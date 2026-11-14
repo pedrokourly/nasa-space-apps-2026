@@ -77,3 +77,39 @@ Code: `web/src/routing/core/grid.ts`, `gridBinary.ts`. Contract: `AGENTS.md`, se
 - `elevation.bin` in meters and `slope.bin` in **degrees** (confirmed: `pipeline/export_slope.py`, Horn method with the real meters per cell), Float32 little-endian, row-major, row 0 = north.
 - Cell values are area samples: the center of cell (col, row) sits half a cell inside the `bbox`.
 - Data/GIS computes the slope on the 15 m grid (documented as an assumption in `docs/terrain-data.md`). A max-per-cell slope from the 1 m DTM would be more conservative.
+
+## Final demo scenario (numbers for the pitch)
+
+Computed by `route()` over the real grid and the real targets (`web/public/data/targets.geojson`), with the default assumptions above (1.0 kg of O₂ available). Kept honest by `web/src/routing/realGrid.test.ts`.
+
+| Leg | Distance | Time | O₂ |
+|---|---|---|---|
+| Habitat → Artuby ridge | 1.00 km | 17 min | 0.030 kg |
+| Artuby ridge → Séítah | 0.22 km | 4 min | 0.008 kg |
+| Séítah → delta front | 2.57 km | 47 min | 0.088 kg |
+| Delta front → upper fan | 1.46 km | 30 min | 0.060 kg |
+| Upper fan → habitat | 4.26 km | 70 min | 0.124 kg |
+| **Whole loop** | **9.51 km** | **2.8 h** | **0.31 kg, GO** |
+
+- With half the O₂ the loop needs, the verdict is NO-GO and the route marks the point of no return.
+- The route is computed in the browser in about 0.2 s the first time (grid download and return field) and about 10 ms afterwards.
+- The delta front target sits on a 17° slope (the limit is 25°): the steepest arrival of the walk.
+
+## Sources and libraries
+
+Data:
+
+- **Terrain:** Mars 2020 Terrain Relative Navigation HiRISE DTM Mosaic, MRO/HiRISE, 1 m, USGS Astrogeology Science Center, published 2020-07-24, https://doi.org/10.5066/P9REJ9JN. Resampled to the 512 × 512 routing grid by the Data/GIS pipeline; details and citation in `docs/terrain-data.md`.
+- **Targets:** `web/public/data/targets.geojson`; sources in `docs/targets.md`.
+
+Published references used by the model:
+
+- Tobler, W. (1993). *Three presentations on geographical analysis and modeling*. NCGIA Technical Report 93-1. (walking speed vs. gradient)
+- Pandolf, K. B., Givoni, B. & Goldman, R. F. (1977). Predicting energy expenditure with loads while standing or walking very slowly. *Journal of Applied Physiology*, 43(4), 577–581. (metabolic power)
+- Weir, J. B. de V. (1949). New methods for calculating metabolic rate with special reference to protein metabolism. *Journal of Physiology*, 109, 1–9. (energy per liter of O₂)
+- Waligora, J. M. et al. (1975). *Apollo experience report: assessment of metabolic expenditures*. NASA TN D-7883. (sanity check: 822 to 1267 kJ/h on lunar EVAs)
+- Hart, P. E., Nilsson, N. J. & Raphael, B. (1968). A formal basis for the heuristic determination of minimum cost paths. *IEEE Transactions on Systems Science and Cybernetics*, 4(2), 100–107. (A*)
+- Dijkstra, E. W. (1959). A note on two problems in connexion with graphs. *Numerische Mathematik*, 1, 269–271. (optimal return field; reference for the A* tests)
+- Mars mean radius 3389.5 km for distances (`web/src/lib/mars-geo.ts`); Mars surface gravity 3.721 m/s².
+
+Libraries: the routing core has **no runtime dependency**; it is plain TypeScript and uses only the project's own `haversine`. Development and tests use TypeScript, Vite and Vitest (versions in `web/package.json`, all open source).

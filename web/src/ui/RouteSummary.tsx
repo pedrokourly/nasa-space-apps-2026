@@ -1,5 +1,4 @@
 import { useAppStore } from '../state/store';
-import { NO_PATH_MESSAGE } from '../routing/api';
 import { profilePointAt } from '../routing/profilePoint';
 import './RouteSummary.css';
 
@@ -19,7 +18,7 @@ export default function RouteSummary() {
   if (status === 'error') {
     return (
       <div className="route-summary route-summary--error" role="status" aria-live="polite">
-        {error === NO_PATH_MESSAGE ? error : `Route error: ${error ?? 'unknown'}`}
+        {error ?? 'Route error: unknown'}
       </div>
     );
   }

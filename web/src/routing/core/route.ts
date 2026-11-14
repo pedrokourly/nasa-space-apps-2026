@@ -11,8 +11,8 @@
 import { haversine, type LonLat } from '../../lib/mars-geo';
 import type { Route, RouteLeg } from '../../types/contract';
 import { findPath } from './astar';
-import { DEFAULT_PROFILE, type CostProfile } from './cost';
-import { NoPathError, OutOfGridError } from './errors';
+import { BLOCKED, cellFactor, DEFAULT_PROFILE, type CostProfile } from './cost';
+import { BlockedPointError, NoPathError, OutOfGridError } from './errors';
 import { cellIndex, cellToLonLat, lonLatToCell, type Cell, type Grid } from './grid';
 import { returnCostField } from './returnField';
 import { DEFAULT_O2_AVAILABLE_KG, DEFAULT_WALK, segmentCost, type WalkProfile } from './walk';
@@ -45,7 +45,9 @@ function cachedReturnField(grid: Grid, home: Cell, cost: CostProfile, walk: Walk
 
 /**
  * Route through all `points`, in order. The first point is the habitat.
- * Throws `OutOfGridError` (point outside the grid), `NoPathError` (no path) or `Error` (fewer than 2 points).
+ * Throws `OutOfGridError` (point outside the grid), `BlockedPointError` (point on an impassable cell),
+ * `NoPathError` (no path between two points) or `Error` (fewer than 2 points).
+ * Points that fall in the same cell give a zero-length line with two equal vertices (valid GeoJSON).
  *
  * Verdict: GO if the O₂ of the trip plus the optimal return from its last point (zero when the route
  * ends at the habitat) fits in the available amount.
@@ -61,9 +63,10 @@ export function route(grid: Grid, points: LonLat[], options: RouteOptions = {}):
   const available = options.o2_available_kg ?? DEFAULT_O2_AVAILABLE_KG;
   const { meta } = grid;
 
-  const stops: Cell[] = points.map((p) => {
+  const stops: Cell[] = points.map((p, i) => {
     const cell = lonLatToCell(meta, p);
-    if (!cell) throw new OutOfGridError(p);
+    if (!cell) throw new OutOfGridError(i);
+    if (cellFactor(grid, cellIndex(meta, cell.col, cell.row), costProfile) === BLOCKED) throw new BlockedPointError(i);
     return cell;
   });
 
@@ -75,6 +78,11 @@ export function route(grid: Grid, points: LonLat[], options: RouteOptions = {}):
     if (!leg) throw new NoPathError();
     path.push(...(i === 1 ? leg.cells : leg.cells.slice(1)));
     stopVertex.push(path.length - 1);
+  }
+  // Every point in the same cell: repeat the vertex so the LineString has the 2 positions GeoJSON requires.
+  if (path.length === 1) {
+    path.push(path[0]!);
+    stopVertex[stopVertex.length - 1] = 1;
   }
 
   const coords: LonLat[] = path.map((c) => cellToLonLat(meta, c.col, c.row));

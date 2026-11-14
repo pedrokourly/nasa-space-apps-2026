@@ -1,6 +1,7 @@
-import { NoPathError, type RouteFn, type RouteRequest, type RouteResponse } from './api';
+import type { RouteFn, RouteRequest, RouteResponse } from './api';
 import { createRouter } from './core/route';
 import { loadGrid } from './loadGrid';
+import { answerRoute } from './respond';
 
 /**
  * Where the Worker reads the grid from: the real Jezero grid made by the Data/GIS pipeline
@@ -34,15 +35,9 @@ interface WorkerScope {
 }
 const ctx = self as unknown as WorkerScope;
 
-async function handle({ id, points }: RouteRequest): Promise<RouteResponse> {
-  try {
-    if (DEV_DELAY_MS > 0) await new Promise((r) => setTimeout(r, DEV_DELAY_MS));
-    const route = await routeImpl(points);
-    return { id, ok: true, route };
-  } catch (e) {
-    if (e instanceof NoPathError) return { id, ok: false, reason: 'no-path', message: e.message };
-    return { id, ok: false, reason: 'error', message: e instanceof Error ? e.message : String(e) };
-  }
+async function handle(req: RouteRequest): Promise<RouteResponse> {
+  if (DEV_DELAY_MS > 0) await new Promise((r) => setTimeout(r, DEV_DELAY_MS));
+  return answerRoute(req, routeImpl);
 }
 
 ctx.onmessage = (e) => {

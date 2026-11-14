@@ -1,0 +1,6 @@
+{
+  "id": 4,
+  "ok": false,
+  "reason": "error",
+  "message": "Failed to load /data/meta.json (HTTP 404)"
+}

@@ -118,6 +118,12 @@ describe('real Jezero grid (public/data)', () => {
     expect(r.properties.point_of_no_return).toBeGreaterThan(0);
   });
 
+  it('a stop on the no-data border cell is refused with a clear message', () => {
+    const [minLon, minLat, maxLon, maxLat] = grid.meta.bbox;
+    const border: LonLat = [minLon + (maxLon - minLon) / grid.meta.width / 2, (minLat + maxLat) / 2];
+    expect(() => route(grid, [HABITAT, border])).toThrow(/^Stop 1 is on impassable terrain/);
+  });
+
   it('no route cell is impassable', () => {
     const r = route(grid, DEMO);
     for (const [lon, lat] of r.geometry.coordinates) {
