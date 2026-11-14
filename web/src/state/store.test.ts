@@ -23,10 +23,20 @@ describe('store', () => {
 
   it('alterna camadas', () => {
     const s = () => useAppStore.getState();
+    const base = s().activeLayers;
     s().toggleLayer('hirise');
     s().toggleLayer('themis');
     s().toggleLayer('hirise');
-    expect(s().activeLayers).toEqual(['themis']);
+    expect(s().activeLayers).toEqual([...base, 'themis']);
+  });
+
+  it('troca a base mantendo overlays e limita a opacidade', () => {
+    const s = () => useAppStore.getState();
+    s().toggleLayer('themis-dia');
+    s().setBaseLayer('hirise-jezero');
+    expect(s().activeLayers).toEqual(['hirise-jezero', 'themis-dia']);
+    s().setLayerOpacity('themis-dia', 3);
+    expect(s().layerOpacity['themis-dia']).toBe(1);
   });
 
   it('guarda status, seleção, hover e rota', () => {

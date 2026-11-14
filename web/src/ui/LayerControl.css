@@ -1,0 +1,67 @@
+/* Baixo-direita, acima da atribuição do Leaflet; zoom (topo-esq), cursor (topo-dir) e escala (baixo-esq) ficam livres. */
+.layer-control {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 2rem;
+  z-index: 1000;
+  max-width: 19rem;
+  border-radius: 6px;
+  background: rgb(11 13 18 / 88%);
+  color: #e8e6e3;
+  font-size: 0.8rem;
+  box-shadow: 0 1px 6px rgb(0 0 0 / 50%);
+}
+
+.layer-control__toggle {
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.layer-control__body {
+  padding: 0 0.6rem 0.5rem;
+}
+
+.layer-control__group {
+  margin: 0 0 0.4rem;
+  padding: 0;
+  border: 0;
+}
+
+.layer-control__group legend {
+  padding: 0;
+  color: #9aa0a6;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.layer-control__row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.15rem 0;
+  cursor: pointer;
+}
+
+.layer-control__name {
+  flex: 1;
+}
+
+.layer-control__mission {
+  color: #9aa0a6;
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+
+.layer-control__overlay input[type='range'] {
+  width: 100%;
+  margin: 0 0 0.2rem;
+}

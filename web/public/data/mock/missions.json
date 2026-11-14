@@ -54,5 +54,13 @@
     "agencia": "NASA",
     "link": "https://science.nasa.gov/mission/mars-2020-perseverance/",
     "descricao": "Estação meteorológica do rover: temperatura, vento, pressão, poeira."
+  },
+  {
+    "id": "viking-mdim",
+    "nome": "Viking Orbiter",
+    "instrumento": "MDIM 2.1",
+    "agencia": "NASA / USGS",
+    "link": "https://science.nasa.gov/mission/viking/",
+    "descricao": "Mosaico global colorido de imagens dos orbitadores Viking (USGS MDIM 2.1), cerca de 232 m por pixel."
   }
 ]
