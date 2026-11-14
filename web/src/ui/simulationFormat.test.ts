@@ -4,8 +4,9 @@ import { formatDistance, formatElapsed } from './simulationFormat';
 describe('simulation formatting', () => {
   it('formats elapsed time as h:mm', () => {
     expect(formatElapsed(0)).toBe('0:00');
-    expect(formatElapsed(59)).toBe('0:00');
-    expect(formatElapsed(3600 + 5 * 60 + 30)).toBe('1:05');
+    expect(formatElapsed(29)).toBe('0:00');
+    expect(formatElapsed(59)).toBe('0:01');
+    expect(formatElapsed(3600 + 5 * 60 + 30)).toBe('1:06');
     expect(formatElapsed(-10)).toBe('0:00');
   });
 
