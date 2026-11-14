@@ -51,6 +51,11 @@ export interface Meta {
   row0: 'north';
   dtype: 'float32le';
   source?: string;
+  /**
+   * Optional. `true` when Data/GIS also ships `sand.bin`: one Uint8 per cell, row-major, same size
+   * as the grid, 1 = sand (Routing makes it cost 2×), 0 = not sand. Absent or `false` = no sand layer.
+   */
+  sand_layer?: boolean;
 }
 
 // --- missions.json ---
@@ -88,7 +93,11 @@ export interface RouteProps {
   /** `[cumulative distance in m, elevation in m]` pairs; the last one has `dist_m`. */
   profile: [dist_m: number, elev_m: number][];
   verdict?: 'GO' | 'NO-GO';
-  /** Vertex index in the LineString. */
+  /**
+   * Index (in the LineString) of the FIRST vertex from which the astronaut can no longer get back
+   * to the habitat (the route's first point) with the O₂ left. The last safe vertex is this index − 1.
+   * Present only when `verdict` is `'NO-GO'`.
+   */
   point_of_no_return?: number;
   mock?: boolean;
 }

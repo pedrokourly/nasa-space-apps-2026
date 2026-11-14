@@ -184,6 +184,7 @@ Cada frente trabalha com **mock exatamente neste formato** até o dado real cheg
 | Arquivo | Formato | Gera | Consome |
 |---|---|---|---|
 | `elevation.bin`, `slope.bin` | Grade Float32 little-endian, linha a linha (row-major) | Dados/GIS | Roteamento, 3D |
+| `sand.bin` (optional) | Uint8 grid, row-major, same size; 1 = sand, 0 = not sand. Only when `meta.json` has `sand_layer: true` | Data/GIS | Routing |
 | `meta.json` | `bbox`, `width`, `height`, metros por célula, convenção de longitude, valor de nodata | Dados/GIS | Roteamento, Mapa 2D |
 | `targets.geojson` | FeatureCollection de Points com `name`, `why`, `mission` | Dados/GIS (+ textos de Produto) | Mapa 2D, UI, 3D |
 | `missions.json` | Lista: `name`, `instrument`, `agency`, `link` (+ descrição) | Produto/pitch | UI (proveniência) |
@@ -192,10 +193,13 @@ Cada frente trabalha com **mock exatamente neste formato** até o dado real cheg
 Nomes de campo exatos (tipos em `web/src/types/contract.ts`; mocks em `web/public/data/mock/`):
 
 - **Grade (`elevation.bin`, `slope.bin`):** Float32 little-endian, row-major, **linha 0 = norte**.
-- **`meta.json`:** `bbox` `[minLon, minLat, maxLon, maxLat]` (−180 a 180), `width`, `height`, `m_per_cell_x`, `m_per_cell_y`, `lon_convention: "-180..180"`, `nodata`, `crs: "EPSG:4326"`, `row0: "north"`, `dtype: "float32le"`, `source?`.
+- **Units:** `elevation.bin` in meters; `slope.bin` in **degrees** (0 to 90), computed with the real meters per cell in x and y. No-data cells hold the `nodata` value (never 0). Degrees confirmed by the Data/GIS pipeline (`pipeline/export_slope.py`).
+- **`sand.bin` (optional):** one Uint8 per cell, same size and order as the grid, 1 = sand (Routing makes it cost 2×), 0 = not sand. Shipped only together with `sand_layer: true` in `meta.json`; without it there is no sand layer.
+- **`meta.json`:** `bbox` `[minLon, minLat, maxLon, maxLat]` (−180 a 180), `width`, `height`, `m_per_cell_x`, `m_per_cell_y`, `lon_convention: "-180..180"`, `nodata`, `crs: "EPSG:4326"`, `row0: "north"`, `dtype: "float32le"`, `source?`, `sand_layer?` (`true` when `sand.bin` exists).
 - **`missions.json`:** lista de `{ id (ex.: "mro-hirise"), name, instrument, agency, link, description? }`.
 - **`targets.geojson`:** propriedades `id`, `name`, `why`, `mission` (= `id` de `missions.json`), `mock?`.
 - **Rota (Feature LineString):** propriedades `dist_m`, `time_s`, `o2_kg`, `profile` (lista de `[dist_m, elev_m]`, último = `dist_m`), `verdict?` (`"GO"` | `"NO-GO"`), `point_of_no_return?` (índice do vértice), `mock?`.
+- **`point_of_no_return` meaning:** index of the FIRST vertex from which the astronaut can no longer get back to the habitat (the route's first point) with the O₂ left; the last safe vertex is that index − 1. Present only when `verdict` is `"NO-GO"`.
 
 A rota em GeoJSON é o ponto de encontro de todas as frentes: o mesmo arquivo alimenta 2D, 3D, painéis e URL.
 
