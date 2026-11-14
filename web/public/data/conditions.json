@@ -1,0 +1,159 @@
+{
+  "source": {
+    "mission": "Mars 2020 (Perseverance)",
+    "mission_id": "mars2020-meda",
+    "instrument": "MEDA (Mars Environmental Dynamics Analyzer)",
+    "bundle": "mars2020_meda",
+    "release": "mars2020_meda-20260811",
+    "doi": "10.17189/1522849",
+    "url": "https://pds-atmospheres.nmsu.edu/PDS/data/PDS4/Mars2020/mars2020_meda/",
+    "note": "Last data available in the release, not a live feed."
+  },
+  "latest_sol": 1859,
+  "sols": [
+    {
+      "sol": 1859,
+      "utc_start": "2026-05-13T06:57:14.732Z",
+      "utc_end": "2026-05-14T07:36:49.438Z",
+      "variables": {
+        "pressure": {
+          "status": "ok",
+          "unit": "Pa",
+          "level": "derived",
+          "product": "DER_PS",
+          "column": "PRESSURE",
+          "min": 716.61,
+          "mean": 736.05,
+          "max": 750.86,
+          "n": 48086
+        },
+        "air_temperature": {
+          "status": "ok",
+          "unit": "K",
+          "level": "calibrated",
+          "product": "CAL_ATS",
+          "column": "mean of ATS_LOCAL_TEMP1..5 per record",
+          "min": 190.06,
+          "mean": 214.1,
+          "max": 252.08,
+          "n": 48510
+        },
+        "relative_humidity": {
+          "status": "ok",
+          "unit": "%",
+          "level": "derived",
+          "product": "DER_RHS",
+          "column": "LOCAL_RELATIVE_HUMIDITY",
+          "min": 0.18,
+          "mean": 4.21,
+          "max": 80.29,
+          "n": 30008
+        },
+        "wind": {
+          "status": "unavailable",
+          "reason": "No wind sensor (WS) product is listed for this sol in the derived or calibrated collections."
+        },
+        "dust": {
+          "status": "unavailable",
+          "reason": "No dust variable in the products used (DER_PS, DER_RHS, CAL_ATS); the dust sensor (RDS) product was not used."
+        }
+      }
+    },
+    {
+      "sol": 1858,
+      "utc_start": "2026-05-12T06:17:40.026Z",
+      "utc_end": "2026-05-13T06:57:13.732Z",
+      "variables": {
+        "pressure": {
+          "status": "ok",
+          "unit": "Pa",
+          "level": "derived",
+          "product": "DER_PS",
+          "column": "PRESSURE",
+          "min": 723.46,
+          "mean": 738.73,
+          "max": 751.4,
+          "n": 51783
+        },
+        "air_temperature": {
+          "status": "ok",
+          "unit": "K",
+          "level": "calibrated",
+          "product": "CAL_ATS",
+          "column": "mean of ATS_LOCAL_TEMP1..5 per record",
+          "min": 191.36,
+          "mean": 215.19,
+          "max": 254.33,
+          "n": 52163
+        },
+        "relative_humidity": {
+          "status": "ok",
+          "unit": "%",
+          "level": "derived",
+          "product": "DER_RHS",
+          "column": "LOCAL_RELATIVE_HUMIDITY",
+          "min": 0.19,
+          "mean": 10.6,
+          "max": 70.78,
+          "n": 37323
+        },
+        "wind": {
+          "status": "unavailable",
+          "reason": "No wind sensor (WS) product is listed for this sol in the derived or calibrated collections."
+        },
+        "dust": {
+          "status": "unavailable",
+          "reason": "No dust variable in the products used (DER_PS, DER_RHS, CAL_ATS); the dust sensor (RDS) product was not used."
+        }
+      }
+    },
+    {
+      "sol": 1857,
+      "utc_start": "2026-05-11T05:38:07.321Z",
+      "utc_end": "2026-05-12T06:17:39.026Z",
+      "variables": {
+        "pressure": {
+          "status": "ok",
+          "unit": "Pa",
+          "level": "derived",
+          "product": "DER_PS",
+          "column": "PRESSURE",
+          "min": 720.47,
+          "mean": 738.52,
+          "max": 751.61,
+          "n": 48070
+        },
+        "air_temperature": {
+          "status": "ok",
+          "unit": "K",
+          "level": "calibrated",
+          "product": "CAL_ATS",
+          "column": "mean of ATS_LOCAL_TEMP1..5 per record",
+          "min": 190.34,
+          "mean": 211.73,
+          "max": 255.39,
+          "n": 48490
+        },
+        "relative_humidity": {
+          "status": "ok",
+          "unit": "%",
+          "level": "derived",
+          "product": "DER_RHS",
+          "column": "LOCAL_RELATIVE_HUMIDITY",
+          "min": 0.19,
+          "mean": 13.94,
+          "max": 81.06,
+          "n": 40674
+        },
+        "wind": {
+          "status": "unavailable",
+          "reason": "No wind sensor (WS) product is listed for this sol in the derived or calibrated collections."
+        },
+        "dust": {
+          "status": "unavailable",
+          "reason": "No dust variable in the products used (DER_PS, DER_RHS, CAL_ATS); the dust sensor (RDS) product was not used."
+        }
+      }
+    }
+  ]
+}

@@ -84,6 +84,64 @@ export interface TargetProps {
 export type Target = Feature<Point, TargetProps>;
 export type TargetsCollection = FeatureCollection<Point, TargetProps>;
 
+// --- conditions.json (MEDA) ---
+
+/** A variable with data for the sol: min, mean and max over the sol. */
+export interface ConditionStats {
+  status: 'ok';
+  unit: string;
+  min: number;
+  mean: number;
+  max: number;
+  /** Number of valid records used. */
+  n: number;
+  level: 'derived' | 'calibrated';
+  /** PDS product, e.g. `"DER_PS"`. */
+  product: string;
+  column: string;
+}
+
+/** A variable without data: never filled with an invented value. */
+export interface ConditionUnavailable {
+  status: 'unavailable';
+  reason: string;
+}
+
+export type ConditionVariable = ConditionStats | ConditionUnavailable;
+
+export interface SolConditions {
+  sol: number;
+  /** Start and end of the data of the sol, UTC, from the PDS label. */
+  utc_start: string;
+  utc_end: string;
+  variables: {
+    pressure: ConditionVariable;
+    air_temperature: ConditionVariable;
+    relative_humidity: ConditionVariable;
+    wind: ConditionVariable;
+    dust: ConditionVariable;
+  };
+}
+
+export interface Conditions {
+  source: {
+    mission: string;
+    /** `Mission.id` in `missions.json`. */
+    mission_id: string;
+    instrument: string;
+    bundle: string;
+    /** PDS release the data came from, e.g. `"mars2020_meda-20260811"`. */
+    release: string;
+    doi: string;
+    url: string;
+    note: string;
+  };
+  /** Most recent sol in the file (the data is not live). */
+  latest_sol: number;
+  /** Sols, latest first. */
+  sols: SolConditions[];
+}
+
 // --- route ---
 
 export interface RouteProps {
