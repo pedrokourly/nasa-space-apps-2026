@@ -33,9 +33,14 @@ export function useSimulationClock(): void {
 export function useSimulationSnapshot(): SimulationState | null {
   const route = useAppStore((s) => s.route);
   const t_s = useSimulationStore((s) => s.t_s);
+  // Same O₂ supply the route was computed with (issue #61), so the readout matches the verdict.
+  const o2Available = useAppStore((s) => s.evaParams.o2_available_kg);
   const timeline = useMemo(
     () => (route && route.geometry.coordinates.length >= 2 ? buildTimeline(route) : null),
     [route],
   );
-  return useMemo(() => (route && timeline ? simulationStateAt(timeline, route, t_s) : null), [route, timeline, t_s]);
+  return useMemo(
+    () => (route && timeline ? simulationStateAt(timeline, route, t_s, o2Available) : null),
+    [route, timeline, t_s, o2Available],
+  );
 }
