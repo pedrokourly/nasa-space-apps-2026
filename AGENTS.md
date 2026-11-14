@@ -198,8 +198,8 @@ Nomes de campo exatos (tipos em `web/src/types/contract.ts`; mocks em `web/publi
 - **`meta.json`:** `bbox` `[minLon, minLat, maxLon, maxLat]` (−180 a 180), `width`, `height`, `m_per_cell_x`, `m_per_cell_y`, `lon_convention: "-180..180"`, `nodata`, `crs: "EPSG:4326"`, `row0: "north"`, `dtype: "float32le"`, `source?`, `sand_layer?` (`true` when `sand.bin` exists).
 - **`missions.json`:** lista de `{ id (ex.: "mro-hirise"), name, instrument, agency, link, description? }`.
 - **`targets.geojson`:** propriedades `id`, `name`, `why`, `mission` (= `id` de `missions.json`), `mock?`.
-- **Rota (Feature LineString):** propriedades `dist_m`, `time_s`, `o2_kg`, `profile` (lista de `[dist_m, elev_m]`, último = `dist_m`), `verdict?` (`"GO"` | `"NO-GO"`), `point_of_no_return?` (índice do vértice), `mock?`.
-- **`point_of_no_return` meaning:** index of the FIRST vertex from which the astronaut can no longer get back to the habitat (the route's first point) with the O₂ left; the last safe vertex is that index − 1. Present only when `verdict` is `"NO-GO"`.
+- **Rota (Feature LineString):** propriedades `dist_m`, `time_s`, `o2_kg`, `profile` (lista de `[dist_m, elev_m]`, último = `dist_m`), `legs?` (one per pair of consecutive requested points: `from_vertex`, `to_vertex`, `dist_m`, `time_s`, `o2_kg`; their sums equal the totals), `verdict?` (`"GO"` | `"NO-GO"`), `point_of_no_return?` (índice do vértice), `mock?`.
+- **`point_of_no_return` meaning:** index of the FIRST vertex from which the astronaut can no longer get back to the habitat (the route's first point) with the O₂ left, by the least-O₂ way home; the last safe vertex is that index − 1. Present only when `verdict` is `"NO-GO"`.
 
 A rota em GeoJSON é o ponto de encontro de todas as frentes: o mesmo arquivo alimenta 2D, 3D, painéis e URL.
 

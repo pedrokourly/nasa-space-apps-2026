@@ -3,7 +3,7 @@ import { NoPathError, OutOfGridError } from './errors';
 import { cellToLonLat } from './grid';
 import { buildMockGrid, flatGrid, wallWithGapGrid, mockMeta } from './mockGrid';
 import { createRouter, route } from './route';
-import { DEFAULT_WALK, segmentCost, walkingSpeed } from './walk';
+import { DEFAULT_WALK, metabolicPowerW, o2KgForEnergy, segmentCost, walkingSpeed } from './walk';
 
 const cellPt = (g: ReturnType<typeof flatGrid>, col: number, row: number) => cellToLonLat(g.meta, col, row);
 
@@ -19,6 +19,33 @@ describe('walking model', () => {
     const up = segmentCost(100, 20);
     expect(up.time_s).toBeGreaterThan(flat.time_s);
     expect(up.o2_kg).toBeGreaterThan(flat.o2_kg);
+  });
+
+  it('Pandolf on Earth (gravity 1, paved) matches the published formula', () => {
+    const earth = { ...DEFAULT_WALK, gravityRatio: 1, terrainFactor: 1, bodyMassKg: 70, loadMassKg: 20 };
+    // 1.5·70 + 2·90·(20/70)² + 1·90·(1.5·1.2² + 0.35·1.2·5) = 105 + 14.694 + 383.4
+    expect(metabolicPowerW(1.2, 0.05, earth)).toBeCloseTo(105 + 2 * 90 * (20 / 70) ** 2 + 90 * (1.5 * 1.44 + 0.35 * 1.2 * 5), 6);
+  });
+
+  it('Mars gravity lowers the load and walking cost but not the standing term', () => {
+    const mars = metabolicPowerW(1, 0);
+    const earth = metabolicPowerW(1, 0, { ...DEFAULT_WALK, gravityRatio: 1 });
+    expect(mars).toBeLessThan(earth);
+    expect(metabolicPowerW(0, 0, { ...DEFAULT_WALK, gravityRatio: 0 })).toBeCloseTo(1.5 * DEFAULT_WALK.bodyMassKg, 10);
+  });
+
+  it('a descent never costs less than flat walking at the same speed', () => {
+    expect(metabolicPowerW(0.8, -0.2)).toBeCloseTo(metabolicPowerW(0.8, 0), 10);
+  });
+
+  it('O₂ from energy: 20.1 kJ uses one liter (1.429 g) of O₂', () => {
+    expect(o2KgForEnergy(20_100)).toBeCloseTo(0.001429, 12);
+  });
+
+  it('flat walking with the defaults uses about 0.10 kg O₂ per hour (~400 W)', () => {
+    const perHour = segmentCost(3600 * DEFAULT_WALK.speedFlatMS, 0).o2_kg;
+    expect(perHour).toBeGreaterThan(0.09);
+    expect(perHour).toBeLessThan(0.11);
   });
 
   it('zero distance costs nothing', () => {
@@ -137,6 +164,60 @@ describe('route(): verdict and point of no return', () => {
       [H, cellPt(tri, 20, 2), cellPt(tri, 37, 20)],
     ];
     for (const pts of routes) {
+      const total = route(tri, pts).properties.o2_kg;
+      for (const k of [0.3, 0.5, 0.9, 1.0, 1.01, 1.5, 2.01, 5]) {
+        const p = route(tri, pts, { o2_available_kg: total * k }).properties;
+        expect(p.point_of_no_return !== undefined).toBe(p.verdict === 'NO-GO');
+      }
+    }
+  });
+});
+
+describe('route(): legs and optimal return (S5)', () => {
+  const tri = flatGrid(40, 40, 20);
+  const H = cellPt(tri, 2, 37);
+  const B = cellPt(tri, 37, 37);
+  const C = cellPt(tri, 20, 2);
+
+  it('one leg per pair of stops; legs cover the line and add up to the totals', () => {
+    const r = route(tri, [H, B, C, H]);
+    const p = r.properties;
+    const legs = p.legs!;
+    expect(legs).toHaveLength(3);
+    expect(legs[0]!.from_vertex).toBe(0);
+    expect(legs[2]!.to_vertex).toBe(r.geometry.coordinates.length - 1);
+    for (let k = 1; k < legs.length; k++) expect(legs[k]!.from_vertex).toBe(legs[k - 1]!.to_vertex);
+    const sum = (key: 'dist_m' | 'time_s' | 'o2_kg') => legs.reduce((s, l) => s + l[key], 0);
+    expect(sum('dist_m')).toBeCloseTo(p.dist_m, 6);
+    expect(sum('time_s')).toBeCloseTo(p.time_s, 6);
+    expect(sum('o2_kg')).toBeCloseTo(p.o2_kg, 10);
+  });
+
+  it('one-way trip: the verdict counts the shortcut home, not retracing the way out', () => {
+    // H → B → C ends far from home. Retracing costs the whole trip again (H→B is 35 cells,
+    // B→C ~39 cells); the direct way home from C is ~38 cells, much cheaper.
+    const out = route(tri, [H, B, C]).properties.o2_kg;
+    const homeFromC = route(tri, [C, H]).properties.o2_kg;
+    const enough = (out + homeFromC) * 1.01;
+    expect(enough).toBeLessThan(2 * out); // retracing would not fit
+    const r = route(tri, [H, B, C], { o2_available_kg: enough });
+    expect(r.properties.verdict).toBe('GO');
+    expect(r.properties.point_of_no_return).toBeUndefined();
+  });
+
+  it('known point of no return on a loop: the first vertex where spent + least O₂ home exceeds what is available', () => {
+    // Flat ground, H at the corner, out along the bottom edge to B (35 steps east). Each straight
+    // step costs `step` kg; the least O₂ home from vertex i on that edge is i·step, so spent + home
+    // = 2·i·step. With 9.5·step available it first exceeds at i = 5.
+    const p = route(tri, [H, cellPt(tri, 3, 37)]).properties;
+    const step = p.o2_kg; // one straight step
+    const r = route(tri, [H, B, C, H], { o2_available_kg: 9.5 * step });
+    expect(r.properties.verdict).toBe('NO-GO');
+    expect(r.properties.point_of_no_return).toBe(5);
+  });
+
+  it('the point of no return still exists if and only if the verdict is NO-GO', () => {
+    for (const pts of [[H, B], [H, B, H], [H, B, C, H], [H, C, B]]) {
       const total = route(tri, pts).properties.o2_kg;
       for (const k of [0.3, 0.5, 0.9, 1.0, 1.01, 1.5, 2.01, 5]) {
         const p = route(tri, pts, { o2_available_kg: total * k }).properties;
