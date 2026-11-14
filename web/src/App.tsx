@@ -19,9 +19,9 @@ import ViewToggle, { type ViewMode } from './ui/ViewToggle'
 // Cesium is heavy: the 3D view is its own chunk, fetched only when the user switches to it.
 const ThreeDView = lazy(() => import('./three-d/ThreeDView'))
 
-// Real data replaces mocks file by file. meta.json is the real Jezero grid (same bbox as the
-// mock); targets and missions stay mock until Data/GIS publishes them (issue #28).
-const DATA_SOURCES: DataSources = { meta: 'real', targets: 'mock', missions: 'mock' }
+// Real data replaces mocks file by file. meta.json is the real Jezero grid and targets.geojson
+// the real science targets (#28); missions stay mock until a real missions.json is published.
+const DATA_SOURCES: DataSources = { meta: 'real', targets: 'real', missions: 'mock' }
 
 const label = (s: DataSource) => (s === 'real' ? 'real' : 'MOCK')
 
