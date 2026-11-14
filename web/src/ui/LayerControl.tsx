@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useAppStore } from '../state/store';
-import { useMap } from '../map/MapContext';
-import { LAYERS, backdropAt, isGlobal } from '../map/layers';
+import { BACKDROP_ID, LAYERS, isGlobal } from '../map/layers';
 import type { Mission } from '../types/contract';
 import ProvenanceBadge from './ProvenanceBadge';
 import './LayerControl.css';
@@ -14,27 +13,15 @@ export default function LayerControl({ missions }: { missions: Mission[] }) {
   const toggleLayer = useAppStore((s) => s.toggleLayer);
   const setBaseLayer = useAppStore((s) => s.setBaseLayer);
   const setLayerOpacity = useAppStore((s) => s.setLayerOpacity);
-  const map = useMap();
-  const [zoom, setZoom] = useState(() => map?.getZoom() ?? 0);
-
-  useEffect(() => {
-    if (!map) return;
-    const update = () => setZoom(map.getZoom());
-    update();
-    map.on('zoomend', update);
-    return () => {
-      map.off('zoomend', update);
-    };
-  }, [map]);
 
   const bases = LAYERS.filter((l) => l.type === 'base');
   const overlays = LAYERS.filter((l) => l.type === 'overlay');
 
   // Everything drawn on the map needs a provenance label, including the backdrop
-  // that LayerManager puts under a local base (which one depends on the zoom).
+  // that LayerManager puts under a local base.
   const base = bases.find((l) => activeLayers.includes(l.id));
-  const backdrop = base && !isGlobal(base) ? backdropAt(zoom) : undefined;
-  const shown = backdrop && !activeLayers.includes(backdrop) ? [...activeLayers, backdrop] : activeLayers;
+  const shown =
+    base && !isGlobal(base) && !activeLayers.includes(BACKDROP_ID) ? [...activeLayers, BACKDROP_ID] : activeLayers;
 
   return (
     <section className="layer-control" aria-label="Map layers">

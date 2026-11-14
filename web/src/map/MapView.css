@@ -27,9 +27,3 @@
   font-variant-numeric: tabular-nums;
   pointer-events: none;
 }
-
-.map-view__home a {
-  font-size: 18px;
-  line-height: 30px;
-  color: #222;
-}
