@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import type { LonLat } from '../lib/mars-geo';
 import { useAppStore } from '../state/store';
+import type { EvaParams } from './core/walk';
 import { StaleRouteError } from './api';
 import { createRouteClient } from './client';
 
@@ -12,7 +13,7 @@ export function useRouting(): void {
     const client = createRouteClient();
     let timer: number | undefined;
 
-    const apply = (points: LonLat[]) => {
+    const apply = (points: LonLat[], params: EvaParams) => {
       window.clearTimeout(timer);
       if (points.length < 2) {
         client.cancel();
@@ -26,7 +27,7 @@ export function useRouting(): void {
         const st = useAppStore.getState();
         st.setRouteError(null);
         st.setRouteStatus('computing');
-        client.route(points).then(
+        client.route(points, params).then(
           (route) => {
             const cur = useAppStore.getState();
             cur.setRoute(route);
@@ -43,9 +44,10 @@ export function useRouting(): void {
       }, DEBOUNCE_MS);
     };
 
-    apply(useAppStore.getState().waypoints);
+    const init = useAppStore.getState();
+    apply(init.waypoints, init.evaParams);
     const unsub = useAppStore.subscribe((s, prev) => {
-      if (s.waypoints !== prev.waypoints) apply(s.waypoints);
+      if (s.waypoints !== prev.waypoints || s.evaParams !== prev.evaParams) apply(s.waypoints, s.evaParams);
     });
 
     return () => {

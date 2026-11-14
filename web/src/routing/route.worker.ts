@@ -23,7 +23,7 @@ function getRouter(): Promise<RouteFn> {
 }
 
 /** ROUTING PLUG POINT: the real `route()` (A* over the grid, time, O₂, verdict). */
-const routeImpl: RouteFn = async (points) => (await getRouter())(points);
+const routeImpl: RouteFn = async (points, params) => (await getRouter())(points, params);
 
 /** Artificial delay (ms) in dev only, to see "Computing route…". Off by default (VITE_ROUTE_MOCK_DELAY_MS). */
 const DEV_DELAY_MS = import.meta.env.DEV ? Number(import.meta.env.VITE_ROUTE_MOCK_DELAY_MS ?? 0) || 0 : 0;
@@ -34,10 +34,10 @@ interface WorkerScope {
 }
 const ctx = self as unknown as WorkerScope;
 
-async function handle({ id, points }: RouteRequest): Promise<RouteResponse> {
+async function handle({ id, points, params }: RouteRequest): Promise<RouteResponse> {
   try {
     if (DEV_DELAY_MS > 0) await new Promise((r) => setTimeout(r, DEV_DELAY_MS));
-    const route = await routeImpl(points);
+    const route = await routeImpl(points, params);
     return { id, ok: true, route };
   } catch (e) {
     if (e instanceof NoPathError) return { id, ok: false, reason: 'no-path', message: e.message };
