@@ -1,0 +1,85 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.45089,
+          18.44463
+        ]
+      },
+      "properties": {
+        "id": "habitat",
+        "name": "Habitat (landing site)",
+        "why": "EVA start and return point (point A), at the Octavia E. Butler landing site where Perseverance touched down. The HiRISE terrain model used for routing was the basemap of the landing hazard map.",
+        "mission": "mro-hirise"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.44437,
+          18.43074
+        ]
+      },
+      "properties": {
+        "id": "artuby-ridge",
+        "name": "Artuby Ridge (Rochette)",
+        "why": "Igneous bedrock of the Máaz formation on the crater floor, close to the habitat. Perseverance cored Montdenier and Montagnac at Rochette (sols 194 and 196).",
+        "mission": "mro-hirise"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.44302,
+          18.43396
+        ]
+      },
+      "properties": {
+        "id": "seitah",
+        "name": "Séítah olivine cumulate (Brac)",
+        "why": "Olivine-rich igneous rock of the Séítah formation, part of the olivine and carbonate terrain that orbital spectroscopy (MRO/CRISM) found at Jezero. Perseverance cored Salette and Coulettes at Brac (sols 262 and 271).",
+        "mission": "mro-crism"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.40617,
+          18.4589
+        ]
+      },
+      "properties": {
+        "id": "delta-front",
+        "name": "Delta front (Skinner Ridge)",
+        "why": "Sedimentary rocks of the ancient river delta, where water-laid sediment can preserve signs of past life. Perseverance cored Swift Run and Skyland at Skinner Ridge (sols 490 and 495) and Hazeltop and Bearwallow at nearby Wildcat Ridge (sols 509 and 516).",
+        "mission": "mro-hirise"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.38407,
+          18.4702
+        ]
+      },
+      "properties": {
+        "id": "upper-fan",
+        "name": "Upper delta fan (Berea)",
+        "why": "Sedimentary rocks on top of the delta, about 120 m above the crater floor, so the route includes a long climb. Perseverance cored Melyn at Berea (sol 749).",
+        "mission": "mro-hirise"
+      }
+    }
+  ]
+}
