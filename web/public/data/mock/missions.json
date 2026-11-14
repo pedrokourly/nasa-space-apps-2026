@@ -1,0 +1,58 @@
+[
+  {
+    "id": "mro-hirise",
+    "nome": "Mars Reconnaissance Orbiter",
+    "instrumento": "HiRISE",
+    "agencia": "NASA",
+    "link": "https://www.uahirise.org/",
+    "descricao": "Imagens de altíssima resolução (cerca de 30 cm por pixel)."
+  },
+  {
+    "id": "mro-ctx",
+    "nome": "Mars Reconnaissance Orbiter",
+    "instrumento": "CTX",
+    "agencia": "NASA",
+    "link": "https://science.nasa.gov/mission/mars-reconnaissance-orbiter/",
+    "descricao": "Câmera de contexto, cerca de 6 m por pixel."
+  },
+  {
+    "id": "mro-crism",
+    "nome": "Mars Reconnaissance Orbiter",
+    "instrumento": "CRISM",
+    "agencia": "NASA",
+    "link": "https://crism.jhuapl.edu/",
+    "descricao": "Espectrômetro de imageamento para minerais (argilas, carbonatos)."
+  },
+  {
+    "id": "odyssey-themis",
+    "nome": "Mars Odyssey",
+    "instrumento": "THEMIS",
+    "agencia": "NASA",
+    "link": "https://themis.asu.edu/",
+    "descricao": "Imageamento no infravermelho térmico; inércia térmica e composição."
+  },
+  {
+    "id": "mgs-mola",
+    "nome": "Mars Global Surveyor",
+    "instrumento": "MOLA",
+    "agencia": "NASA",
+    "link": "https://science.nasa.gov/mission/mars-global-surveyor/",
+    "descricao": "Altímetro a laser; base do relevo global de Marte."
+  },
+  {
+    "id": "mex-hrsc",
+    "nome": "Mars Express",
+    "instrumento": "HRSC",
+    "agencia": "ESA",
+    "link": "https://www.esa.int/Science_Exploration/Space_Science/Mars_Express",
+    "descricao": "Câmera estéreo de alta resolução; modelos digitais de terreno."
+  },
+  {
+    "id": "mars2020-meda",
+    "nome": "Mars 2020 (Perseverance)",
+    "instrumento": "MEDA",
+    "agencia": "NASA",
+    "link": "https://science.nasa.gov/mission/mars-2020-perseverance/",
+    "descricao": "Estação meteorológica do rover: temperatura, vento, pressão, poeira."
+  }
+]

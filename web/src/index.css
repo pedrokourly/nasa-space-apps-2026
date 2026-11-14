@@ -33,6 +33,14 @@ body,
   background: #11141b;
 }
 
+.app-footer {
+  padding: 0.4rem 1rem;
+  border-top: 1px solid #2a2f3a;
+  background: #11141b;
+  font-size: 0.8rem;
+  color: #aab0bd;
+}
+
 .app-header h1 {
   margin: 0;
   font-size: 1.1rem;
