@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { loadData, type AppData } from './lib/loadData'
+import MapView from './map/MapView'
 
 export default function App() {
   const [data, setData] = useState<AppData | null>(null)
@@ -14,7 +15,9 @@ export default function App() {
       <header className="app-header">
         <h1>Martian Map · Jezero</h1>
       </header>
-      <main id="map-area" className="map-area" aria-label="Área do mapa" />
+      <main id="map-area" className="map-area" aria-label="Área do mapa">
+        <MapView />
+      </main>
       <footer className="app-footer">
         {erro
           ? `Erro ao carregar dados: ${erro}`
