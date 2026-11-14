@@ -4,7 +4,7 @@ Desenvolvimento e submissão do desafio "Interplanetary Survival Guide: Martian 
 
 Planejador de Marswalk para a cratera Jezero: mapa 2D em camadas de várias missões da NASA, rota segura sobre relevo real e visão 3D opcional. App 100% estático, sem backend.
 
-**Demo:** a definir.
+**Live demo:** https://martian-map.pedrokourly.dev
 
 ## Como rodar
 
@@ -53,7 +53,7 @@ web/                 # app Vite + React + TypeScript
 
 ## Deploy e regra da `main`
 
-O deploy é feito na Vercel a partir do `vercel.json` da raiz (build em `web/`, saída em `web/dist`).
+Deploy runs on Cloudflare Workers (static assets, `web/wrangler.jsonc`) with Workers Builds connected to `main`: root directory `web`, build command `npm run build`, deploy command `npx wrangler deploy`.
 
 **A `main` está sempre deployável:** nunca quebre a `main`; trabalhe em branch e abra PR pequeno. Veja as regras completas em [`AGENTS.md`](AGENTS.md).
 

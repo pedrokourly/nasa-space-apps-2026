@@ -156,7 +156,7 @@ Tudo estático, **sem backend**. Fluxo de mão única: dados da NASA → pipelin
 | Estado | Zustand ou Context do React | Rota atual, alvo selecionado, ponto em destaque no perfil |
 | Dados | Python (rasterio + numpy) | Processa uma vez, gera arquivos leves |
 | Armazenamento | Arquivos estáticos (GeoJSON, `.bin`, JSON) | Sem banco |
-| Deploy | Vercel ou Netlify | Deploy automático desde a primeira hora; a demo fica sempre no ar |
+| Deploy | Cloudflare Workers (static assets) | Workers Builds deploys `main` automatically; root `web`, build `npm run build`, deploy `npx wrangler deploy` (`web/wrangler.jsonc`) |
 
 **Não use Three.js** para o 3D (teríamos que construir terreno, LOD e projeção do zero). **Não adicione servidor** — se algo parece exigir um, gere um arquivo estático no pipeline.
 

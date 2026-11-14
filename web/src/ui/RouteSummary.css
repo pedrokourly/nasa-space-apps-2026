@@ -17,3 +17,30 @@
   background: rgb(160 40 20 / 92%);
   color: #fff;
 }
+
+.route-summary--info {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.route-summary__verdict {
+  padding: 0.05rem 0.4rem;
+  border-radius: 3px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #0b0d12;
+}
+
+.route-summary__verdict--go {
+  background: #34d399;
+}
+
+.route-summary__verdict--nogo {
+  background: #ff3b30;
+  color: #fff;
+}
+
+.route-summary__pnr {
+  color: #ff8a80;
+}
