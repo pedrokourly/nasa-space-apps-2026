@@ -8,6 +8,7 @@ import LayerManager from './map/LayerManager'
 import LayerControl from './ui/LayerControl'
 import RouteController from './routing/RouteController'
 import RouteLayer from './map/RouteLayer'
+import RouteMarkers from './map/RouteMarkers'
 import RouteSummary from './ui/RouteSummary'
 
 export default function App() {
@@ -29,6 +30,7 @@ export default function App() {
           <LayerControl missions={data?.missions ?? []} />
           <RouteController />
           <RouteLayer />
+          <RouteMarkers />
           <RouteSummary />
           <WaypointsLayer meta={data?.meta ?? null} />
           {data && <TargetsLayer targets={data.targets} />}

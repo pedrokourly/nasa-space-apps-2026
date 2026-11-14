@@ -1,0 +1,31 @@
+.pnr-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #ff3b30;
+  border: 2px solid #0b0d12;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  box-shadow: 0 0 0 2px rgba(255, 59, 48, 0.35);
+}
+
+.leaflet-tooltip.pnr-tooltip,
+.leaflet-tooltip.profile-hover-tooltip {
+  background: rgba(11, 13, 18, 0.9);
+  color: #f5f5f5;
+  border: 1px solid #2a2f3a;
+  font-size: 12px;
+  padding: 2px 6px;
+  box-shadow: none;
+}
+
+.leaflet-tooltip.pnr-tooltip {
+  border-color: #ff3b30;
+}
+
+.leaflet-tooltip.pnr-tooltip::before,
+.leaflet-tooltip.profile-hover-tooltip::before {
+  display: none;
+}
