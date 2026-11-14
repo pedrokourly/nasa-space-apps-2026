@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { LonLat } from '../lib/mars-geo';
 import type { LayerId, Route, RouteStatus } from '../types/contract';
 import { DEFAULT_ACTIVE_LAYERS, LAYERS } from '../map/layers';
+import type { LoadedCrism } from '../lib/crism';
 
 export interface AppState {
   waypoints: LonLat[];
@@ -17,6 +18,8 @@ export interface AppState {
 
   /** Dims the map outside the EVA planning area (the `meta.json` bbox). */
   focusPlanningArea: boolean;
+  /** CRISM overlay data (JSON metadata + PNG URL), set by `CrismLayer` once loaded. */
+  crism: LoadedCrism | null;
 
   setWaypoints: (pts: LonLat[]) => void;
   addWaypoint: (p: LonLat) => void;
@@ -32,6 +35,7 @@ export interface AppState {
   setBaseLayer: (id: LayerId) => void;
   setLayerOpacity: (id: LayerId, opacity: number) => void;
   setFocusPlanningArea: (on: boolean) => void;
+  setCrism: (c: LoadedCrism | null) => void;
 }
 
 export const useAppStore = create<AppState>()((set) => ({
@@ -46,6 +50,7 @@ export const useAppStore = create<AppState>()((set) => ({
     LAYERS.flatMap((l) => (l.defaultOpacity === undefined ? [] : [[l.id, l.defaultOpacity] as const])),
   ),
   focusPlanningArea: true,
+  crism: null,
 
   setWaypoints: (waypoints) => set({ waypoints }),
   addWaypoint: (p) => set((s) => ({ waypoints: [...s.waypoints, p] })),
@@ -69,4 +74,5 @@ export const useAppStore = create<AppState>()((set) => ({
   setLayerOpacity: (id, opacity) =>
     set((s) => ({ layerOpacity: { ...s.layerOpacity, [id]: Math.min(1, Math.max(0, opacity)) } })),
   setFocusPlanningArea: (focusPlanningArea) => set({ focusPlanningArea }),
+  setCrism: (crism) => set({ crism }),
 }));

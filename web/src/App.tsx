@@ -7,6 +7,7 @@ import WaypointsLayer from './map/WaypointsLayer'
 import PlanningAreaFocus from './map/PlanningAreaFocus'
 import LayerManager from './map/LayerManager'
 import SlopeLayer from './map/SlopeLayer'
+import CrismLayer from './map/CrismLayer'
 import LayerControl from './ui/LayerControl'
 import RouteController from './routing/RouteController'
 import RouteLayer from './map/RouteLayer'
@@ -49,6 +50,7 @@ export default function App() {
           <MapView>
             <LayerManager />
             <SlopeLayer meta={data?.meta ?? null} />
+            <CrismLayer />
             <LayerControl missions={data?.missions ?? []} terrainSource={data?.meta.source} />
             <RouteController />
             <RouteLayer />

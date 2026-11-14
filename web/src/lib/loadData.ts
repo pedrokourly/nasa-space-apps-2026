@@ -1,4 +1,4 @@
-import type { Meta, Mission, Route, TargetsCollection } from '../types/contract';
+import type { CrismMeta, Meta, Mission, Route, TargetsCollection } from '../types/contract';
 
 export interface AppData {
   meta: Meta;
@@ -44,6 +44,40 @@ export function parseMeta(raw: unknown): Meta {
   if (raw.row0 !== 'north') fail(f, "row0 must be 'north'");
   if (raw.dtype !== 'float32le') fail(f, "dtype must be 'float32le'");
   return raw as unknown as Meta;
+}
+
+const HEX_COLOR = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
+const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/** Validates `crism.json` (overlay metadata, see AGENTS.md section 5). */
+export function parseCrism(raw: unknown): CrismMeta {
+  const f = 'crism.json';
+  if (!isObj(raw)) return fail(f, 'expected an object');
+  const { bbox } = raw;
+  if (!Array.isArray(bbox) || bbox.length !== 4 || !bbox.every(isNum)) return fail(f, 'bbox must have 4 numbers');
+  checkLonLat(f, [bbox[0], bbox[1]]);
+  checkLonLat(f, [bbox[2], bbox[3]]);
+  if (!(bbox[0] < bbox[2] && bbox[1] < bbox[3])) fail(f, 'bbox must be [minLon, minLat, maxLon, maxLat]');
+  for (const k of ['product_id', 'mineral'] as const) {
+    if (typeof raw[k] !== 'string' || raw[k].trim() === '') fail(f, `field ${k} is missing`);
+  }
+  const date = typeof raw.acquired === 'string' ? ISO_DATE.exec(raw.acquired) : null;
+  if (!date) return fail(f, 'acquired must be an ISO date (YYYY-MM-DD)');
+  const d = new Date(Date.UTC(Number(date[1]), Number(date[2]) - 1, Number(date[3])));
+  if (d.getUTCMonth() !== Number(date[2]) - 1 || d.getUTCDate() !== Number(date[3])) {
+    fail(f, `acquired ${raw.acquired} is not a real date`);
+  }
+  const { legend } = raw;
+  if (!isObj(legend) || typeof legend.title !== 'string' || legend.title.trim() === '') {
+    return fail(f, 'legend.title is missing');
+  }
+  if (!Array.isArray(legend.entries) || legend.entries.length === 0) return fail(f, 'legend.entries must be a non-empty list');
+  for (const e of legend.entries) {
+    if (!isObj(e) || typeof e.label !== 'string' || e.label.trim() === '') return fail(f, 'legend entry needs a label');
+    if (typeof e.color !== 'string' || !HEX_COLOR.test(e.color)) fail(f, `legend color ${String(e.color)} must be #rgb or #rrggbb`);
+  }
+  if (raw.mock !== undefined && typeof raw.mock !== 'boolean') fail(f, 'mock must be a boolean');
+  return raw as unknown as CrismMeta;
 }
 
 /** Validates `missions.json`. */
