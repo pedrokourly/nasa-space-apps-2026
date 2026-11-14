@@ -40,13 +40,32 @@ export function Legend({ def }: { def: LayerDef }) {
 export default function ProvenanceBadge({
   activeLayers,
   missions,
+  terrainSource,
 }: {
   activeLayers: string[];
   missions: Mission[];
+  /** Provenance of the elevation grid the routes are computed on (`meta.json` `source`). */
+  terrainSource?: string;
 }) {
   const active = LAYERS.filter((l) => activeLayers.includes(l.id));
+  const doi = terrainSource?.match(/DOI\s+(10\.\S+?)[),\s]/)?.[1];
   return (
     <div className="provenance" aria-label="Provenance of the active layers">
+      {terrainSource && (
+        <div className="provenance__item">
+          <p className="provenance__line">
+            Terrain (routes, slope, O₂): {terrainSource}
+            {doi && (
+              <>
+                {' '}
+                <a href={`https://doi.org/${doi}`} target="_blank" rel="noopener noreferrer">
+                  Source
+                </a>
+              </>
+            )}
+          </p>
+        </div>
+      )}
       {active.map((l) => {
         const mission = missions.find((m) => m.id === l.missionId);
         return (

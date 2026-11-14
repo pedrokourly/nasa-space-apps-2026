@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
-import { loadData, type AppData } from './lib/loadData'
+import { loadData, type AppData, type DataSource, type DataSources } from './lib/loadData'
 import MapView from './map/MapView'
 import TargetsLayer from './map/TargetsLayer'
 import TargetCard from './ui/TargetCard'
@@ -17,13 +17,19 @@ import ViewToggle, { type ViewMode } from './ui/ViewToggle'
 // Cesium is heavy: the 3D view is its own chunk, fetched only when the user switches to it.
 const ThreeDView = lazy(() => import('./three-d/ThreeDView'))
 
+// Real data replaces mocks file by file. meta.json is the real Jezero grid (same bbox as the
+// mock); targets and missions stay mock until Data/GIS publishes them (issue #28).
+const DATA_SOURCES: DataSources = { meta: 'real', targets: 'mock', missions: 'mock' }
+
+const label = (s: DataSource) => (s === 'real' ? 'real' : 'MOCK')
+
 export default function App() {
   const [data, setData] = useState<AppData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [view, setView] = useState<ViewMode>('2d')
 
   useEffect(() => {
-    loadData('mock').then(setData, (e: unknown) => setError(e instanceof Error ? e.message : String(e)))
+    loadData(DATA_SOURCES).then(setData, (e: unknown) => setError(e instanceof Error ? e.message : String(e)))
   }, [])
 
   return (
@@ -40,7 +46,7 @@ export default function App() {
         ) : (
           <MapView>
             <LayerManager />
-            <LayerControl missions={data?.missions ?? []} />
+            <LayerControl missions={data?.missions ?? []} terrainSource={data?.meta.source} />
             <RouteController />
             <RouteLayer />
             <RouteMarkers />
@@ -57,7 +63,7 @@ export default function App() {
         {error
           ? `Error loading data: ${error}`
           : data
-            ? `Data: MOCK · ${data.targets.features.length} targets · ${data.missions.length} missions`
+            ? `Terrain: ${label(DATA_SOURCES.meta)} · ${data.targets.features.length} targets (${label(DATA_SOURCES.targets)}) · ${data.missions.length} missions (${label(DATA_SOURCES.missions)})`
             : 'Loading data…'}
       </footer>
     </div>

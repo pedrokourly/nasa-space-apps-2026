@@ -99,13 +99,26 @@ async function fetchJson(url: string): Promise<unknown> {
   return res.json();
 }
 
-/** Loads meta, targets and missions from `data/mock/` or `data/` (same origin). */
-export async function loadData(source: DataSource): Promise<AppData> {
-  const base = `${import.meta.env.BASE_URL}data/${source === 'mock' ? 'mock/' : ''}`;
+/** Where each file comes from, so real data can replace mocks one file at a time. */
+export interface DataSources {
+  meta: DataSource;
+  targets: DataSource;
+  missions: DataSource;
+}
+
+const dataUrl = (source: DataSource, file: string) =>
+  `${import.meta.env.BASE_URL}data/${source === 'mock' ? 'mock/' : ''}${file}`;
+
+/**
+ * Loads meta, targets and missions from `data/mock/` or `data/` (same origin).
+ * Pass one source for all files, or one per file.
+ */
+export async function loadData(source: DataSource | DataSources): Promise<AppData> {
+  const s: DataSources = typeof source === 'string' ? { meta: source, targets: source, missions: source } : source;
   const [meta, targets, missions] = await Promise.all([
-    fetchJson(`${base}meta.json`),
-    fetchJson(`${base}targets.geojson`),
-    fetchJson(`${base}missions.json`),
+    fetchJson(dataUrl(s.meta, 'meta.json')),
+    fetchJson(dataUrl(s.targets, 'targets.geojson')),
+    fetchJson(dataUrl(s.missions, 'missions.json')),
   ]);
   return { meta: parseMeta(meta), targets: parseTargets(targets), missions: parseMissions(missions) };
 }

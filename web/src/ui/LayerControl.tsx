@@ -6,7 +6,14 @@ import ProvenanceBadge from './ProvenanceBadge';
 import './LayerControl.css';
 
 /** Layer control: radio for the base, checkbox + opacity for overlays. */
-export default function LayerControl({ missions }: { missions: Mission[] }) {
+export default function LayerControl({
+  missions,
+  terrainSource,
+}: {
+  missions: Mission[];
+  /** `meta.json` `source`: provenance of the elevation grid used for routing. */
+  terrainSource?: string;
+}) {
   const [open, setOpen] = useState(true);
   const activeLayers = useAppStore((s) => s.activeLayers);
   const layerOpacity = useAppStore((s) => s.layerOpacity);
@@ -78,7 +85,7 @@ export default function LayerControl({ missions }: { missions: Mission[] }) {
           </fieldset>
         </div>
       )}
-      <ProvenanceBadge activeLayers={shown} missions={missions} />
+      <ProvenanceBadge activeLayers={shown} missions={missions} terrainSource={terrainSource} />
     </section>
   );
 }
