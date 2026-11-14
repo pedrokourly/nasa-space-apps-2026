@@ -27,3 +27,19 @@ Perguntas abertas para o Dados/GIS: ordem dos bytes e nodata confirmados? Decliv
 ```bash
 cd web && npm test
 ```
+
+## Modelo de custo (S1)
+
+`core/cost.ts` (perfil em `DEFAULT_PROFILE`) e `core/astar.ts`.
+
+| Regra | Valor | Origem |
+|---|---|---|
+| Declividade >= 25° | intransponível | Plano inicial do time (suposição de projeto) |
+| Célula sem dado (elevação ou declividade) | intransponível | Regra do `AGENTS.md`: nodata nunca vira zero |
+| Areia | custo × 2 | Plano inicial do time (suposição de projeto) |
+| Termo de declividade | fator = 1 + 2 · (slope / 25°)² | **Hipótese nossa**, sem referência científica; calibrar com dados reais |
+
+- Custo do passo = metros do passo × média dos fatores das duas células. Todo fator é >= 1, então a distância reta em metros é uma heurística admissível e o A* é ótimo.
+- 8 vizinhos; a diagonal só é permitida se as duas células ortogonais ao lado estão livres (não corta quina de obstáculo).
+- `findPathDijkstra` é a referência usada nos testes para conferir o A*.
+- Modos de rota (curta, segura) serão outro `CostProfile`, sem mudar arquivos de dados.
