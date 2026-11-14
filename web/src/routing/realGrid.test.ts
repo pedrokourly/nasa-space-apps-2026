@@ -41,13 +41,18 @@ describe('real Jezero grid (public/data)', () => {
   });
 
   it('elevation has no holes and a plausible range for Jezero (meters)', () => {
+    // Count first and assert once: 262,144 expect() calls would make the test slow.
+    let holes = 0;
     let min = Infinity;
     let max = -Infinity;
     for (const e of grid.elevation) {
-      expect(isNoData(grid.meta, e)).toBe(false);
-      min = Math.min(min, e);
-      max = Math.max(max, e);
+      if (isNoData(grid.meta, e)) holes++;
+      else {
+        min = Math.min(min, e);
+        max = Math.max(max, e);
+      }
     }
+    expect(holes).toBe(0);
     expect(min).toBeGreaterThan(-2700);
     expect(max).toBeLessThan(-2300);
   });
@@ -55,17 +60,20 @@ describe('real Jezero grid (public/data)', () => {
   it('slope is in degrees (0 to 90), no data only on the 1-cell border, and little of it is impassable', () => {
     const { width: w, height: h } = grid.meta;
     let steep = 0;
+    let wrongNoData = 0;
+    let outOfRange = 0;
     for (let row = 0; row < h; row++) {
       for (let col = 0; col < w; col++) {
         const s = grid.slope[cellIndex(grid.meta, col, row)]!;
         const border = row === 0 || col === 0 || row === h - 1 || col === w - 1;
-        expect(isNoData(grid.meta, s)).toBe(border);
+        if (isNoData(grid.meta, s) !== border) wrongNoData++;
         if (border) continue;
-        expect(s).toBeGreaterThanOrEqual(0);
-        expect(s).toBeLessThanOrEqual(90);
+        if (!(s >= 0 && s <= 90)) outOfRange++;
         if (s >= 25) steep++;
       }
     }
+    expect(wrongNoData).toBe(0);
+    expect(outOfRange).toBe(0);
     // Measured 0.46% at >= 25° (max 43.7°): a mostly smooth crater floor, as Data/GIS documented.
     expect(steep / (w * h)).toBeLessThan(0.02);
   });
