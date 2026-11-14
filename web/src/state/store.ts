@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { LonLat } from '../lib/mars-geo';
 import type { LayerId, Route, RouteStatus } from '../types/contract';
-import { DEFAULT_BASE_ID, LAYERS } from '../map/layers';
+import { DEFAULT_ACTIVE_LAYERS, LAYERS } from '../map/layers';
 
 export interface AppState {
   waypoints: LonLat[];
@@ -37,7 +37,7 @@ export const useAppStore = create<AppState>()((set) => ({
   routeError: null,
   selectedTargetId: null,
   hoverProfileIndex: null,
-  activeLayers: [DEFAULT_BASE_ID],
+  activeLayers: [...DEFAULT_ACTIVE_LAYERS],
   layerOpacity: Object.fromEntries(
     LAYERS.flatMap((l) => (l.defaultOpacity === undefined ? [] : [[l.id, l.defaultOpacity] as const])),
   ),
