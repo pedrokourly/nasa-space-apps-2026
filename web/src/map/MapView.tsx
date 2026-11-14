@@ -22,10 +22,8 @@ const JEZERO_BOUNDS: L.LatLngBoundsLiteral = [
   [19.4453, 78.8717],
 ];
 
-const TREK = 'https://trek.nasa.gov/tiles/Mars/EQ/';
-
 interface MapViewProps {
-  /** Camadas e controles que usam `useMap()` (issues #7, #9 e #11). */
+  /** Camadas e controles que usam `useMap()` (LayerManager, #9 e #11). */
   children?: ReactNode;
   /** Chamado uma vez quando o mapa é criado. */
   onReady?: (map: L.Map) => void;
@@ -54,17 +52,6 @@ export default function MapView({ children, onReady }: MapViewProps) {
       maxBounds: JEZERO_BOUNDS,
       maxBoundsViscosity: 1,
     });
-
-    // Base: MOLA color hillshade global (MGS/MOLA), nativo até o z7 e ampliado acima.
-    L.tileLayer(
-      `${TREK}Mars_MGS_MOLA_ClrShade_merge_global_463m/1.0.0/default/default028mm/{z}/{y}/{x}.jpg`,
-      {
-        tileSize: 256,
-        maxNativeZoom: 7,
-        maxZoom: MAX_ZOOM,
-        attribution: 'NASA Mars Trek · MGS/MOLA',
-      },
-    ).addTo(instance);
 
     // Com MarsCRS, a escala usa R = 3389,5 km.
     L.control.scale({ metric: true, imperial: false }).addTo(instance);

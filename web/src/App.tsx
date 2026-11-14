@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { loadData, type AppData } from './lib/loadData'
 import MapView from './map/MapView'
+import LayerManager from './map/LayerManager'
+import LayerControl from './ui/LayerControl'
 
 export default function App() {
   const [data, setData] = useState<AppData | null>(null)
@@ -16,7 +18,10 @@ export default function App() {
         <h1>Martian Map · Jezero</h1>
       </header>
       <main id="map-area" className="map-area" aria-label="Área do mapa">
-        <MapView />
+        <MapView>
+          <LayerManager />
+          <LayerControl />
+        </MapView>
       </main>
       <footer className="app-footer">
         {erro
