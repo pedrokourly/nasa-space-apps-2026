@@ -1,0 +1,28 @@
+.copy-route-link {
+  position: absolute;
+  top: 2.9rem;
+  right: 0.6rem;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  background: rgb(11 13 18 / 80%);
+  color: #00e5ff;
+  font-size: 0.8rem;
+}
+
+.copy-route-link button {
+  font: inherit;
+  cursor: pointer;
+  color: inherit;
+  background: transparent;
+  border: 1px solid currentcolor;
+  border-radius: 3px;
+  padding: 0.05rem 0.5rem;
+}
+
+.copy-route-link__status:empty {
+  display: none;
+}
