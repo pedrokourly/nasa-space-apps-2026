@@ -1,0 +1,84 @@
+.target-card {
+  position: absolute;
+  top: 5.5rem;
+  left: 0.5rem;
+  z-index: 1000;
+  width: min(320px, calc(100% - 1rem));
+  max-height: calc(100% - 9rem);
+  overflow-y: auto;
+  padding: 0.9rem 1rem;
+  border: 1px solid #ffb454;
+  border-radius: 6px;
+  background: rgb(17 20 27 / 94%);
+  color: #e8e6e3;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.target-card__close {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.4rem;
+  border: 0;
+  background: none;
+  color: #aab0bd;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.target-card__title {
+  margin: 0 1.5rem 0.4rem 0;
+  font-size: 1rem;
+  color: #ffe2b8;
+}
+
+.target-card__mock {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  color: #ffb454;
+}
+
+.target-card__why {
+  margin: 0 0 0.7rem;
+}
+
+.target-card__prov {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin-bottom: 0.8rem;
+  padding: 0.5rem 0.6rem;
+  border-left: 3px solid #ffb454;
+  background: #11141b;
+  color: #aab0bd;
+}
+
+.target-card__prov-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.target-card__prov strong {
+  color: #e8e6e3;
+}
+
+.target-card__prov a {
+  color: #8ab4ff;
+}
+
+.target-card__add {
+  width: 100%;
+  padding: 0.5rem;
+  border: 0;
+  border-radius: 4px;
+  background: #ffb454;
+  color: #0b0d12;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.target-card__add:hover {
+  background: #ffc57a;
+}
