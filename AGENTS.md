@@ -4,6 +4,19 @@ Instruções para qualquer agente de IA (Claude Code, Codex, Copilot, Cursor etc
 
 ---
 
+## Regra de idioma (obrigatória): tudo em inglês
+
+**TUDO o que é exibido ao usuário e TUDO o que está no repositório é em inglês.** Sem exceção para conteúdo novo.
+
+- **Interface:** textos, rótulos, avisos, tooltips, cards, legendas, atribuições, mensagens de erro.
+- **Dados exibidos:** textos dos alvos (`targets.geojson`), descrições de missões (`missions.json`), condições, proveniência.
+- **Código:** identificadores, comentários, JSDoc, nomes de arquivo, mensagens de teste.
+- **Repositório:** README, `docs/`, commits, títulos e descrições de PR.
+- **Pitch:** vídeo e página de submissão também em inglês.
+- **Conteúdo legado em português** (este arquivo, `CLAUDE.md`, textos da UI, nomes de campo do contrato como `nome`, `por_que`, `missao`, `tempo_s`, `perfil`, `veredito`) deve ser migrado para inglês. Não acrescente conteúdo novo em português enquanto a migração não termina. Renomear campos do contrato segue a regra da seção 5: avisar as frentes e atualizar a seção no mesmo PR.
+
+---
+
 ## 1. Regra nº 1: formato obrigatório de issues
 
 **Toda issue criada neste repositório — por pessoa ou por agente — segue exatamente o modelo abaixo. Sem exceção.** Uma issue fora do modelo deve ser reescrita antes de qualquer trabalho começar.
@@ -118,8 +131,8 @@ Agentes: considere a data atual. Depois do feature freeze, **recuse** propor ou 
 | Must | Orçamento de O₂ com ponto de não retorno e veredito GO / NO-GO |
 | Must | Painel de condições com o último sol disponível (MEDA) |
 | Must | Cards dos alvos científicos: por que ir lá e qual missão revelou |
-| Must | Rota compartilhável pela URL (`#route=lon,lat;lon,lat`) |
 | Should | Sobrevoo 3D da rota no Cesium, com modelo 3D |
+| Could | Rota compartilhável pela URL (`#route=lon,lat;lon,lat`) |
 | Could | Ordem ótima das paradas (caixeiro viajante por força bruta, ≤ 8 paradas) |
 | Could | Modos de rota: mais curta, mais segura, mais ciência |
 | Could | Salvar planos no `localStorage` e exportar/importar JSON |
@@ -238,7 +251,7 @@ Princípios:
 - **Leaflet e Cesium só no navegador** — não introduza SSR.
 - **Não versione dado bruto da NASA** (GeoTIFFs de gigabytes). Versione o script do pipeline e os arquivos leves gerados.
 - **Segredos:** o token do Cesium ion vem de variável de ambiente (`VITE_CESIUM_ION_TOKEN`), nunca commitado.
-- Textos da interface, issues, commits e docs em **português**; o vídeo e a página de submissão seguem o idioma confirmado com o evento local (na dúvida, inglês).
+- **Idioma: inglês, sempre.** Veja a "Regra de idioma" no topo deste arquivo.
 
 ---
 
