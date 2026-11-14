@@ -1,5 +1,5 @@
 import type { Mission } from '../types/contract';
-import { LAYERS, type LayerDef } from '../map/layers';
+import { LAYERS, isTileLayer, type LayerDef } from '../map/layers';
 import './ProvenanceBadge.css';
 
 /** Provenance text of a layer: imagery, mission, resolution and version/date. */
@@ -7,10 +7,13 @@ function provenanceParts(def: LayerDef, mission: Mission | undefined): string[] 
   const who = mission
     ? `${mission.instrument} / ${mission.name}, ${mission.agency}`
     : def.shortLabel;
+  const tiles = isTileLayer(def);
   return [
-    `Imagery: ${who}`,
-    def.resolution ?? 'resolution not provided',
-    def.versionOrDate ?? 'mosaic date not provided by Mars Trek',
+    `${def.dataKind ?? 'Imagery'}: ${who}`,
+    ...(def.resolution ?? (tiles ? 'resolution not provided' : null) ? [def.resolution ?? 'resolution not provided'] : []),
+    ...(def.versionOrDate ?? (tiles ? 'mosaic date not provided by Mars Trek' : null)
+      ? [def.versionOrDate ?? 'mosaic date not provided by Mars Trek']
+      : []),
   ];
 }
 

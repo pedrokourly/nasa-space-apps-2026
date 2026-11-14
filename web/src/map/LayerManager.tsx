@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { useMap } from './MapContext';
 import { useAppStore } from '../state/store';
-import { BACKDROP_ID, LAYERS, getLayer, isGlobal, type LayerDef } from './layers';
+import { BACKDROP_ID, LAYERS, getLayer, isGlobal, isTileLayer, type TileLayerDef } from './layers';
 
 /** HiRISE Jezero goes up to native z17; above that the map does not allow zooming. */
 const MAX_ZOOM = 17;
@@ -13,7 +13,7 @@ const Z_BASE = 2;
 const Z_DETAIL = 3;
 const Z_OVERLAY = 4;
 
-function createTileLayer(def: LayerDef, zIndex: number, opacity: number): L.TileLayer {
+function createTileLayer(def: TileLayerDef,zIndex: number, opacity: number): L.TileLayer {
   return L.tileLayer(def.url, {
     tileSize: def.tileSize ?? 256,
     zoomOffset: def.zoomOffset ?? 0,
@@ -44,17 +44,18 @@ export default function LayerManager() {
 
     const base = LAYERS.find((l) => l.type === 'base' && activeLayers.includes(l.id));
     // `opacity` set only for the backdrop, which is always drawn fully opaque.
-    const wanted = new Map<string, { def: LayerDef; z: number; opacity?: number }>();
-    if (base) {
+    const wanted = new Map<string, { def: TileLayerDef; z: number; opacity?: number }>();
+    if (base && isTileLayer(base)) {
       if (!isGlobal(base)) {
         const backdrop = getLayer(BACKDROP_ID);
-        if (backdrop) wanted.set(backdrop.id, { def: backdrop, z: Z_BACKDROP, opacity: 1 });
+        if (backdrop && isTileLayer(backdrop)) wanted.set(backdrop.id, { def: backdrop, z: Z_BACKDROP, opacity: 1 });
       }
       wanted.set(base.id, { def: base, z: Z_BASE });
     }
     // An overlay that is also the backdrop takes over the same tile layer (overlay z and opacity).
     for (const l of LAYERS) {
-      if (l.type === 'base' || !activeLayers.includes(l.id)) continue;
+      // Data-driven overlays (slope, …) have their own component.
+      if (l.type === 'base' || !isTileLayer(l) || !activeLayers.includes(l.id)) continue;
       wanted.set(l.id, { def: l, z: l.type === 'detail' ? Z_DETAIL : Z_OVERLAY });
     }
 
