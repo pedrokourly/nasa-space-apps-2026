@@ -64,8 +64,8 @@ describe('store', () => {
   it('evaParams: defaults, partial merge and clamping', () => {
     const s = () => useAppStore.getState();
     expect(s().evaParams).toEqual(DEFAULT_EVA_PARAMS);
-    s().setEvaParams({ o2BaseKgPerH: 0.2 });
-    expect(s().evaParams).toEqual({ ...DEFAULT_EVA_PARAMS, o2BaseKgPerH: 0.2 });
+    s().setEvaParams({ loadMassKg: 120 });
+    expect(s().evaParams).toEqual({ ...DEFAULT_EVA_PARAMS, loadMassKg: 120 });
     s().setEvaParams({ speedFlatMS: 100, o2_available_kg: -5 });
     expect(s().evaParams.speedFlatMS).toBe(EVA_PARAM_RANGES.speedFlatMS.max);
     expect(s().evaParams.o2_available_kg).toBe(EVA_PARAM_RANGES.o2_available_kg.min);

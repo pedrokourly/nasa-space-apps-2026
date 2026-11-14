@@ -20,18 +20,18 @@ describe('EVA parameters: defaults and clamping', () => {
   it('defaults come from the walking model', () => {
     expect(DEFAULT_EVA_PARAMS).toEqual({
       speedFlatMS: DEFAULT_WALK.speedFlatMS,
-      o2BaseKgPerH: DEFAULT_WALK.o2BaseKgPerH,
+      loadMassKg: DEFAULT_WALK.loadMassKg,
       o2_available_kg: DEFAULT_O2_AVAILABLE_KG,
     });
   });
 
   it('clamps to the ranges and ignores non-finite values', () => {
-    expect(clampEvaParams({ speedFlatMS: 99, o2BaseKgPerH: -1, o2_available_kg: 0 })).toEqual({
+    expect(clampEvaParams({ speedFlatMS: 99, loadMassKg: -1, o2_available_kg: 0 })).toEqual({
       speedFlatMS: EVA_PARAM_RANGES.speedFlatMS.max,
-      o2BaseKgPerH: EVA_PARAM_RANGES.o2BaseKgPerH.min,
+      loadMassKg: EVA_PARAM_RANGES.loadMassKg.min,
       o2_available_kg: EVA_PARAM_RANGES.o2_available_kg.min,
     });
-    expect(clampEvaParams({ speedFlatMS: NaN, o2BaseKgPerH: Infinity })).toEqual({});
+    expect(clampEvaParams({ speedFlatMS: NaN, loadMassKg: Infinity })).toEqual({});
   });
 
   it('every preset is inside the ranges', () => {
@@ -47,11 +47,11 @@ describe('EVA parameters through the router', () => {
     expect(router([A, B], DEFAULT_EVA_PARAMS)).toEqual(route(g, [A, B]));
   });
 
-  it('doubling o2BaseKgPerH on a flat grid doubles o2_kg and keeps the time', () => {
+  it('a heavier load on a flat grid raises o2_kg and keeps the time', () => {
     const base = router([A, B], DEFAULT_EVA_PARAMS).properties;
-    const dbl = router([A, B], { ...DEFAULT_EVA_PARAMS, o2BaseKgPerH: DEFAULT_EVA_PARAMS.o2BaseKgPerH * 2 }).properties;
-    expect(dbl.o2_kg / base.o2_kg).toBeCloseTo(2, 9);
-    expect(dbl.time_s).toBeCloseTo(base.time_s, 9);
+    const heavy = router([A, B], { ...DEFAULT_EVA_PARAMS, loadMassKg: DEFAULT_EVA_PARAMS.loadMassKg + 30 }).properties;
+    expect(heavy.o2_kg).toBeGreaterThan(base.o2_kg);
+    expect(heavy.time_s).toBeCloseTo(base.time_s, 9);
   });
 
   it('doubling speedFlatMS halves the time', () => {

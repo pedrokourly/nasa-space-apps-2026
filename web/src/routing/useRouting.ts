@@ -4,6 +4,7 @@ import { useAppStore } from '../state/store';
 import type { EvaParams } from './core/walk';
 import { StaleRouteError } from './api';
 import { createRouteClient } from './client';
+import { routeErrorText } from './respond';
 
 const DEBOUNCE_MS = 150;
 
@@ -37,7 +38,7 @@ export function useRouting(): void {
             if (e instanceof StaleRouteError) return;
             const cur = useAppStore.getState();
             cur.setRoute(null);
-            cur.setRouteError(e instanceof Error ? e.message : String(e));
+            cur.setRouteError(routeErrorText(e));
             cur.setRouteStatus('error');
           },
         );

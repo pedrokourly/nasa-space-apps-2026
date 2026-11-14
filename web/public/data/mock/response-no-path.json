@@ -1,0 +1,7 @@
+{
+  "id": 2,
+  "ok": false,
+  "reason": "no-path",
+  "message": "Stop 1 is on impassable terrain (too steep or no data). Move it.",
+  "point_index": 1
+}

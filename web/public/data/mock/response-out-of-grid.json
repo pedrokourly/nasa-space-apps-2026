@@ -1,0 +1,7 @@
+{
+  "id": 3,
+  "ok": false,
+  "reason": "out-of-grid",
+  "message": "Stop 1 is outside the EVA planning area. Move it inside the rectangle.",
+  "point_index": 1
+}
