@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useAppStore } from '../state/store';
 import { LAYERS } from '../map/layers';
+import type { Mission } from '../types/contract';
+import ProvenanceBadge from './ProvenanceBadge';
 import './LayerControl.css';
 
 /** Controle de camadas: rádio para a base, checkbox + opacidade para overlays. */
-export default function LayerControl() {
+export default function LayerControl({ missions }: { missions: Mission[] }) {
   const [open, setOpen] = useState(true);
   const activeLayers = useAppStore((s) => s.activeLayers);
   const layerOpacity = useAppStore((s) => s.layerOpacity);
@@ -70,6 +72,7 @@ export default function LayerControl() {
           </fieldset>
         </div>
       )}
+      <ProvenanceBadge activeLayers={activeLayers} missions={missions} />
     </section>
   );
 }

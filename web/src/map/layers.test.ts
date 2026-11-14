@@ -19,6 +19,14 @@ describe('registro de camadas', () => {
     for (const l of LAYERS) expect(ids.has(l.missionId), `${l.id} -> ${l.missionId}`).toBe(true);
   });
 
+  it('toda camada tem produto e fonteUrl não vazios', () => {
+    for (const l of LAYERS) {
+      expect(l.produto.trim(), l.id).not.toBe('');
+      expect(l.fonteUrl.trim(), l.id).not.toBe('');
+      expect(l.fonteUrl).toContain(l.produto);
+    }
+  });
+
   it('bounds usam longitude −180 a 180 e latitude −90 a 90', () => {
     for (const l of LAYERS) {
       const [[sul, oeste], [norte, leste]] = l.bounds;

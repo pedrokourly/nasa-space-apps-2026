@@ -4,6 +4,17 @@ import type L from 'leaflet';
 const TREK = 'https://trek.nasa.gov/tiles/Mars/EQ/';
 const TILES = '/1.0.0/default/default028mm/{z}/{y}/{x}.';
 
+/** Legenda de cores opcional (barra de gradiente com rótulos, sem inventar valores). */
+export interface LegendDef {
+  titulo: string;
+  /** Cores CSS do gradiente, do mínimo (esquerda) ao máximo (direita). */
+  gradiente: string[];
+  rotuloMin: string;
+  rotuloMax: string;
+  /** Observação sobre a origem/precisão das cores. */
+  nota?: string;
+}
+
 export interface LayerDef {
   id: string;
   nome: string;
@@ -25,7 +36,18 @@ export interface LayerDef {
   zoomOffset?: number;
   /** Opacidade inicial (padrão 1). */
   opacidadePadrao?: number;
+  /** ID do produto no Mars Trek. */
+  produto: string;
+  /** Versão/data, só quando consta do próprio ID do produto. */
+  versaoOuData?: string;
+  /** Resolução, só quando consta do próprio ID do produto. */
+  resolucao?: string;
+  /** WMTSCapabilities do produto no Mars Trek (verificável). */
+  fonteUrl: string;
+  legenda?: LegendDef;
 }
+
+const wmts = (produto: string) => `${TREK}${produto}/1.0.0/WMTSCapabilities.xml`;
 
 export const LAYERS: LayerDef[] = [
   {
@@ -42,6 +64,8 @@ export const LAYERS: LayerDef[] = [
       [19.4453003, 78.8717121],
     ],
     attribution: 'NASA Mars Trek · MRO/CTX',
+    produto: 'Jezero_CTX_BlockAdj_dd',
+    fonteUrl: wmts('Jezero_CTX_BlockAdj_dd'),
   },
   {
     id: 'hirise-jezero',
@@ -57,6 +81,9 @@ export const LAYERS: LayerDef[] = [
       [18.669315, 77.583964],
     ],
     attribution: 'NASA Mars Trek · MRO/HiRISE',
+    produto: 'JEZ_hirise_soc_006_orthoMosaic_25cm_Eqc_latTs0_lon0_first_dd',
+    resolucao: '25 cm/px',
+    fonteUrl: wmts('JEZ_hirise_soc_006_orthoMosaic_25cm_Eqc_latTs0_lon0_first_dd'),
   },
   {
     id: 'mola',
@@ -72,6 +99,17 @@ export const LAYERS: LayerDef[] = [
       [90, 179.9983],
     ],
     attribution: 'NASA Mars Trek · MGS/MOLA',
+    produto: 'Mars_MGS_MOLA_ClrShade_merge_global_463m',
+    resolucao: '463 m/px',
+    fonteUrl: wmts('Mars_MGS_MOLA_ClrShade_merge_global_463m'),
+    // Sem valores numéricos: o color ramp oficial do produto não foi verificado.
+    legenda: {
+      titulo: 'Elevação (MOLA)',
+      gradiente: ['#2b3a8f', '#3fa7c9', '#6dbb5a', '#e3d35a', '#c8742f', '#ffffff'],
+      rotuloMin: 'mais baixo',
+      rotuloMax: 'mais alto',
+      nota: 'Cores aproximadas; escala numérica não verificada.',
+    },
   },
   {
     id: 'viking-mdim',
@@ -87,6 +125,10 @@ export const LAYERS: LayerDef[] = [
       [90, 180],
     ],
     attribution: 'NASA Mars Trek · Viking/MDIM 2.1',
+    produto: 'Mars_Viking_MDIM21_ClrMosaic_global_232m',
+    versaoOuData: 'MDIM 2.1',
+    resolucao: '232 m/px',
+    fonteUrl: wmts('Mars_Viking_MDIM21_ClrMosaic_global_232m'),
   },
   {
     id: 'themis-dia',
@@ -102,6 +144,10 @@ export const LAYERS: LayerDef[] = [
       [65.0007535, 179.9998849],
     ],
     attribution: 'NASA Mars Trek · Mars Odyssey/THEMIS',
+    produto: 'THEMIS_DayIR_ControlledMosaics_100m_v2_oct2018',
+    versaoOuData: 'v2, out/2018',
+    resolucao: '100 m/px',
+    fonteUrl: wmts('THEMIS_DayIR_ControlledMosaics_100m_v2_oct2018'),
     opacidadePadrao: 0.6,
   },
 ];

@@ -23,7 +23,7 @@ export default function App() {
       <main id="map-area" className="map-area" aria-label="Área do mapa">
         <MapView>
           <LayerManager />
-          <LayerControl />
+          <LayerControl missions={data?.missions ?? []} />
           <WaypointsLayer meta={data?.meta ?? null} />
           {data && <TargetsLayer targets={data.targets} />}
           {data && <TargetCard targets={data.targets} missions={data.missions} />}
