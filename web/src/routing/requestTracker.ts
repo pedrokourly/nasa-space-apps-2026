@@ -1,14 +1,14 @@
-/** Controla ids crescentes de pedidos: só o último pedido feito é "atual" (último vence). */
+/** Tracks increasing request ids: only the latest request is "current" (latest wins). */
 export class RequestTracker {
   private last = 0;
 
-  /** Registra um novo pedido e devolve seu id. */
+  /** Registers a new request and returns its id. */
   next(): number {
     this.last += 1;
     return this.last;
   }
 
-  /** Verdadeiro se `id` é o pedido mais recente. */
+  /** True if `id` is the most recent request. */
   isCurrent(id: number): boolean {
     return id === this.last;
   }

@@ -2,41 +2,41 @@ import type { Mission } from '../types/contract';
 import { LAYERS, type LayerDef } from '../map/layers';
 import './ProvenanceBadge.css';
 
-/** Texto de proveniência de uma camada: imagem, missão, resolução e versão/data. */
+/** Provenance text of a layer: imagery, mission, resolution and version/date. */
 function provenanceParts(def: LayerDef, mission: Mission | undefined): string[] {
-  const quem = mission
-    ? `${mission.instrumento} / ${mission.nome}, ${mission.agencia}`
-    : def.sigla;
+  const who = mission
+    ? `${mission.instrument} / ${mission.name}, ${mission.agency}`
+    : def.shortLabel;
   return [
-    `Imagem: ${quem}`,
-    def.resolucao ?? 'resolução não informada',
-    def.versaoOuData ?? 'data do mosaico não informada pelo Mars Trek',
+    `Imagery: ${who}`,
+    def.resolution ?? 'resolution not provided',
+    def.versionOrDate ?? 'mosaic date not provided by Mars Trek',
   ];
 }
 
-/** Legenda genérica de cores (barra + rótulos), usada por qualquer `LayerDef.legenda`. */
+/** Generic color legend (bar + labels), used by any `LayerDef.legend`. */
 export function Legend({ def }: { def: LayerDef }) {
-  const l = def.legenda;
+  const l = def.legend;
   if (!l) return null;
   return (
     <div className="provenance__legend">
-      <span className="provenance__legend-title">{l.titulo}</span>
+      <span className="provenance__legend-title">{l.title}</span>
       <div
         className="provenance__legend-bar"
         role="img"
-        aria-label={`${l.titulo}: de ${l.rotuloMin} a ${l.rotuloMax}`}
-        style={{ background: `linear-gradient(to right, ${l.gradiente.join(', ')})` }}
+        aria-label={`${l.title}: from ${l.minLabel} to ${l.maxLabel}`}
+        style={{ background: `linear-gradient(to right, ${l.gradient.join(', ')})` }}
       />
       <div className="provenance__legend-labels">
-        <span>{l.rotuloMin}</span>
-        <span>{l.rotuloMax}</span>
+        <span>{l.minLabel}</span>
+        <span>{l.maxLabel}</span>
       </div>
-      {l.nota && <span className="provenance__legend-note">{l.nota}</span>}
+      {l.note && <span className="provenance__legend-note">{l.note}</span>}
     </div>
   );
 }
 
-/** Proveniência das camadas ativas (sempre visível) + legenda de cores. */
+/** Provenance of the active layers (always visible) + color legend. */
 export default function ProvenanceBadge({
   activeLayers,
   missions,
@@ -44,22 +44,22 @@ export default function ProvenanceBadge({
   activeLayers: string[];
   missions: Mission[];
 }) {
-  const ativas = LAYERS.filter((l) => activeLayers.includes(l.id));
+  const active = LAYERS.filter((l) => activeLayers.includes(l.id));
   return (
-    <div className="provenance" aria-label="Proveniência das camadas ativas">
-      {ativas.map((l) => {
+    <div className="provenance" aria-label="Provenance of the active layers">
+      {active.map((l) => {
         const mission = missions.find((m) => m.id === l.missionId);
         return (
           <div key={l.id} className="provenance__item">
             <p className="provenance__line">
               {provenanceParts(l, mission).join(' · ')}{' '}
-              <a href={l.fonteUrl} target="_blank" rel="noopener noreferrer">
-                Fonte
+              <a href={l.sourceUrl} target="_blank" rel="noopener noreferrer">
+                Source
               </a>
             </p>
             {!mission && (
               <p className="provenance__warn" role="alert">
-                Aviso: missão “{l.missionId}” não consta em missions.json.
+                Warning: mission “{l.missionId}” is not listed in missions.json.
               </p>
             )}
             <Legend def={l} />

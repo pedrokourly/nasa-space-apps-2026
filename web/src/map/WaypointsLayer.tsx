@@ -7,8 +7,8 @@ import { isInsideBbox } from '../lib/bbox';
 import type { Meta } from '../types/contract';
 import './WaypointsLayer.css';
 
-const MSG_FORA =
-  'Fora da área com relevo (bbox do grid). Escolha um ponto dentro do retângulo.';
+const MSG_OUTSIDE =
+  'Outside the area of interest (terrain data). Pick a point inside the rectangle.';
 
 function makeIcon(index: number): L.DivIcon {
   const start = index === 0;
@@ -26,42 +26,42 @@ interface Props {
 }
 
 /**
- * Marcadores de partida (A) e paradas (1, 2, 3…) da rota. A fonte da verdade é
- * `waypoints` no store; os marcadores são sincronizados por diff a cada mudança.
- * Filho de `<MapView>`.
+ * Start (A) and stop (1, 2, 3…) markers of the route. The source of truth is
+ * `waypoints` in the store; markers are synced by diff on every change.
+ * Child of `<MapView>`.
  */
 export default function WaypointsLayer({ meta }: Props) {
   const map = useMap();
   const waypoints = useAppStore((s) => s.waypoints);
   const setWaypoints = useAppStore((s) => s.setWaypoints);
-  const [aviso, setAviso] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
 
   const markersRef = useRef<L.Marker[]>([]);
   const bboxRef = useRef(meta?.bbox ?? null);
-  const avisoTimer = useRef<number | undefined>(undefined);
+  const warningTimer = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     bboxRef.current = meta?.bbox ?? null;
   }, [meta]);
 
-  const avisarRef = useRef((msg: string) => {
-    setAviso(msg);
-    window.clearTimeout(avisoTimer.current);
-    avisoTimer.current = window.setTimeout(() => setAviso(null), 4000);
+  const warnRef = useRef((msg: string) => {
+    setWarning(msg);
+    window.clearTimeout(warningTimer.current);
+    warningTimer.current = window.setTimeout(() => setWarning(null), 4000);
   });
 
-  useEffect(() => () => window.clearTimeout(avisoTimer.current), []);
+  useEffect(() => () => window.clearTimeout(warningTimer.current), []);
 
-  // Clique no mapa adiciona ponto (se estiver dentro do bbox).
+  // A map click adds a point (if it is inside the bbox).
   useEffect(() => {
     if (!map) return;
     const onClick = (e: L.LeafletMouseEvent) => {
       const p = toLonLat(e.latlng);
       const bbox = bboxRef.current;
-      // Sem meta.json carregado não dá para validar o ponto: ignora o clique.
+      // Without meta.json loaded the point cannot be validated: ignore the click.
       if (!bbox) return;
       if (!isInsideBbox(p, bbox)) {
-        avisarRef.current(MSG_FORA);
+        warnRef.current(MSG_OUTSIDE);
         return;
       }
       useAppStore.getState().addWaypoint(p);
@@ -72,7 +72,7 @@ export default function WaypointsLayer({ meta }: Props) {
     };
   }, [map]);
 
-  // Retângulo do bbox (área válida), não interativo.
+  // Bbox rectangle (valid area), non-interactive.
   useEffect(() => {
     if (!map || !meta) return;
     const [minLon, minLat, maxLon, maxLat] = meta.bbox;
@@ -88,7 +88,7 @@ export default function WaypointsLayer({ meta }: Props) {
     };
   }, [map, meta]);
 
-  // Sincroniza marcadores com o store (diff por índice).
+  // Syncs markers with the store (diff by index).
   useEffect(() => {
     if (!map) return;
     const markers = markersRef.current;
@@ -109,7 +109,7 @@ export default function WaypointsLayer({ meta }: Props) {
       const label = document.createElement('div');
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.textContent = 'Remover';
+      btn.textContent = 'Remove';
       btn.addEventListener('click', () => {
         const idx = indexOf(marker);
         if (idx >= 0) useAppStore.getState().removeWaypoint(idx);
@@ -118,7 +118,7 @@ export default function WaypointsLayer({ meta }: Props) {
       marker.bindPopup(popup);
       marker.on('popupopen', () => {
         const idx = indexOf(marker);
-        label.textContent = idx === 0 ? 'Partida (habitat)' : `Parada ${idx}`;
+        label.textContent = idx === 0 ? 'Start (habitat)' : `Stop ${idx}`;
       });
 
       marker.on('contextmenu', (e: L.LeafletMouseEvent) => {
@@ -136,7 +136,7 @@ export default function WaypointsLayer({ meta }: Props) {
         if (bbox && !isInsideBbox(p, bbox)) {
           const prev = useAppStore.getState().waypoints[idx];
           if (prev) marker.setLatLng(toLatLng(prev));
-          avisarRef.current(MSG_FORA);
+          warnRef.current(MSG_OUTSIDE);
           return;
         }
         useAppStore.getState().moveWaypoint(idx, p);
@@ -145,7 +145,7 @@ export default function WaypointsLayer({ meta }: Props) {
       markers.push(marker);
     });
 
-    // Remove marcadores sobrando (ao final, já que o índice é a identidade).
+    // Remove extra markers (from the end, since the index is the identity).
     while (markers.length > waypoints.length) {
       const m = markers.pop();
       m?.off();
@@ -153,7 +153,7 @@ export default function WaypointsLayer({ meta }: Props) {
     }
   }, [map, waypoints]);
 
-  // Limpeza ao desmontar ou trocar de mapa.
+  // Cleanup on unmount or when the map changes.
   useEffect(() => {
     const markers = markersRef.current;
     return () => {
@@ -170,18 +170,18 @@ export default function WaypointsLayer({ meta }: Props) {
       <div className="waypoints-panel__bar">
         <span>
           {waypoints.length === 0
-            ? 'Clique no mapa para definir a partida'
-            : `${waypoints.length} ${waypoints.length === 1 ? 'ponto' : 'pontos'}`}
+            ? 'Click the map to set the start point'
+            : `${waypoints.length} ${waypoints.length === 1 ? 'point' : 'points'}`}
         </span>
         {waypoints.length > 0 && (
           <button type="button" onClick={() => setWaypoints([])}>
-            Limpar rota
+            Clear route
           </button>
         )}
       </div>
-      {aviso && (
+      {warning && (
         <div className="waypoints-panel__warn" role="alert">
-          {aviso}
+          {warning}
         </div>
       )}
     </div>

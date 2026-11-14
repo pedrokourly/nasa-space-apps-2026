@@ -1,32 +1,35 @@
 import type { LonLat } from '../lib/mars-geo';
 import type { Route } from '../types/contract';
 
-/** Mensagem do thread principal para o Worker. `id` cresce a cada pedido. */
+/** Message from the main thread to the Worker. `id` grows with every request. */
 export type RouteRequest = { id: number; points: LonLat[] };
 
-/** Resposta do Worker; devolve o mesmo `id` do pedido. */
+/** Worker response; returns the same `id` as the request. */
 export type RouteResponse =
   | { id: number; ok: true; route: Route }
   | { id: number; ok: false; reason: 'no-path' | 'error'; message: string };
 
 /**
- * Assinatura da função de rota. A frente Roteamento substitui `routeImpl`
- * (em `route.worker.ts`) pelo `route()` real (#37/#38) sem mexer no mapa.
+ * Route function signature. The Routing workstream replaces `routeImpl`
+ * (in `route.worker.ts`) with the real `route()` (#37/#38) without touching the map.
  */
 export type RouteFn = (points: LonLat[]) => Route | Promise<Route>;
 
-/** Lançado pela função de rota quando não existe caminho possível entre os pontos. */
+/** Default message when no path exists between the points (also shown by the UI as is). */
+export const NO_PATH_MESSAGE = 'No possible path between the points';
+
+/** Thrown by the route function when no possible path exists between the points. */
 export class NoPathError extends Error {
-  constructor(message = 'Sem caminho possível entre os pontos') {
+  constructor(message = NO_PATH_MESSAGE) {
     super(message);
     this.name = 'NoPathError';
   }
 }
 
-/** Resposta antiga descartada porque um pedido mais novo já foi feito (ou o cliente foi cancelado). */
+/** Old response discarded because a newer request was already made (or the client was cancelled). */
 export class StaleRouteError extends Error {
   constructor() {
-    super('Resposta de rota descartada (pedido mais novo em andamento)');
+    super('Route response discarded (newer request in progress)');
     this.name = 'StaleRouteError';
   }
 }

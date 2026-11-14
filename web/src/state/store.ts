@@ -7,12 +7,12 @@ export interface AppState {
   waypoints: LonLat[];
   route: Route | null;
   routeStatus: RouteStatus;
-  /** Mensagem do último erro de rota (quando `routeStatus === 'error'`). */
+  /** Message of the last route error (when `routeStatus === 'error'`). */
   routeError: string | null;
   selectedTargetId: string | null;
   hoverProfileIndex: number | null;
   activeLayers: LayerId[];
-  /** Opacidade (0 a 1) por camada; ausente = padrão da camada. */
+  /** Opacity (0 to 1) per layer; missing = the layer's default. */
   layerOpacity: Record<LayerId, number>;
 
   setWaypoints: (pts: LonLat[]) => void;
@@ -25,7 +25,7 @@ export interface AppState {
   selectTarget: (id: string | null) => void;
   setHoverProfileIndex: (i: number | null) => void;
   toggleLayer: (id: LayerId) => void;
-  /** Troca a base ativa (uma por vez), mantendo os overlays. */
+  /** Switches the active base (one at a time), keeping the overlays. */
   setBaseLayer: (id: LayerId) => void;
   setLayerOpacity: (id: LayerId, opacity: number) => void;
 }
@@ -39,7 +39,7 @@ export const useAppStore = create<AppState>()((set) => ({
   hoverProfileIndex: null,
   activeLayers: [DEFAULT_BASE_ID],
   layerOpacity: Object.fromEntries(
-    LAYERS.flatMap((l) => (l.opacidadePadrao === undefined ? [] : [[l.id, l.opacidadePadrao] as const])),
+    LAYERS.flatMap((l) => (l.defaultOpacity === undefined ? [] : [[l.id, l.defaultOpacity] as const])),
   ),
 
   setWaypoints: (waypoints) => set({ waypoints }),
@@ -58,7 +58,7 @@ export const useAppStore = create<AppState>()((set) => ({
     })),
   setBaseLayer: (id) =>
     set((s) => {
-      const isBase = (l: LayerId) => LAYERS.some((d) => d.id === l && d.tipo === 'base');
+      const isBase = (l: LayerId) => LAYERS.some((d) => d.id === l && d.type === 'base');
       return { activeLayers: [id, ...s.activeLayers.filter((l) => !isBase(l))] };
     }),
   setLayerOpacity: (id, opacity) =>

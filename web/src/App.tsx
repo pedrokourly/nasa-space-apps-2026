@@ -13,10 +13,10 @@ import RouteSummary from './ui/RouteSummary'
 
 export default function App() {
   const [data, setData] = useState<AppData | null>(null)
-  const [erro, setErro] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    loadData('mock').then(setData, (e: unknown) => setErro(e instanceof Error ? e.message : String(e)))
+    loadData('mock').then(setData, (e: unknown) => setError(e instanceof Error ? e.message : String(e)))
   }, [])
 
   return (
@@ -24,7 +24,7 @@ export default function App() {
       <header className="app-header">
         <h1>Martian Map · Jezero</h1>
       </header>
-      <main id="map-area" className="map-area" aria-label="Área do mapa">
+      <main id="map-area" className="map-area" aria-label="Map area">
         <MapView>
           <LayerManager />
           <LayerControl missions={data?.missions ?? []} />
@@ -38,11 +38,11 @@ export default function App() {
         </MapView>
       </main>
       <footer className="app-footer">
-        {erro
-          ? `Erro ao carregar dados: ${erro}`
+        {error
+          ? `Error loading data: ${error}`
           : data
-            ? `Dados: MOCK · ${data.targets.features.length} alvos · ${data.missions.length} missões`
-            : 'Carregando dados…'}
+            ? `Data: MOCK · ${data.targets.features.length} targets · ${data.missions.length} missions`
+            : 'Loading data…'}
       </footer>
     </div>
   )

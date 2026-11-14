@@ -6,16 +6,16 @@ import { toLatLng } from '../lib/mars-geo';
 import { profilePointAt } from '../routing/profilePoint';
 import './RouteMarkers.css';
 
-/** Acima da rota (450) e dos marcadores (600), sem capturar o mouse. */
+/** Above the route (450) and the markers (600), without capturing the mouse. */
 const HOVER_PANE = 'routeHoverPane';
 
-const fmtKm = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const fmtM = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
+const fmtKm = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtM = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
 
 /**
- * Marcadores ligados à rota (issue #13), filho de `<MapView>`:
- * - ponto em destaque do perfil de elevação (`hoverProfileIndex`, escrito pelo gráfico da frente UI);
- * - ponto de não retorno (`route.properties.ponto_nao_retorno`), quando o Roteamento entregar.
+ * Markers tied to the route (issue #13), child of `<MapView>`:
+ * - highlighted point of the elevation profile (`hoverProfileIndex`, written by the UI workstream's chart);
+ * - point of no return (`route.properties.point_of_no_return`), once Routing delivers it.
  */
 export default function RouteMarkers() {
   const map = useMap();
@@ -30,10 +30,10 @@ export default function RouteMarkers() {
     pane.style.pointerEvents = 'none';
   }, [map]);
 
-  // Ponto de não retorno: recriado só quando a rota muda.
+  // Point of no return: recreated only when the route changes.
   useEffect(() => {
     if (!map) return;
-    const p = profilePointAt(route, route?.properties.ponto_nao_retorno);
+    const p = profilePointAt(route, route?.properties.point_of_no_return);
     if (!p) return;
     const marker = L.marker(toLatLng(p.lonlat), {
       pane: HOVER_PANE,
@@ -41,7 +41,7 @@ export default function RouteMarkers() {
       keyboard: false,
       icon: L.divIcon({ className: 'pnr-icon', html: '<span>!</span>', iconSize: [22, 22], iconAnchor: [11, 11] }),
     })
-      .bindTooltip(`Ponto de não retorno · ${fmtKm.format(p.dist_m / 1000)} km`, {
+      .bindTooltip(`Point of no return · ${fmtKm.format(p.dist_m / 1000)} km`, {
         permanent: true,
         direction: 'right',
         offset: [12, 0],
@@ -53,7 +53,7 @@ export default function RouteMarkers() {
     };
   }, [map, route]);
 
-  // Ponto em destaque do perfil: um único marcador reposicionado a cada hover, sem recriar.
+  // Highlighted profile point: a single marker repositioned on each hover, never recreated.
   useEffect(() => {
     if (!map) return;
     const p = profilePointAt(route, hoverIndex);
@@ -81,7 +81,7 @@ export default function RouteMarkers() {
     }
   }, [map, route, hoverIndex]);
 
-  // Remove o marcador de hover ao desmontar ou trocar de mapa.
+  // Removes the hover marker on unmount or when the map changes.
   useEffect(() => {
     return () => {
       hoverRef.current?.remove();

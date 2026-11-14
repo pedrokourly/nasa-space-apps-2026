@@ -1,6 +1,6 @@
 import { useRouting } from './useRouting';
 
-/** Componente sem UI que liga `waypoints` do store ao Worker de rota. */
+/** UI-less component that connects the store's `waypoints` to the route Worker. */
 export default function RouteController() {
   useRouting();
   return null;

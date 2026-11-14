@@ -78,12 +78,12 @@ Como astronauta planejando uma EVA em Jezero, quero ver o tempo e o O₂ gastos 
 - [ ] Implementar modelo de velocidade de caminhada em função da declividade
 - [ ] Converter tempo de percurso em consumo de O₂ (kg)
 - [ ] Calcular o ponto de não retorno ao longo da rota
-- [ ] Incluir `tempo_s`, `o2_kg` e o índice do ponto de não retorno nas propriedades da rota GeoJSON
+- [ ] Incluir `time_s`, `o2_kg` e o índice do ponto de não retorno nas propriedades da rota GeoJSON
 - [ ] Escrever testes sobre um grid inventado com resultado conhecido
 
 # Critério de aceite
 
-- `route(pontos)` devolve GeoJSON LineString com `dist_m`, `tempo_s` e `o2_kg` preenchidos
+- `route(pontos)` devolve GeoJSON LineString com `dist_m`, `time_s` e `o2_kg` preenchidos
 - Num grid plano de teste, dobrar a distância dobra o tempo e o O₂ (teste automatizado passando)
 - Quando o O₂ necessário para voltar excede o disponível, a saída indica veredito NO-GO e a posição do ponto de não retorno
 ```
@@ -185,17 +185,17 @@ Cada frente trabalha com **mock exatamente neste formato** até o dado real cheg
 |---|---|---|---|
 | `elevation.bin`, `slope.bin` | Grade Float32 little-endian, linha a linha (row-major) | Dados/GIS | Roteamento, 3D |
 | `meta.json` | `bbox`, `width`, `height`, metros por célula, convenção de longitude, valor de nodata | Dados/GIS | Roteamento, Mapa 2D |
-| `targets.geojson` | FeatureCollection de Points com `nome`, `por_que`, `missao` | Dados/GIS (+ textos de Produto) | Mapa 2D, UI, 3D |
-| `missions.json` | Lista: `nome`, `instrumento`, `agencia`, `link` (+ descrição) | Produto/pitch | UI (proveniência) |
-| Rota | GeoJSON LineString em lon/lat −180 a 180, propriedades `dist_m`, `tempo_s`, `o2_kg` e perfil de elevação | Roteamento | Mapa 2D, UI, 3D, URL |
+| `targets.geojson` | FeatureCollection de Points com `name`, `why`, `mission` | Dados/GIS (+ textos de Produto) | Mapa 2D, UI, 3D |
+| `missions.json` | Lista: `name`, `instrument`, `agency`, `link` (+ descrição) | Produto/pitch | UI (proveniência) |
+| Rota | GeoJSON LineString em lon/lat −180 a 180, propriedades `dist_m`, `time_s`, `o2_kg` e perfil de elevação | Roteamento | Mapa 2D, UI, 3D, URL |
 
 Nomes de campo exatos (tipos em `web/src/types/contract.ts`; mocks em `web/public/data/mock/`):
 
 - **Grade (`elevation.bin`, `slope.bin`):** Float32 little-endian, row-major, **linha 0 = norte**.
-- **`meta.json`:** `bbox` `[minLon, minLat, maxLon, maxLat]` (−180 a 180), `width`, `height`, `m_per_cell_x`, `m_per_cell_y`, `lon_convention: "-180..180"`, `nodata`, `crs: "EPSG:4326"`, `row0: "north"`, `dtype: "float32le"`, `fonte?`.
-- **`missions.json`:** lista de `{ id (ex.: "mro-hirise"), nome, instrumento, agencia, link, descricao? }`.
-- **`targets.geojson`:** propriedades `id`, `nome`, `por_que`, `missao` (= `id` de `missions.json`), `mock?`.
-- **Rota (Feature LineString):** propriedades `dist_m`, `tempo_s`, `o2_kg`, `perfil` (lista de `[dist_m, elev_m]`, último = `dist_m`), `veredito?` (`"GO"` | `"NO-GO"`), `ponto_nao_retorno?` (índice do vértice), `mock?`.
+- **`meta.json`:** `bbox` `[minLon, minLat, maxLon, maxLat]` (−180 a 180), `width`, `height`, `m_per_cell_x`, `m_per_cell_y`, `lon_convention: "-180..180"`, `nodata`, `crs: "EPSG:4326"`, `row0: "north"`, `dtype: "float32le"`, `source?`.
+- **`missions.json`:** lista de `{ id (ex.: "mro-hirise"), name, instrument, agency, link, description? }`.
+- **`targets.geojson`:** propriedades `id`, `name`, `why`, `mission` (= `id` de `missions.json`), `mock?`.
+- **Rota (Feature LineString):** propriedades `dist_m`, `time_s`, `o2_kg`, `profile` (lista de `[dist_m, elev_m]`, último = `dist_m`), `verdict?` (`"GO"` | `"NO-GO"`), `point_of_no_return?` (índice do vértice), `mock?`.
 
 A rota em GeoJSON é o ponto de encontro de todas as frentes: o mesmo arquivo alimenta 2D, 3D, painéis e URL.
 

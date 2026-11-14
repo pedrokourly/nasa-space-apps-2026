@@ -6,26 +6,26 @@ import { MapContext } from './MapContext';
 import { formatLatLon } from './format';
 import './MapView.css';
 
-/** Centro inicial: cratera Jezero [lat, lon]. */
+/** Initial center: Jezero crater [lat, lon]. */
 const JEZERO_CENTER: L.LatLngTuple = [18.44, 77.45];
 
-/** Mostra a cratera inteira (~45 km) em telas de desktop. */
+/** Shows the whole crater (~45 km) on desktop screens. */
 const INITIAL_ZOOM = 9;
-/** Abaixo do z8 a área limitada pelo maxBounds fica menor que a tela. */
+/** Below z8 the area limited by maxBounds becomes smaller than the screen. */
 const MIN_ZOOM = 8;
-/** HiRISE Jezero vai até o z17 nativo. */
+/** HiRISE Jezero goes up to native z17. */
 const MAX_ZOOM = 17;
 
-/** Cobertura do CTX Jezero preliminar (spike #2): [[sul, oeste], [norte, leste]]. */
+/** Coverage of the preliminary CTX Jezero (spike #2): [[south, west], [north, east]]. */
 const JEZERO_BOUNDS: L.LatLngBoundsLiteral = [
   [15.9058, 75.1538],
   [19.4453, 78.8717],
 ];
 
 interface MapViewProps {
-  /** Camadas e controles que usam `useMap()` (LayerManager, #9 e #11). */
+  /** Layers and controls that use `useMap()` (LayerManager, #9 and #11). */
   children?: ReactNode;
-  /** Chamado uma vez quando o mapa é criado. */
+  /** Called once when the map is created. */
   onReady?: (map: L.Map) => void;
 }
 
@@ -53,7 +53,7 @@ export default function MapView({ children, onReady }: MapViewProps) {
       maxBoundsViscosity: 1,
     });
 
-    // Com MarsCRS, a escala usa R = 3389,5 km.
+    // With MarsCRS, the scale uses R = 3389.5 km.
     L.control.scale({ metric: true, imperial: false }).addTo(instance);
 
     instance.on('mousemove', (e: L.LeafletMouseEvent) => setCursor(e.latlng));
@@ -72,7 +72,7 @@ export default function MapView({ children, onReady }: MapViewProps) {
     <div className="map-view">
       <div ref={containerRef} className="map-view__canvas" />
       <div className="map-view__coords" aria-live="off">
-        {cursor ? formatLatLon(cursor.lat, cursor.lng) : 'Passe o cursor sobre o mapa'}
+        {cursor ? formatLatLon(cursor.lat, cursor.lng) : 'Hover over the map'}
       </div>
       <MapContext.Provider value={map}>{children}</MapContext.Provider>
     </div>

@@ -2,11 +2,11 @@ import L from 'leaflet';
 import { MARS_RADIUS_M } from '../lib/mars-geo';
 
 /**
- * CRS do mapa de Marte: lat/lon puro (EPSG:4326), como os tiles do NASA Mars Trek.
+ * Mars map CRS: plain lat/lon (EPSG:4326), like the NASA Mars Trek tiles.
  *
- * `L.CRS.EPSG4326` herda de `L.CRS.Earth`, cujo `R` é o raio da Terra (6371 km).
- * Sem trocar o raio, `map.distance()` e `L.control.scale()` (que chamam `crs.distance`)
- * devolveriam distâncias ~88% maiores que as reais em Marte. Aqui o raio é o de
- * Marte (3389,5 km), o mesmo do haversine de `src/lib/mars-geo.ts`.
+ * `L.CRS.EPSG4326` inherits from `L.CRS.Earth`, whose `R` is Earth's radius (6371 km).
+ * Without swapping the radius, `map.distance()` and `L.control.scale()` (which call `crs.distance`)
+ * would return distances ~88% larger than the real ones on Mars. Here the radius is Mars's
+ * (3389.5 km), the same as the haversine in `src/lib/mars-geo.ts`.
  */
 export const MarsCRS = L.extend({}, L.CRS.EPSG4326, { R: MARS_RADIUS_M }) as L.CRS;

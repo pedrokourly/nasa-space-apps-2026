@@ -47,9 +47,9 @@
   },
   "properties": {
     "dist_m": 4626.263,
-    "tempo_s": 5783,
+    "time_s": 5783,
     "o2_kg": 0.0803,
-    "perfil": [
+    "profile": [
       [
         0,
         -2601.9
@@ -91,7 +91,7 @@
         -2600.9
       ]
     ],
-    "veredito": "GO",
+    "verdict": "GO",
     "mock": true
   }
 }

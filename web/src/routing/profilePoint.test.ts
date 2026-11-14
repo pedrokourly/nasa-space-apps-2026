@@ -14,24 +14,24 @@ const route: Route = {
   },
   properties: {
     dist_m: 1200,
-    tempo_s: 1200,
+    time_s: 1200,
     o2_kg: 0.03,
-    perfil: [
+    profile: [
       [0, -2500],
       [600, -2480],
       [1200, -2490],
     ],
-    ponto_nao_retorno: 1,
+    point_of_no_return: 1,
   },
 };
 
 describe('profilePointAt', () => {
-  it('devolve vértice, distância e elevação do índice do perfil', () => {
+  it('returns vertex, distance and elevation for the profile index', () => {
     expect(profilePointAt(route, 1)).toEqual({ lonlat: [77.41, 18.45], dist_m: 600, elev_m: -2480 });
     expect(profilePointAt(route, 2)?.dist_m).toBe(1200);
   });
 
-  it('devolve null para índice ausente ou fora da rota', () => {
+  it('returns null for a missing or out-of-route index', () => {
     expect(profilePointAt(route, null)).toBeNull();
     expect(profilePointAt(route, undefined)).toBeNull();
     expect(profilePointAt(route, -1)).toBeNull();
@@ -40,8 +40,8 @@ describe('profilePointAt', () => {
     expect(profilePointAt(null, 0)).toBeNull();
   });
 
-  it('devolve null se o perfil for mais curto que a geometria', () => {
-    const curto: Route = { ...route, properties: { ...route.properties, perfil: [[0, -2500]] } };
-    expect(profilePointAt(curto, 1)).toBeNull();
+  it('returns null if the profile is shorter than the geometry', () => {
+    const short: Route = { ...route, properties: { ...route.properties, profile: [[0, -2500]] } };
+    expect(profilePointAt(short, 1)).toBeNull();
   });
 });
