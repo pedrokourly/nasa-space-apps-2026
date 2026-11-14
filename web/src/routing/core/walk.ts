@@ -51,3 +51,44 @@ export function segmentCost(
   const rateKgPerS = (walk.o2BaseKgPerH / 3600) * (1 + walk.o2UphillGain * Math.max(0, grade));
   return { time_s, o2_kg: time_s * rateKgPerS };
 }
+
+/**
+ * EVA parameters the planner can tune (issue #61). All values are ASSUMPTIONS with no scientific
+ * reference yet; the defaults come from `DEFAULT_WALK` and `DEFAULT_O2_AVAILABLE_KG`.
+ */
+export interface EvaParams {
+  /** Walking speed on flat terrain (m/s). */
+  speedFlatMS: number;
+  /** O₂ consumption on flat terrain (kg per hour). */
+  o2BaseKgPerH: number;
+  /** O₂ available at departure (kg). */
+  o2_available_kg: number;
+}
+
+export const DEFAULT_EVA_PARAMS: EvaParams = {
+  speedFlatMS: DEFAULT_WALK.speedFlatMS,
+  o2BaseKgPerH: DEFAULT_WALK.o2BaseKgPerH,
+  o2_available_kg: DEFAULT_O2_AVAILABLE_KG,
+};
+
+/**
+ * ASSUMPTION: sane ranges for the planner inputs (inclusive). Wide enough to cover the presets,
+ * narrow enough to keep the model away from degenerate values (zero speed, zero O₂ use).
+ */
+export const EVA_PARAM_RANGES: Record<keyof EvaParams, { min: number; max: number }> = {
+  speedFlatMS: { min: 0.2, max: 2 },
+  o2BaseKgPerH: { min: 0.02, max: 0.5 },
+  o2_available_kg: { min: 0.1, max: 5 },
+};
+
+/** Clamps each provided field to its range; non-finite values are ignored (the field is dropped). */
+export function clampEvaParams(partial: Partial<EvaParams>): Partial<EvaParams> {
+  const out: Partial<EvaParams> = {};
+  for (const key of Object.keys(EVA_PARAM_RANGES) as (keyof EvaParams)[]) {
+    const v = partial[key];
+    if (v === undefined || !Number.isFinite(v)) continue;
+    const { min, max } = EVA_PARAM_RANGES[key];
+    out[key] = Math.min(max, Math.max(min, v));
+  }
+  return out;
+}

@@ -1,8 +1,9 @@
 import type { LonLat } from '../lib/mars-geo';
 import type { Route } from '../types/contract';
+import type { EvaParams } from './core/walk';
 
 /** Message from the main thread to the Worker. `id` grows with every request. */
-export type RouteRequest = { id: number; points: LonLat[] };
+export type RouteRequest = { id: number; points: LonLat[]; params?: EvaParams };
 
 /** Worker response; returns the same `id` as the request. */
 export type RouteResponse =
@@ -13,7 +14,7 @@ export type RouteResponse =
  * Route function signature. The Routing workstream replaces `routeImpl`
  * (in `route.worker.ts`) with the real `route()` (#37/#38) without touching the map.
  */
-export type RouteFn = (points: LonLat[]) => Route | Promise<Route>;
+export type RouteFn = (points: LonLat[], params?: EvaParams) => Route | Promise<Route>;
 
 /** Thrown by the route function when no possible path exists between the points (defined in the core). */
 export { NO_PATH_MESSAGE, NoPathError } from './core/errors';
