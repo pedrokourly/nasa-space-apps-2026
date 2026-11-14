@@ -9,6 +9,7 @@
 > - MOLA color shade (463 m/px): ~500 m, about one MOLA pixel (low confidence). At walking scale it is a blur, so it is now a translucent overlay (default off, 40%), not a base.
 > - Viking MDIM 2.1: offset could not be measured. Dropped (it was only a fallback).
 > - Jezero DTMs (`JEZ_ctx_B_soc_008_DTM_…_20m`, HiRISE 1 m) are in the catalog but are **not** served as WMTS tiles (404). The sharpest global relief tile set is `Mars_MOLA_blend200ppx_HRSC_ClrShade_clon0dd_200mpp_lzw` (200 m/px, native z8).
+> - Global CTX mosaic served by Esri (`OnMars/CTX/MapServer`, 512 px tiles, `zoomOffset: -1`): same ~80 m south offset as the preliminary CTX (NCC 0.82). The app uses it as the backdrop from z7 up and the color MOLA below z7, so the whole planet is browsable while routes stay inside Jezero's area of interest.
 > - Scale bar checked at z9/11/13/15: it matches the Mars-radius haversine (e.g. the "1 km" bar measures 1002 m). Plate carrée stretches east–west by ~5% at 18°N; that is expected.
 
 Data do levantamento: 14/11/2026. Fonte: `WMTSCapabilities.xml` de cada produto em `https://trek.nasa.gov/tiles/Mars/EQ/<ID>/1.0.0/WMTSCapabilities.xml` e a API de catálogo do Trek (`https://trek.nasa.gov/mars/TrekServices/ws/index/eq/searchItems`). Página de prova: [`mars-trek-leaflet.html`](./mars-trek-leaflet.html) (abre direto por `file://`).

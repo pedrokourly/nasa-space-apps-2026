@@ -71,6 +71,30 @@ export const LAYERS: LayerDef[] = [
     sourceUrl: wmts('JEZ_ctx_B_soc_008_orthoMosaic_6m_Eqc_latTs0_lon0'),
   },
   {
+    // Whole planet at ~5 m/px, served by Esri (512 px tiles, one zoom level below Leaflet's).
+    // Uncontrolled mosaic: measured ~80 m south of the controlled Jezero products at z11.
+    id: 'ctx-global',
+    name: 'CTX global mosaic (5 m, uncontrolled)',
+    url: 'https://astro.arcgis.com/arcgis/rest/services/OnMars/CTX/MapServer/tile/{z}/{y}/{x}',
+    type: 'base',
+    missionId: 'mro-ctx',
+    shortLabel: 'MRO/CTX',
+    format: 'png',
+    tileSize: 512,
+    zoomOffset: -1,
+    minNativeZoom: 1,
+    maxNativeZoom: 12,
+    bounds: [
+      [-90, -180],
+      [90, 180],
+    ],
+    attribution: 'MRO/CTX: NASA/JPL/MSSS/Caltech Murray Lab/Esri',
+    product: 'CTX_beta01_uncontrolled_5m_Caltech',
+    versionOrDate: 'beta01',
+    resolution: '5 m/px',
+    sourceUrl: 'https://astro.arcgis.com/arcgis/rest/services/OnMars/CTX/MapServer',
+  },
+  {
     id: 'hirise-jezero',
     name: 'HiRISE Jezero (25 cm)',
     url: `${TREK}JEZ_hirise_soc_006_orthoMosaic_25cm_Eqc_latTs0_lon0_first_dd${TILES}png`,
@@ -143,11 +167,20 @@ export const LAYERS: LayerDef[] = [
 export const DEFAULT_BASE_ID = 'ctx-jezero';
 
 /**
- * Global layer drawn underneath, fully opaque, when the chosen base is local (HiRISE,
- * CTX Jezero): those PNGs are transparent outside their coverage. THEMIS (100 m/px,
- * grayscale) blends with CTX far better than the 463 m/px color MOLA.
+ * Global layers drawn underneath, fully opaque, when the chosen base is local (HiRISE,
+ * CTX Jezero): those PNGs are transparent outside their coverage.
+ * Far out, the color MOLA shows the planet; from z7 on (~325 m/px, below MOLA's 463 m)
+ * the global CTX mosaic takes over so the terrain stays sharp around the local base.
  */
-export const BACKDROP_ID = 'themis-dia';
+export const BACKDROPS: readonly { id: string; minZoom?: number; maxZoom?: number }[] = [
+  { id: 'mola', maxZoom: 6 },
+  { id: 'ctx-global', minZoom: 7 },
+];
+
+/** The backdrop layer drawn at a given map zoom. */
+export function backdropAt(zoom: number): string | undefined {
+  return BACKDROPS.find((b) => zoom >= (b.minZoom ?? 0) && zoom <= (b.maxZoom ?? Infinity))?.id;
+}
 
 export function getLayer(id: string): LayerDef | undefined {
   return LAYERS.find((l) => l.id === id);

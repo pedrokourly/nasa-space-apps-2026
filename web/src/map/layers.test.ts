@@ -23,7 +23,8 @@ describe('layer registry', () => {
     for (const l of LAYERS) {
       expect(l.product.trim(), l.id).not.toBe('');
       expect(l.sourceUrl.trim(), l.id).not.toBe('');
-      expect(l.sourceUrl).toContain(l.product);
+      // Mars Trek products link to their own WMTSCapabilities; the Esri-served CTX mosaic does not.
+      if (l.sourceUrl.includes('trek.nasa.gov')) expect(l.sourceUrl).toContain(l.product);
     }
   });
 
