@@ -1,66 +1,66 @@
 [
   {
     "id": "mro-hirise",
-    "nome": "Mars Reconnaissance Orbiter",
-    "instrumento": "HiRISE",
-    "agencia": "NASA",
+    "name": "Mars Reconnaissance Orbiter",
+    "instrument": "HiRISE",
+    "agency": "NASA",
     "link": "https://www.uahirise.org/",
-    "descricao": "Imagens de altíssima resolução (cerca de 30 cm por pixel)."
+    "description": "Very high-resolution imagery (about 30 cm per pixel)."
   },
   {
     "id": "mro-ctx",
-    "nome": "Mars Reconnaissance Orbiter",
-    "instrumento": "CTX",
-    "agencia": "NASA",
+    "name": "Mars Reconnaissance Orbiter",
+    "instrument": "CTX",
+    "agency": "NASA",
     "link": "https://science.nasa.gov/mission/mars-reconnaissance-orbiter/",
-    "descricao": "Câmera de contexto, cerca de 6 m por pixel."
+    "description": "Context camera, about 6 m per pixel."
   },
   {
     "id": "mro-crism",
-    "nome": "Mars Reconnaissance Orbiter",
-    "instrumento": "CRISM",
-    "agencia": "NASA",
+    "name": "Mars Reconnaissance Orbiter",
+    "instrument": "CRISM",
+    "agency": "NASA",
     "link": "https://crism.jhuapl.edu/",
-    "descricao": "Espectrômetro de imageamento para minerais (argilas, carbonatos)."
+    "description": "Imaging spectrometer for minerals (clays, carbonates)."
   },
   {
     "id": "odyssey-themis",
-    "nome": "Mars Odyssey",
-    "instrumento": "THEMIS",
-    "agencia": "NASA",
+    "name": "Mars Odyssey",
+    "instrument": "THEMIS",
+    "agency": "NASA",
     "link": "https://themis.asu.edu/",
-    "descricao": "Imageamento no infravermelho térmico; inércia térmica e composição."
+    "description": "Thermal infrared imaging; thermal inertia and composition."
   },
   {
     "id": "mgs-mola",
-    "nome": "Mars Global Surveyor",
-    "instrumento": "MOLA",
-    "agencia": "NASA",
+    "name": "Mars Global Surveyor",
+    "instrument": "MOLA",
+    "agency": "NASA",
     "link": "https://science.nasa.gov/mission/mars-global-surveyor/",
-    "descricao": "Altímetro a laser; base do relevo global de Marte."
+    "description": "Laser altimeter; basis of the global Mars relief."
   },
   {
     "id": "mex-hrsc",
-    "nome": "Mars Express",
-    "instrumento": "HRSC",
-    "agencia": "ESA",
+    "name": "Mars Express",
+    "instrument": "HRSC",
+    "agency": "ESA",
     "link": "https://www.esa.int/Science_Exploration/Space_Science/Mars_Express",
-    "descricao": "Câmera estéreo de alta resolução; modelos digitais de terreno."
+    "description": "High-resolution stereo camera; digital terrain models."
   },
   {
     "id": "mars2020-meda",
-    "nome": "Mars 2020 (Perseverance)",
-    "instrumento": "MEDA",
-    "agencia": "NASA",
+    "name": "Mars 2020 (Perseverance)",
+    "instrument": "MEDA",
+    "agency": "NASA",
     "link": "https://science.nasa.gov/mission/mars-2020-perseverance/",
-    "descricao": "Estação meteorológica do rover: temperatura, vento, pressão, poeira."
+    "description": "Rover weather station: temperature, wind, pressure, dust."
   },
   {
     "id": "viking-mdim",
-    "nome": "Viking Orbiter",
-    "instrumento": "MDIM 2.1",
-    "agencia": "NASA / USGS",
+    "name": "Viking Orbiter",
+    "instrument": "MDIM 2.1",
+    "agency": "NASA / USGS",
     "link": "https://science.nasa.gov/mission/viking/",
-    "descricao": "Mosaico global colorido de imagens dos orbitadores Viking (USGS MDIM 2.1), cerca de 232 m por pixel."
+    "description": "Global color mosaic of Viking orbiter images (USGS MDIM 2.1), about 232 m per pixel."
   }
 ]

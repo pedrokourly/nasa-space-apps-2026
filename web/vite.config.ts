@@ -4,6 +4,6 @@ import { defineConfig } from 'vite'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  // Worker como módulo ES (o formato iife padrão não suporta o build com code-splitting).
+  // Worker as an ES module (the default iife format does not support the code-splitting build).
   worker: { format: 'es' },
 })

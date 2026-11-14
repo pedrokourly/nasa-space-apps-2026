@@ -39,9 +39,10 @@ Como <quem>, quero <o quê>, para <por quê>.
 - Recuse caminhos fora do escopo (backend, banco, login, Three.js, Next.js com SSR) e explique o porquê em uma linha.
 - Qualquer código geoespacial: releia a seção "Armadilhas de Marte" (raio 3389,5 km, longitude −180 a 180, EPSG:4326).
 - Mudança no contrato de dados atualiza a seção 5 do `AGENTS.md` no mesmo PR.
+- **Tudo em inglês:** todo texto exibido na interface e todo conteúdo do repositório (código, comentários, docs, commits, PRs). Veja a "Regra de idioma" do `AGENTS.md`. Nunca escreva conteúdo novo em português, mesmo editando um arquivo legado.
 
 ### Commits e PRs
 
-- Mensagens em português, no imperativo, referenciando a issue (`Closes #N`).
+- Mensagens em inglês, no imperativo, referenciando a issue (`Closes #N`).
 - O corpo do PR mostra como verificar cada critério de aceite da issue.
 - Não faça commit, push ou abra PR sem o usuário pedir.

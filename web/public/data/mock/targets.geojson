@@ -12,9 +12,9 @@
       },
       "properties": {
         "id": "habitat",
-        "nome": "Habitat (ponto de pouso)",
-        "por_que": "Ponto A da EVA. Texto provisório (MOCK): região do pouso do Perseverance.",
-        "missao": "mars2020-meda",
+        "name": "Habitat (landing site)",
+        "why": "EVA start point A. Provisional text (MOCK): region where Perseverance landed.",
+        "mission": "mars2020-meda",
         "mock": true
       }
     },
@@ -29,9 +29,9 @@
       },
       "properties": {
         "id": "frente-delta",
-        "nome": "Frente do delta",
-        "por_que": "Texto provisório (MOCK): sedimentos de um antigo delta fluvial, candidatos a preservar sinais de vida passada.",
-        "missao": "mro-hirise",
+        "name": "Delta front",
+        "why": "Provisional text (MOCK): sediments of an ancient river delta, candidates for preserving signs of past life.",
+        "mission": "mro-hirise",
         "mock": true
       }
     },
@@ -46,9 +46,9 @@
       },
       "properties": {
         "id": "margem-carbonatos",
-        "nome": "Margem com carbonatos",
-        "por_que": "Texto provisório (MOCK): assinatura espectral de carbonatos na margem da cratera.",
-        "missao": "mro-crism",
+        "name": "Carbonate margin",
+        "why": "Provisional text (MOCK): spectral signature of carbonates on the crater margin.",
+        "mission": "mro-crism",
         "mock": true
       }
     },
@@ -63,9 +63,9 @@
       },
       "properties": {
         "id": "amostra",
-        "nome": "Local de amostra",
-        "por_que": "Texto provisório (MOCK): afloramento de rocha ígnea para comparação com os sedimentos.",
-        "missao": "mro-ctx",
+        "name": "Sample site",
+        "why": "Provisional text (MOCK): igneous rock outcrop for comparison with the sediments.",
+        "mission": "mro-ctx",
         "mock": true
       }
     }

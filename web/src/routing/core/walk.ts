@@ -1,25 +1,25 @@
 /**
- * Modelo de caminhada e consumo de O₂ por trecho.
+ * Walking model and per-segment O₂ consumption.
  *
- * REFERÊNCIA (velocidade): função de caminhada de Tobler (1993), `v = 6·exp(−3,5·|S + 0,05|)` km/h,
- * com S = tan(inclinação) com sinal. Aqui é normalizada para que o plano valha `speedFlatMS`.
+ * REFERENCE (speed): Tobler's hiking function (1993), `v = 6·exp(−3.5·|S + 0.05|)` km/h,
+ * with S = signed tan(slope angle). Here it is normalized so that flat terrain equals `speedFlatMS`.
  *
- * SUPOSIÇÕES (sem referência científica, a calibrar e citar quando houver fonte):
- * - `speedFlatMS`: velocidade de um astronauta de traje no plano.
- * - `o2BaseKgPerH`: consumo de O₂ andando no plano.
- * - `o2UphillGain`: quanto o subir aumenta o consumo (por unidade de gradiente).
- * - `minSpeedMS`: piso de velocidade, para nunca dividir por quase zero.
- * - A gravidade de Marte (0,38 g) não é modelada.
+ * ASSUMPTIONS (no scientific reference; calibrate and cite when a source is found):
+ * - `speedFlatMS`: speed of a suited astronaut on flat terrain.
+ * - `o2BaseKgPerH`: O₂ consumption while walking on flat terrain.
+ * - `o2UphillGain`: how much climbing raises consumption (per unit of gradient).
+ * - `minSpeedMS`: speed floor, so we never divide by nearly zero.
+ * - Mars gravity (0.38 g) is not modeled.
  */
 
 export interface WalkProfile {
-  /** SUPOSIÇÃO: velocidade no plano (m/s). */
+  /** ASSUMPTION: speed on flat terrain (m/s). */
   speedFlatMS: number;
-  /** Piso de velocidade (m/s). */
+  /** Speed floor (m/s). */
   minSpeedMS: number;
-  /** SUPOSIÇÃO: consumo de O₂ no plano (kg por hora). */
+  /** ASSUMPTION: O₂ consumption on flat terrain (kg per hour). */
   o2BaseKgPerH: number;
-  /** SUPOSIÇÃO: acréscimo relativo de consumo por unidade de gradiente de subida (rise/run). */
+  /** ASSUMPTION: relative consumption increase per unit of uphill gradient (rise/run). */
   o2UphillGain: number;
 }
 
@@ -30,16 +30,16 @@ export const DEFAULT_WALK: WalkProfile = {
   o2UphillGain: 4,
 };
 
-/** SUPOSIÇÃO: O₂ disponível na saída (kg), cerca de 10 h de caminhada no plano. */
+/** ASSUMPTION: O₂ available at departure (kg), about 10 h of walking on flat terrain. */
 export const DEFAULT_O2_AVAILABLE_KG = 1.0;
 
-/** Velocidade (m/s) para um gradiente `grade` = subida/avanço, com sinal (positivo = subindo). */
+/** Speed (m/s) for a signed gradient `grade` = rise/run (positive = uphill). */
 export function walkingSpeed(grade: number, walk: WalkProfile = DEFAULT_WALK): number {
   const v = walk.speedFlatMS * Math.exp(-3.5 * (Math.abs(grade + 0.05) - 0.05));
   return Math.max(v, walk.minSpeedMS);
 }
 
-/** Tempo e O₂ para andar `distM` metros (horizontais) com variação de elevação `deltaElevM`. */
+/** Time and O₂ to walk `distM` horizontal meters with an elevation change of `deltaElevM`. */
 export function segmentCost(
   distM: number,
   deltaElevM: number,

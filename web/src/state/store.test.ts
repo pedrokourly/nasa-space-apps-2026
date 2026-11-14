@@ -6,7 +6,7 @@ const initial = useAppStore.getState();
 describe('store', () => {
   beforeEach(() => useAppStore.setState(initial, true));
 
-  it('adiciona, move e remove waypoints', () => {
+  it('adds, moves and removes waypoints', () => {
     const s = () => useAppStore.getState();
     s().addWaypoint([77.45, 18.44]);
     s().addWaypoint([77.4, 18.46]);
@@ -21,7 +21,7 @@ describe('store', () => {
     expect(s().waypoints).toEqual([]);
   });
 
-  it('alterna camadas', () => {
+  it('toggles layers', () => {
     const s = () => useAppStore.getState();
     const base = s().activeLayers;
     s().toggleLayer('hirise');
@@ -30,7 +30,7 @@ describe('store', () => {
     expect(s().activeLayers).toEqual([...base, 'themis']);
   });
 
-  it('troca a base mantendo overlays e limita a opacidade', () => {
+  it('switches the base keeping overlays and clamps the opacity', () => {
     const s = () => useAppStore.getState();
     s().toggleLayer('themis-dia');
     s().setBaseLayer('hirise-jezero');
@@ -39,7 +39,7 @@ describe('store', () => {
     expect(s().layerOpacity['themis-dia']).toBe(1);
   });
 
-  it('guarda status, seleção, hover e rota', () => {
+  it('stores status, selection, hover and route', () => {
     const s = () => useAppStore.getState();
     s().setRouteStatus('computing');
     s().selectTarget('amostra');

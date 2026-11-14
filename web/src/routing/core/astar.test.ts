@@ -11,7 +11,7 @@ import {
   wallWithGapGrid,
 } from './mockGrid';
 
-/** PRNG determinístico (mulberry32) para testes reproduzíveis. */
+/** Deterministic PRNG (mulberry32) for reproducible tests. */
 function rng(seed: number): () => number {
   let a = seed;
   return () => {
@@ -22,8 +22,8 @@ function rng(seed: number): () => number {
   };
 }
 
-describe('função de custo', () => {
-  it('declividade >= 25° bloqueia; abaixo custa mais que plano', () => {
+describe('cost function', () => {
+  it('slope >= 25° blocks; below it costs more than flat', () => {
     const g = buildMockGrid(3, 1, (col) => ({ slope: [0, 24.9, 25][col]! }));
     expect(cellFactor(g, 0, DEFAULT_PROFILE)).toBe(1);
     const f = cellFactor(g, 1, DEFAULT_PROFILE);
@@ -32,25 +32,25 @@ describe('função de custo', () => {
     expect(cellFactor(g, 2, DEFAULT_PROFILE)).toBe(Infinity);
   });
 
-  it('célula sem dado bloqueia (nunca vira zero)', () => {
+  it('a no-data cell blocks (never becomes zero)', () => {
     const g = holesGrid(3, 1, [[1, 0]]);
     const costs = buildCostGrid(g);
     expect(costs[1]).toBe(Infinity);
     expect(costs[0]).toBe(1);
   });
 
-  it('areia custa 2× o mesmo terreno sem areia', () => {
+  it('sand costs 2× the same terrain without sand', () => {
     const g = sandPatchGrid(2, 1, { col0: 1, col1: 1, row0: 0, row1: 0 });
     expect(cellFactor(g, 1, DEFAULT_PROFILE)).toBeCloseTo(2 * cellFactor(g, 0, DEFAULT_PROFILE), 10);
   });
 
-  it('rejeita perfil que daria custo menor que o plano', () => {
+  it('rejects a profile that would cost less than flat', () => {
     expect(() => buildCostGrid(flatGrid(2, 2), { ...DEFAULT_PROFILE, sandMultiplier: 0.5 })).toThrow();
   });
 });
 
-describe('A* em terrenos de teste', () => {
-  it('grid plano: linha reta tem o comprimento esperado', () => {
+describe('A* on test terrains', () => {
+  it('flat grid: straight line has the expected length', () => {
     const g = flatGrid(11, 11, 20);
     const r = findPath(g, { col: 0, row: 5 }, { col: 10, row: 5 })!;
     expect(r.cells).toHaveLength(11);
@@ -58,7 +58,7 @@ describe('A* em terrenos de teste', () => {
     expect(r.cost).toBeCloseTo(200, 6);
   });
 
-  it('muro com passagem: o caminho cruza o muro só pela passagem', () => {
+  it('wall with a gap: the path crosses the wall only through the gap', () => {
     const g = wallWithGapGrid(21, 21, 3);
     const r = findPath(g, { col: 0, row: 18 }, { col: 20, row: 18 })!;
     expect(r).not.toBeNull();
@@ -66,18 +66,18 @@ describe('A* em terrenos de teste', () => {
     expect(crossings).toEqual([{ col: 10, row: 3 }]);
   });
 
-  it('muro sem passagem: não há caminho', () => {
+  it('wall without a gap: there is no path', () => {
     const g = buildMockGrid(9, 9, (col) => (col === 4 ? { slope: MOCK_STEEP_DEG } : {}));
     expect(findPath(g, { col: 0, row: 4 }, { col: 8, row: 4 })).toBeNull();
   });
 
-  it('não corta a quina na diagonal entre dois obstáculos', () => {
-    // Obstáculos em (1,0) e (0,1): ir de (0,0) a (1,1) na diagonal passaria pela quina.
+  it('does not cut the corner diagonally between two obstacles', () => {
+    // Obstacles at (1,0) and (0,1): going from (0,0) to (1,1) diagonally would cut the corner.
     const g = buildMockGrid(3, 3, (col, row) => ((col === 1 && row === 0) || (col === 0 && row === 1) ? { slope: 40 } : {}));
     expect(findPath(g, { col: 0, row: 0 }, { col: 1, row: 1 })).toBeNull();
   });
 
-  it('cratera: contorna sem pisar nela e custa mais que a linha reta', () => {
+  it('crater: goes around without stepping on it and costs more than the straight line', () => {
     const g = craterGrid(31, 31, 8);
     const r = findPath(g, { col: 0, row: 15 }, { col: 30, row: 15 })!;
     for (const c of r.cells) {
@@ -86,21 +86,21 @@ describe('A* em terrenos de teste', () => {
     expect(r.length_m).toBeGreaterThan(30 * 20);
   });
 
-  it('areia: contorna um pequeno retângulo de areia quando o desvio é barato', () => {
+  it('sand: goes around a small sand rectangle when the detour is cheap', () => {
     const g = sandPatchGrid(21, 21, { col0: 9, col1: 11, row0: 9, row1: 11 });
     const r = findPath(g, { col: 0, row: 10 }, { col: 20, row: 10 })!;
     const sand = g.sand!;
     expect(r.cells.some((c) => sand[c.row * 21 + c.col] === 1)).toBe(false);
   });
 
-  it('areia: atravessa quando não há como contornar', () => {
+  it('sand: crosses it when there is no way around', () => {
     const g = sandPatchGrid(7, 1, { col0: 3, col1: 3, row0: 0, row1: 0 });
     const r = findPath(g, { col: 0, row: 0 }, { col: 6, row: 0 })!;
     expect(r.cells).toHaveLength(7);
     expect(r.cost).toBeGreaterThan(r.length_m);
   });
 
-  it('buraco (sem dado) no caminho: desvia; início, destino ou ilha bloqueados: null', () => {
+  it('hole (no data) on the way: detours; blocked start, goal or island: null', () => {
     const g = holesGrid(9, 9, [[4, 4]]);
     const r = findPath(g, { col: 0, row: 4 }, { col: 8, row: 4 })!;
     expect(r.cells.some((c) => c.col === 4 && c.row === 4)).toBe(false);
@@ -112,17 +112,17 @@ describe('A* em terrenos de teste', () => {
     expect(findPath(ring, { col: 0, row: 0 }, { col: 2, row: 2 })).toBeNull();
   });
 
-  it('início igual ao destino: caminho de uma célula e custo 0', () => {
+  it('start equals goal: one-cell path and cost 0', () => {
     const r = findPath(flatGrid(3, 3), { col: 1, row: 1 }, { col: 1, row: 1 })!;
     expect(r.cells).toEqual([{ col: 1, row: 1 }]);
     expect(r.cost).toBe(0);
   });
 
-  it('fora do grid lança RangeError', () => {
+  it('outside the grid throws RangeError', () => {
     expect(() => findPath(flatGrid(3, 3), { col: -1, row: 0 }, { col: 1, row: 1 })).toThrow(RangeError);
   });
 
-  it('células retangulares: usa m_per_cell_x e m_per_cell_y distintos', () => {
+  it('rectangular cells: uses different m_per_cell_x and m_per_cell_y', () => {
     const g = flatGrid(3, 3);
     g.meta.m_per_cell_x = 10;
     g.meta.m_per_cell_y = 30;
@@ -133,8 +133,8 @@ describe('A* em terrenos de teste', () => {
   });
 });
 
-describe('A* confere com Dijkstra', () => {
-  it('mesmo custo em 40 grids aleatórios com declive, areia e buracos', () => {
+describe('A* matches Dijkstra', () => {
+  it('same cost on 40 random grids with slope, sand and holes', () => {
     const rand = rng(2026);
     let comparados = 0;
     for (let n = 0; n < 40; n++) {
@@ -166,10 +166,10 @@ describe('A* confere com Dijkstra', () => {
   });
 });
 
-describe('desempenho em 512 × 512', () => {
+describe('performance on 512 × 512', () => {
   const LIMIT_MS = 1000;
 
-  it('grid plano, canto a canto, em menos de 1 s', () => {
+  it('flat grid, corner to corner, in under 1 s', () => {
     const g = flatGrid(512, 512, 20);
     const t0 = performance.now();
     const r = findPath(g, { col: 0, row: 0 }, { col: 511, row: 511 });
@@ -178,13 +178,13 @@ describe('desempenho em 512 × 512', () => {
     expect(ms).toBeLessThan(LIMIT_MS);
   });
 
-  it('grid com declive, areia e 8% de obstáculos aleatórios, em menos de 1 s', () => {
+  it('grid with slope, sand and 8% random obstacles, in under 1 s', () => {
     const rand = rng(7);
     const g = buildMockGrid(
       512,
       512,
       (col, row) => {
-        if ((col === 0 && row === 0) || (col === 511 && row === 511)) return {}; // início e destino livres
+        if ((col === 0 && row === 0) || (col === 511 && row === 511)) return {}; // start and goal free
         return rand() < 0.08 ? { slope: MOCK_STEEP_DEG } : { slope: rand() * 20, sand: rand() < 0.2 };
       },
       { withSand: true },
@@ -192,7 +192,7 @@ describe('desempenho em 512 × 512', () => {
     const t0 = performance.now();
     const r = findPath(g, { col: 0, row: 0 }, { col: 511, row: 511 });
     const ms = performance.now() - t0;
-    // Com 8% de obstáculos espalhados (seed fixa) existe caminho; o teste exige achá-lo.
+    // With 8% scattered obstacles (fixed seed) a path exists; the test requires finding it.
     expect(r).not.toBeNull();
     expect(ms).toBeLessThan(LIMIT_MS);
   });

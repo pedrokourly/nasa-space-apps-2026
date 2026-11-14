@@ -1,46 +1,46 @@
 /**
- * Núcleo do roteamento: tipos do grid e conversões célula ↔ lon/lat.
+ * Routing core: grid types and cell ↔ lon/lat conversions.
  *
- * Lógica pura: sem React, sem Leaflet, sem DOM, sem Worker. Roda no navegador,
- * no Web Worker e no Node (testes). Distância só com `haversine` de `lib/mars-geo.ts`.
+ * Pure logic: no React, no Leaflet, no DOM, no Worker. Runs in the browser,
+ * in the Web Worker and in Node (tests). Distances only with `haversine` from `lib/mars-geo.ts`.
  *
- * PREMISSAS (formato provável, ainda não confirmado pelo Dados/GIS):
- * - `elevation` em metros; `slope` em GRAUS (0 a 90).
- * - Linha 0 é a borda norte (`meta.row0 === 'north'`), longitude −180 a 180.
- * - Os valores de célula são amostras de área ("pixel is area"): o centro da célula
- *   (col, row) fica em meia célula para dentro da borda do `bbox`.
- * - `sand` é opcional: 1 = areia, 0 = rocha. Só existe se o Dados/GIS entregar a camada.
- * Só o loader (issue de dados reais) conhece o formato dos `.bin`; o resto usa `Grid`.
+ * ASSUMPTIONS (likely format, not yet confirmed by Data/GIS):
+ * - `elevation` in meters; `slope` in DEGREES (0 to 90).
+ * - Row 0 is the north edge (`meta.row0 === 'north'`), longitude −180 to 180.
+ * - Cell values are area samples ("pixel is area"): the center of cell (col, row) sits
+ *   half a cell inside the `bbox` edge.
+ * - `sand` is optional: 1 = sand, 0 = rock. It only exists if Data/GIS delivers the layer.
+ * Only the loader (real-data issue) knows the `.bin` format; everything else uses `Grid`.
  */
 import type { LonLat } from '../../lib/mars-geo';
 import type { Meta } from '../../types/contract';
 
-/** Grid já carregado, pronto para o roteamento. Matrizes em ordem de linha (row-major). */
+/** A loaded grid, ready for routing. Arrays are row-major. */
 export interface Grid {
   meta: Meta;
-  /** Elevação em metros, `width * height` valores. */
+  /** Elevation in meters, `width * height` values. */
   elevation: Float32Array;
-  /** Declividade em graus, `width * height` valores. */
+  /** Slope in degrees, `width * height` values. */
   slope: Float32Array;
-  /** Opcional: 1 = areia, 0 = rocha. */
+  /** Optional: 1 = sand, 0 = rock. */
   sand?: Uint8Array;
 }
 
-/** Posição de uma célula no grid: coluna (x, leste) e linha (y, para o sul). */
+/** Position of a cell in the grid: column (x, east) and row (y, southward). */
 export interface Cell {
   col: number;
   row: number;
 }
 
-/** Cria um `Grid` validando que o tamanho de cada matriz bate com `meta`. */
+/** Creates a `Grid`, checking that each array has the size `meta` implies. */
 export function createGrid(grid: Grid): Grid {
   const { width, height } = grid.meta;
   if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) {
-    throw new Error(`meta inválido: width=${width}, height=${height}`);
+    throw new Error(`invalid meta: width=${width}, height=${height}`);
   }
   const expected = width * height;
-  const check = (nome: string, len: number) => {
-    if (len !== expected) throw new Error(`${nome} tem ${len} valores; esperado ${expected} (${width}×${height})`);
+  const check = (name: string, len: number) => {
+    if (len !== expected) throw new Error(`${name} has ${len} values; expected ${expected} (${width}×${height})`);
   };
   check('elevation', grid.elevation.length);
   check('slope', grid.slope.length);
@@ -48,22 +48,22 @@ export function createGrid(grid: Grid): Grid {
   return grid;
 }
 
-/** Índice linear da célula na matriz (row-major). Não valida limites. */
+/** Linear index of the cell in the array (row-major). Does not check bounds. */
 export function cellIndex(meta: Meta, col: number, row: number): number {
   return row * meta.width + col;
 }
 
-/** Diz se a célula está dentro do grid. */
+/** Tells whether the cell is inside the grid. */
 export function inBounds(meta: Meta, col: number, row: number): boolean {
   return Number.isInteger(col) && Number.isInteger(row) && col >= 0 && col < meta.width && row >= 0 && row < meta.height;
 }
 
-/** Valor sem dado: `NaN` ou igual ao `nodata` do meta (comparado em Float32). Nunca tratar como zero. */
+/** No-data value: `NaN` or equal to the meta `nodata` (compared as Float32). Never treat as zero. */
 export function isNoData(meta: Meta, value: number): boolean {
   return Number.isNaN(value) || value === Math.fround(meta.nodata);
 }
 
-/** Centro da célula em `[lon, lat]`, com longitude −180 a 180. */
+/** Center of the cell as `[lon, lat]`, longitude −180 to 180. */
 export function cellToLonLat(meta: Meta, col: number, row: number): LonLat {
   const [minLon, minLat, maxLon, maxLat] = meta.bbox;
   const lon = minLon + ((col + 0.5) * (maxLon - minLon)) / meta.width;
@@ -72,8 +72,8 @@ export function cellToLonLat(meta: Meta, col: number, row: number): LonLat {
 }
 
 /**
- * Célula que contém o ponto `[lon, lat]`, ou `null` se estiver fora do `bbox`.
- * A borda sul/leste do `bbox` pertence à última célula.
+ * Cell that contains the point `[lon, lat]`, or `null` if it is outside the `bbox`.
+ * The south/east edge of the `bbox` belongs to the last cell.
  */
 export function lonLatToCell(meta: Meta, [lon, lat]: LonLat): Cell | null {
   const [minLon, minLat, maxLon, maxLat] = meta.bbox;

@@ -7,48 +7,48 @@ const missions = JSON.parse(
   readFileSync(new URL('../../public/data/mock/missions.json', import.meta.url), 'utf8'),
 ) as { id: string }[];
 
-describe('registro de camadas', () => {
-  it('tem pelo menos 4 camadas de 3 missões distintas', () => {
+describe('layer registry', () => {
+  it('has at least 4 layers from 3 distinct missions', () => {
     expect(LAYERS.length).toBeGreaterThanOrEqual(4);
     expect(new Set(LAYERS.map((l) => l.missionId)).size).toBeGreaterThanOrEqual(3);
   });
 
-  it('ids são únicos e cada missionId existe em missions.json', () => {
+  it('ids are unique and every missionId exists in missions.json', () => {
     expect(new Set(LAYERS.map((l) => l.id)).size).toBe(LAYERS.length);
     const ids = new Set(missions.map((m) => m.id));
     for (const l of LAYERS) expect(ids.has(l.missionId), `${l.id} -> ${l.missionId}`).toBe(true);
   });
 
-  it('toda camada tem produto e fonteUrl não vazios', () => {
+  it('every layer has a non-empty product and sourceUrl', () => {
     for (const l of LAYERS) {
-      expect(l.produto.trim(), l.id).not.toBe('');
-      expect(l.fonteUrl.trim(), l.id).not.toBe('');
-      expect(l.fonteUrl).toContain(l.produto);
+      expect(l.product.trim(), l.id).not.toBe('');
+      expect(l.sourceUrl.trim(), l.id).not.toBe('');
+      expect(l.sourceUrl).toContain(l.product);
     }
   });
 
-  it('bounds usam longitude −180 a 180 e latitude −90 a 90', () => {
+  it('bounds use longitude −180 to 180 and latitude −90 to 90', () => {
     for (const l of LAYERS) {
-      const [[sul, oeste], [norte, leste]] = l.bounds;
-      expect(oeste).toBeGreaterThanOrEqual(-180);
-      expect(leste).toBeLessThanOrEqual(180);
-      expect(oeste).toBeLessThan(leste);
-      expect(sul).toBeGreaterThanOrEqual(-90);
-      expect(norte).toBeLessThanOrEqual(90);
-      expect(sul).toBeLessThan(norte);
+      const [[south, west], [north, east]] = l.bounds;
+      expect(west).toBeGreaterThanOrEqual(-180);
+      expect(east).toBeLessThanOrEqual(180);
+      expect(west).toBeLessThan(east);
+      expect(south).toBeGreaterThanOrEqual(-90);
+      expect(north).toBeLessThanOrEqual(90);
+      expect(south).toBeLessThan(north);
     }
   });
 
-  it('tem atribuição e zoom nativo máximo em todas', () => {
+  it('every layer has an attribution and a max native zoom', () => {
     for (const l of LAYERS) {
       expect(l.attribution).not.toBe('');
       expect(l.maxNativeZoom).toBeGreaterThan(0);
     }
   });
 
-  it('abre com exatamente uma base ativa', () => {
-    const ativas = useAppStore.getState().activeLayers;
-    const basesAtivas = ativas.filter((id) => getLayer(id)?.tipo === 'base');
-    expect(basesAtivas).toEqual([DEFAULT_BASE_ID]);
+  it('opens with exactly one active base', () => {
+    const active = useAppStore.getState().activeLayers;
+    const activeBases = active.filter((id) => getLayer(id)?.type === 'base');
+    expect(activeBases).toEqual([DEFAULT_BASE_ID]);
   });
 });

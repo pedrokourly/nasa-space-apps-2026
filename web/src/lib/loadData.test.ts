@@ -16,8 +16,8 @@ const route: Route = parseRoute(read('route.geojson'));
 const [minLon, minLat, maxLon, maxLat] = meta.bbox;
 const inBbox = ([lon, lat]: LonLat) => lon >= minLon && lon <= maxLon && lat >= minLat && lat <= maxLat;
 
-describe('mocks do contrato', () => {
-  it('bbox tem lados entre 5 e 15 km', () => {
+describe('contract mocks', () => {
+  it('bbox sides are between 5 and 15 km', () => {
     const midLat = (minLat + maxLat) / 2;
     const w = haversine([minLon, midLat], [maxLon, midLat]);
     const h = haversine([minLon, minLat], [minLon, maxLat]);
@@ -27,7 +27,7 @@ describe('mocks do contrato', () => {
     }
   });
 
-  it('alvos e vértices da rota ficam dentro do bbox, com longitude em −180..180', () => {
+  it('targets and route vertices are inside the bbox, with longitude in −180..180', () => {
     const pts = [...targets.features.map((t) => t.geometry.coordinates), ...route.geometry.coordinates];
     for (const p of pts) {
       expect(p[0]).toBeGreaterThanOrEqual(-180);
@@ -36,22 +36,22 @@ describe('mocks do contrato', () => {
     }
   });
 
-  it('todo alvo aponta para uma missão existente', () => {
+  it('every target points to an existing mission', () => {
     const ids = new Set(missions.map((m) => m.id));
-    for (const t of targets.features) expect(ids.has(t.properties.missao)).toBe(true);
+    for (const t of targets.features) expect(ids.has(t.properties.mission)).toBe(true);
   });
 
-  it('dist_m bate com a soma dos haversines e o perfil termina em dist_m', () => {
+  it('dist_m matches the sum of haversines and the profile ends at dist_m', () => {
     const c = route.geometry.coordinates;
-    let soma = 0;
-    for (let i = 1; i < c.length; i++) soma += haversine(c[i - 1], c[i]);
-    expect(Math.abs(soma - route.properties.dist_m)).toBeLessThan(1);
-    const perfil = route.properties.perfil;
-    expect(perfil).toHaveLength(c.length);
-    expect(perfil[perfil.length - 1][0]).toBeCloseTo(route.properties.dist_m, 1);
+    let sum = 0;
+    for (let i = 1; i < c.length; i++) sum += haversine(c[i - 1], c[i]);
+    expect(Math.abs(sum - route.properties.dist_m)).toBeLessThan(1);
+    const profile = route.properties.profile;
+    expect(profile).toHaveLength(c.length);
+    expect(profile[profile.length - 1][0]).toBeCloseTo(route.properties.dist_m, 1);
   });
 
-  it('rota passa por pelo menos 2 alvos', () => {
+  it('route passes through at least 2 targets', () => {
     const c = route.geometry.coordinates;
     const hits = targets.features.filter((t) =>
       c.some((p) => haversine(p, t.geometry.coordinates) < 1),
@@ -60,8 +60,8 @@ describe('mocks do contrato', () => {
   });
 });
 
-describe('validação', () => {
-  it('rejeita longitude fora de −180..180', () => {
+describe('validation', () => {
+  it('rejects longitude outside −180..180', () => {
     expect(() =>
       parseTargets({
         type: 'FeatureCollection',
@@ -69,14 +69,14 @@ describe('validação', () => {
           {
             type: 'Feature',
             geometry: { type: 'Point', coordinates: [270, 10] },
-            properties: { id: 'a', nome: 'a', por_que: 'a', missao: 'a' },
+            properties: { id: 'a', name: 'a', why: 'a', mission: 'a' },
           },
         ],
       }),
     ).toThrow(/longitude/);
   });
 
-  it('rejeita meta sem campo obrigatório', () => {
+  it('rejects meta without a required field', () => {
     expect(() => parseMeta({ bbox: [0, 0, 1, 1] })).toThrow(/meta\.json/);
   });
 });

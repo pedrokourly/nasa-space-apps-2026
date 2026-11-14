@@ -1,18 +1,18 @@
 /**
- * Busca de caminho no grid de custo: A* (heurística = distância reta em metros) e
- * Dijkstra (mesma busca sem heurística), usado nos testes para conferir o A*.
- * 8 vizinhos; diagonal só quando as duas células ortogonais ao lado estão livres
- * (não "corta quina" de obstáculo).
+ * Pathfinding on the cost grid: A* (heuristic = straight-line distance in meters) and
+ * Dijkstra (the same search without a heuristic), used in tests to check A*.
+ * 8 neighbors; a diagonal move is only allowed when both orthogonal cells beside it are free
+ * (it does not "cut the corner" of an obstacle).
  */
 import { buildCostGrid, BLOCKED, DEFAULT_PROFILE, type CostProfile } from './cost';
 import { cellIndex, inBounds, type Cell, type Grid } from './grid';
 
 export interface PathResult {
-  /** Células do caminho, do início ao fim (inclusive). */
+  /** Path cells, from start to goal (inclusive). */
   cells: Cell[];
-  /** Custo total: soma de (metros do passo × média dos fatores das duas células). */
+  /** Total cost: sum of (step meters × average factor of the two cells). */
   cost: number;
-  /** Comprimento do caminho no grid, em metros (sem fator de custo). */
+  /** Path length on the grid in meters (without the cost factor). */
   length_m: number;
 }
 
@@ -21,7 +21,7 @@ const NEIGHBORS: ReadonlyArray<readonly [dc: number, dr: number]> = [
   [1, 1], [1, -1], [-1, 1], [-1, -1],
 ];
 
-/** Heap binário mínimo de pares (nó, prioridade). Entradas antigas são descartadas ao sair (lazy deletion). */
+/** Binary min-heap of (node, priority) pairs. Stale entries are skipped when popped (lazy deletion). */
 class MinHeap {
   private nodes: number[] = [];
   private keys: number[] = [];
@@ -74,8 +74,8 @@ function search(
 ): PathResult | null {
   const { meta } = grid;
   const { width, height } = meta;
-  if (!inBounds(meta, start.col, start.row)) throw new RangeError(`início fora do grid: (${start.col}, ${start.row})`);
-  if (!inBounds(meta, goal.col, goal.row)) throw new RangeError(`destino fora do grid: (${goal.col}, ${goal.row})`);
+  if (!inBounds(meta, start.col, start.row)) throw new RangeError(`start outside the grid: (${start.col}, ${start.row})`);
+  if (!inBounds(meta, goal.col, goal.row)) throw new RangeError(`goal outside the grid: (${goal.col}, ${goal.row})`);
 
   const costs = buildCostGrid(grid, profile);
   const s = cellIndex(meta, start.col, start.row);
@@ -134,12 +134,12 @@ function search(
   return { cells, cost: g[t]!, length_m };
 }
 
-/** Caminho de menor custo entre duas células com A*. `null` = sem caminho (ou início/destino bloqueado). Lança `RangeError` se fora do grid. */
+/** Lowest-cost path between two cells with A*. `null` = no path (or blocked start/goal). Throws `RangeError` if outside the grid. */
 export function findPath(grid: Grid, start: Cell, goal: Cell, profile: CostProfile = DEFAULT_PROFILE): PathResult | null {
   return search(grid, start, goal, profile, true);
 }
 
-/** Mesmo problema resolvido por Dijkstra; serve de referência para conferir o A*. */
+/** The same problem solved by Dijkstra; the reference used to check A*. */
 export function findPathDijkstra(grid: Grid, start: Cell, goal: Cell, profile: CostProfile = DEFAULT_PROFILE): PathResult | null {
   return search(grid, start, goal, profile, false);
 }

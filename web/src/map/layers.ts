@@ -1,163 +1,163 @@
 import type L from 'leaflet';
 
-/** Raiz dos tiles EPSG:4326 do NASA Mars Trek (ver docs/spike/mars-trek.md). */
+/** Root of the NASA Mars Trek EPSG:4326 tiles (see docs/spike/mars-trek.md). */
 const TREK = 'https://trek.nasa.gov/tiles/Mars/EQ/';
 const TILES = '/1.0.0/default/default028mm/{z}/{y}/{x}.';
 
-/** Legenda de cores opcional (barra de gradiente com rótulos, sem inventar valores). */
+/** Optional color legend (gradient bar with labels, without inventing values). */
 export interface LegendDef {
-  titulo: string;
-  /** Cores CSS do gradiente, do mínimo (esquerda) ao máximo (direita). */
-  gradiente: string[];
-  rotuloMin: string;
-  rotuloMax: string;
-  /** Observação sobre a origem/precisão das cores. */
-  nota?: string;
+  title: string;
+  /** CSS gradient colors, from the minimum (left) to the maximum (right). */
+  gradient: string[];
+  minLabel: string;
+  maxLabel: string;
+  /** Note about the origin/accuracy of the colors. */
+  note?: string;
 }
 
 export interface LayerDef {
   id: string;
-  nome: string;
-  /** Template `{z}/{y}/{x}` do tile. */
+  name: string;
+  /** Tile `{z}/{y}/{x}` template. */
   url: string;
-  /** `base`: uma por vez (rádio). `overlay`: liga/desliga com opacidade. */
-  tipo: 'base' | 'overlay';
-  /** Id da missão em `missions.json` (proveniência). */
+  /** `base`: one at a time (radio). `overlay`: toggled on/off with opacity. */
+  type: 'base' | 'overlay';
+  /** Mission id in `missions.json` (provenance). */
   missionId: string;
-  /** Sigla curta missão/instrumento para a interface. */
-  sigla: string;
-  formato: 'jpg' | 'png';
+  /** Short mission/instrument label for the interface. */
+  shortLabel: string;
+  format: 'jpg' | 'png';
   minNativeZoom?: number;
   maxNativeZoom: number;
-  /** Cobertura `[[sul, oeste], [norte, leste]]`, longitude −180..180. */
+  /** Coverage `[[south, west], [north, east]]`, longitude −180..180. */
   bounds: L.LatLngBoundsLiteral;
   attribution: string;
   tileSize?: number;
   zoomOffset?: number;
-  /** Opacidade inicial (padrão 1). */
-  opacidadePadrao?: number;
-  /** ID do produto no Mars Trek. */
-  produto: string;
-  /** Versão/data, só quando consta do próprio ID do produto. */
-  versaoOuData?: string;
-  /** Resolução, só quando consta do próprio ID do produto. */
-  resolucao?: string;
-  /** WMTSCapabilities do produto no Mars Trek (verificável). */
-  fonteUrl: string;
-  legenda?: LegendDef;
+  /** Initial opacity (default 1). */
+  defaultOpacity?: number;
+  /** Product ID on Mars Trek. */
+  product: string;
+  /** Version/date, only when it appears in the product ID itself. */
+  versionOrDate?: string;
+  /** Resolution, only when it appears in the product ID itself. */
+  resolution?: string;
+  /** Product WMTSCapabilities on Mars Trek (verifiable). */
+  sourceUrl: string;
+  legend?: LegendDef;
 }
 
-const wmts = (produto: string) => `${TREK}${produto}/1.0.0/WMTSCapabilities.xml`;
+const wmts = (product: string) => `${TREK}${product}/1.0.0/WMTSCapabilities.xml`;
 
 export const LAYERS: LayerDef[] = [
   {
     id: 'ctx-jezero',
-    nome: 'CTX Jezero (mosaico preliminar)',
+    name: 'CTX Jezero (preliminary mosaic)',
     url: `${TREK}Jezero_CTX_BlockAdj_dd${TILES}png`,
-    tipo: 'base',
+    type: 'base',
     missionId: 'mro-ctx',
-    sigla: 'MRO/CTX',
-    formato: 'png',
+    shortLabel: 'MRO/CTX',
+    format: 'png',
     maxNativeZoom: 12,
     bounds: [
       [15.9058484, 75.1537692],
       [19.4453003, 78.8717121],
     ],
     attribution: 'NASA Mars Trek · MRO/CTX',
-    produto: 'Jezero_CTX_BlockAdj_dd',
-    fonteUrl: wmts('Jezero_CTX_BlockAdj_dd'),
+    product: 'Jezero_CTX_BlockAdj_dd',
+    sourceUrl: wmts('Jezero_CTX_BlockAdj_dd'),
   },
   {
     id: 'hirise-jezero',
-    nome: 'HiRISE Jezero (25 cm)',
+    name: 'HiRISE Jezero (25 cm)',
     url: `${TREK}JEZ_hirise_soc_006_orthoMosaic_25cm_Eqc_latTs0_lon0_first_dd${TILES}png`,
-    tipo: 'base',
+    type: 'base',
     missionId: 'mro-hirise',
-    sigla: 'MRO/HiRISE',
-    formato: 'png',
+    shortLabel: 'MRO/HiRISE',
+    format: 'png',
     maxNativeZoom: 17,
     bounds: [
       [18.3067994, 77.2229331],
       [18.669315, 77.583964],
     ],
     attribution: 'NASA Mars Trek · MRO/HiRISE',
-    produto: 'JEZ_hirise_soc_006_orthoMosaic_25cm_Eqc_latTs0_lon0_first_dd',
-    resolucao: '25 cm/px',
-    fonteUrl: wmts('JEZ_hirise_soc_006_orthoMosaic_25cm_Eqc_latTs0_lon0_first_dd'),
+    product: 'JEZ_hirise_soc_006_orthoMosaic_25cm_Eqc_latTs0_lon0_first_dd',
+    resolution: '25 cm/px',
+    sourceUrl: wmts('JEZ_hirise_soc_006_orthoMosaic_25cm_Eqc_latTs0_lon0_first_dd'),
   },
   {
     id: 'mola',
-    nome: 'Relevo MOLA (cores e sombreamento)',
+    name: 'MOLA shaded relief (color)',
     url: `${TREK}Mars_MGS_MOLA_ClrShade_merge_global_463m${TILES}jpg`,
-    tipo: 'base',
+    type: 'base',
     missionId: 'mgs-mola',
-    sigla: 'MGS/MOLA',
-    formato: 'jpg',
+    shortLabel: 'MGS/MOLA',
+    format: 'jpg',
     maxNativeZoom: 7,
     bounds: [
       [-89.9992, -180],
       [90, 179.9983],
     ],
     attribution: 'NASA Mars Trek · MGS/MOLA',
-    produto: 'Mars_MGS_MOLA_ClrShade_merge_global_463m',
-    resolucao: '463 m/px',
-    fonteUrl: wmts('Mars_MGS_MOLA_ClrShade_merge_global_463m'),
-    // Sem valores numéricos: o color ramp oficial do produto não foi verificado.
-    legenda: {
-      titulo: 'Elevação (MOLA)',
-      gradiente: ['#2b3a8f', '#3fa7c9', '#6dbb5a', '#e3d35a', '#c8742f', '#ffffff'],
-      rotuloMin: 'mais baixo',
-      rotuloMax: 'mais alto',
-      nota: 'Cores aproximadas; escala numérica não verificada.',
+    product: 'Mars_MGS_MOLA_ClrShade_merge_global_463m',
+    resolution: '463 m/px',
+    sourceUrl: wmts('Mars_MGS_MOLA_ClrShade_merge_global_463m'),
+    // No numeric values: the product's official color ramp has not been verified.
+    legend: {
+      title: 'Elevation (MOLA)',
+      gradient: ['#2b3a8f', '#3fa7c9', '#6dbb5a', '#e3d35a', '#c8742f', '#ffffff'],
+      minLabel: 'lower',
+      maxLabel: 'higher',
+      note: 'Approximate colors; numeric scale not verified',
     },
   },
   {
     id: 'viking-mdim',
-    nome: 'Viking MDIM 2.1 (colorido)',
+    name: 'Viking MDIM 2.1 (color)',
     url: `${TREK}Mars_Viking_MDIM21_ClrMosaic_global_232m${TILES}jpg`,
-    tipo: 'base',
+    type: 'base',
     missionId: 'viking-mdim',
-    sigla: 'Viking/MDIM',
-    formato: 'jpg',
+    shortLabel: 'Viking/MDIM',
+    format: 'jpg',
     maxNativeZoom: 7,
     bounds: [
       [-90, -180],
       [90, 180],
     ],
     attribution: 'NASA Mars Trek · Viking/MDIM 2.1',
-    produto: 'Mars_Viking_MDIM21_ClrMosaic_global_232m',
-    versaoOuData: 'MDIM 2.1',
-    resolucao: '232 m/px',
-    fonteUrl: wmts('Mars_Viking_MDIM21_ClrMosaic_global_232m'),
+    product: 'Mars_Viking_MDIM21_ClrMosaic_global_232m',
+    versionOrDate: 'MDIM 2.1',
+    resolution: '232 m/px',
+    sourceUrl: wmts('Mars_Viking_MDIM21_ClrMosaic_global_232m'),
   },
   {
     id: 'themis-dia',
-    nome: 'THEMIS infravermelho (dia)',
+    name: 'THEMIS daytime infrared',
     url: `${TREK}THEMIS_DayIR_ControlledMosaics_100m_v2_oct2018${TILES}png`,
-    tipo: 'overlay',
+    type: 'overlay',
     missionId: 'odyssey-themis',
-    sigla: 'Odyssey/THEMIS',
-    formato: 'png',
+    shortLabel: 'Odyssey/THEMIS',
+    format: 'png',
     maxNativeZoom: 9,
     bounds: [
       [-65.0006576, -179.9999997],
       [65.0007535, 179.9998849],
     ],
     attribution: 'NASA Mars Trek · Mars Odyssey/THEMIS',
-    produto: 'THEMIS_DayIR_ControlledMosaics_100m_v2_oct2018',
-    versaoOuData: 'v2, out/2018',
-    resolucao: '100 m/px',
-    fonteUrl: wmts('THEMIS_DayIR_ControlledMosaics_100m_v2_oct2018'),
-    opacidadePadrao: 0.6,
+    product: 'THEMIS_DayIR_ControlledMosaics_100m_v2_oct2018',
+    versionOrDate: 'v2, Oct 2018',
+    resolution: '100 m/px',
+    sourceUrl: wmts('THEMIS_DayIR_ControlledMosaics_100m_v2_oct2018'),
+    defaultOpacity: 0.6,
   },
 ];
 
-/** Base escolhida ao abrir o app. */
+/** Base chosen when the app opens. */
 export const DEFAULT_BASE_ID = 'ctx-jezero';
 
 /**
- * Base global usada como fundo quando a base escolhida é local (HiRISE, CTX
- * Jezero): esses PNGs são RGBA e transparentes fora da cobertura.
+ * Global base used as a backdrop when the chosen base is local (HiRISE, CTX
+ * Jezero): those PNGs are RGBA and transparent outside their coverage.
  */
 export const BACKDROP_ID = 'mola';
 
@@ -165,8 +165,8 @@ export function getLayer(id: string): LayerDef | undefined {
   return LAYERS.find((l) => l.id === id);
 }
 
-/** True se a cobertura é o planeta inteiro (não precisa de fundo por baixo). */
+/** True if the coverage is the whole planet (needs no backdrop beneath it). */
 export function isGlobal(def: LayerDef): boolean {
-  const [[sul], [norte]] = def.bounds;
-  return norte - sul >= 170;
+  const [[south], [north]] = def.bounds;
+  return north - south >= 170;
 }

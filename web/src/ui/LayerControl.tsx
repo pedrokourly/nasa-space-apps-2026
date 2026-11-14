@@ -5,7 +5,7 @@ import type { Mission } from '../types/contract';
 import ProvenanceBadge from './ProvenanceBadge';
 import './LayerControl.css';
 
-/** Controle de camadas: rádio para a base, checkbox + opacidade para overlays. */
+/** Layer control: radio for the base, checkbox + opacity for overlays. */
 export default function LayerControl({ missions }: { missions: Mission[] }) {
   const [open, setOpen] = useState(true);
   const activeLayers = useAppStore((s) => s.activeLayers);
@@ -14,18 +14,18 @@ export default function LayerControl({ missions }: { missions: Mission[] }) {
   const setBaseLayer = useAppStore((s) => s.setBaseLayer);
   const setLayerOpacity = useAppStore((s) => s.setLayerOpacity);
 
-  const bases = LAYERS.filter((l) => l.tipo === 'base');
-  const overlays = LAYERS.filter((l) => l.tipo === 'overlay');
+  const bases = LAYERS.filter((l) => l.type === 'base');
+  const overlays = LAYERS.filter((l) => l.type === 'overlay');
 
   return (
-    <section className="layer-control" aria-label="Camadas do mapa">
+    <section className="layer-control" aria-label="Map layers">
       <button
         type="button"
         className="layer-control__toggle"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
       >
-        Camadas {open ? '▾' : '▸'}
+        Layers {open ? '▾' : '▸'}
       </button>
       {open && (
         <div className="layer-control__body">
@@ -39,22 +39,22 @@ export default function LayerControl({ missions }: { missions: Mission[] }) {
                   checked={activeLayers.includes(l.id)}
                   onChange={() => setBaseLayer(l.id)}
                 />
-                <span className="layer-control__name">{l.nome}</span>
-                <span className="layer-control__mission">{l.sigla}</span>
+                <span className="layer-control__name">{l.name}</span>
+                <span className="layer-control__mission">{l.shortLabel}</span>
               </label>
             ))}
           </fieldset>
           <fieldset className="layer-control__group">
-            <legend>Sobreposições</legend>
+            <legend>Overlays</legend>
             {overlays.map((l) => {
               const on = activeLayers.includes(l.id);
-              const opacity = layerOpacity[l.id] ?? l.opacidadePadrao ?? 1;
+              const opacity = layerOpacity[l.id] ?? l.defaultOpacity ?? 1;
               return (
                 <div key={l.id} className="layer-control__overlay">
                   <label className="layer-control__row">
                     <input type="checkbox" checked={on} onChange={() => toggleLayer(l.id)} />
-                    <span className="layer-control__name">{l.nome}</span>
-                    <span className="layer-control__mission">{l.sigla}</span>
+                    <span className="layer-control__name">{l.name}</span>
+                    <span className="layer-control__mission">{l.shortLabel}</span>
                   </label>
                   <input
                     type="range"
@@ -63,7 +63,7 @@ export default function LayerControl({ missions }: { missions: Mission[] }) {
                     step={0.05}
                     value={opacity}
                     disabled={!on}
-                    aria-label={`Opacidade: ${l.nome}`}
+                    aria-label={`Opacity: ${l.name}`}
                     onChange={(e) => setLayerOpacity(l.id, Number(e.target.value))}
                   />
                 </div>

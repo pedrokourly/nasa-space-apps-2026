@@ -4,6 +4,19 @@ Instruções para qualquer agente de IA (Claude Code, Codex, Copilot, Cursor etc
 
 ---
 
+## Regra de idioma (obrigatória): tudo em inglês
+
+**TUDO o que é exibido ao usuário e TUDO o que está no repositório é em inglês.** Sem exceção para conteúdo novo.
+
+- **Interface:** textos, rótulos, avisos, tooltips, cards, legendas, atribuições, mensagens de erro.
+- **Dados exibidos:** textos dos alvos (`targets.geojson`), descrições de missões (`missions.json`), condições, proveniência.
+- **Código:** identificadores, comentários, JSDoc, nomes de arquivo, mensagens de teste.
+- **Repositório:** README, `docs/`, commits, títulos e descrições de PR.
+- **Pitch:** vídeo e página de submissão também em inglês.
+- **Conteúdo legado em português** (este arquivo, `CLAUDE.md`, textos da UI, nomes de campo do contrato como `nome`, `por_que`, `missao`, `tempo_s`, `perfil`, `veredito`) deve ser migrado para inglês. Não acrescente conteúdo novo em português enquanto a migração não termina. Renomear campos do contrato segue a regra da seção 5: avisar as frentes e atualizar a seção no mesmo PR.
+
+---
+
 ## 1. Regra nº 1: formato obrigatório de issues
 
 **Toda issue criada neste repositório — por pessoa ou por agente — segue exatamente o modelo abaixo. Sem exceção.** Uma issue fora do modelo deve ser reescrita antes de qualquer trabalho começar.
@@ -65,12 +78,12 @@ Como astronauta planejando uma EVA em Jezero, quero ver o tempo e o O₂ gastos 
 - [ ] Implementar modelo de velocidade de caminhada em função da declividade
 - [ ] Converter tempo de percurso em consumo de O₂ (kg)
 - [ ] Calcular o ponto de não retorno ao longo da rota
-- [ ] Incluir `tempo_s`, `o2_kg` e o índice do ponto de não retorno nas propriedades da rota GeoJSON
+- [ ] Incluir `time_s`, `o2_kg` e o índice do ponto de não retorno nas propriedades da rota GeoJSON
 - [ ] Escrever testes sobre um grid inventado com resultado conhecido
 
 # Critério de aceite
 
-- `route(pontos)` devolve GeoJSON LineString com `dist_m`, `tempo_s` e `o2_kg` preenchidos
+- `route(pontos)` devolve GeoJSON LineString com `dist_m`, `time_s` e `o2_kg` preenchidos
 - Num grid plano de teste, dobrar a distância dobra o tempo e o O₂ (teste automatizado passando)
 - Quando o O₂ necessário para voltar excede o disponível, a saída indica veredito NO-GO e a posição do ponto de não retorno
 ```
@@ -118,8 +131,8 @@ Agentes: considere a data atual. Depois do feature freeze, **recuse** propor ou 
 | Must | Orçamento de O₂ com ponto de não retorno e veredito GO / NO-GO |
 | Must | Painel de condições com o último sol disponível (MEDA) |
 | Must | Cards dos alvos científicos: por que ir lá e qual missão revelou |
-| Must | Rota compartilhável pela URL (`#route=lon,lat;lon,lat`) |
 | Should | Sobrevoo 3D da rota no Cesium, com modelo 3D |
+| Could | Rota compartilhável pela URL (`#route=lon,lat;lon,lat`) |
 | Could | Ordem ótima das paradas (caixeiro viajante por força bruta, ≤ 8 paradas) |
 | Could | Modos de rota: mais curta, mais segura, mais ciência |
 | Could | Salvar planos no `localStorage` e exportar/importar JSON |
@@ -172,17 +185,17 @@ Cada frente trabalha com **mock exatamente neste formato** até o dado real cheg
 |---|---|---|---|
 | `elevation.bin`, `slope.bin` | Grade Float32 little-endian, linha a linha (row-major) | Dados/GIS | Roteamento, 3D |
 | `meta.json` | `bbox`, `width`, `height`, metros por célula, convenção de longitude, valor de nodata | Dados/GIS | Roteamento, Mapa 2D |
-| `targets.geojson` | FeatureCollection de Points com `nome`, `por_que`, `missao` | Dados/GIS (+ textos de Produto) | Mapa 2D, UI, 3D |
-| `missions.json` | Lista: `nome`, `instrumento`, `agencia`, `link` (+ descrição) | Produto/pitch | UI (proveniência) |
-| Rota | GeoJSON LineString em lon/lat −180 a 180, propriedades `dist_m`, `tempo_s`, `o2_kg` e perfil de elevação | Roteamento | Mapa 2D, UI, 3D, URL |
+| `targets.geojson` | FeatureCollection de Points com `name`, `why`, `mission` | Dados/GIS (+ textos de Produto) | Mapa 2D, UI, 3D |
+| `missions.json` | Lista: `name`, `instrument`, `agency`, `link` (+ descrição) | Produto/pitch | UI (proveniência) |
+| Rota | GeoJSON LineString em lon/lat −180 a 180, propriedades `dist_m`, `time_s`, `o2_kg` e perfil de elevação | Roteamento | Mapa 2D, UI, 3D, URL |
 
 Nomes de campo exatos (tipos em `web/src/types/contract.ts`; mocks em `web/public/data/mock/`):
 
 - **Grade (`elevation.bin`, `slope.bin`):** Float32 little-endian, row-major, **linha 0 = norte**.
-- **`meta.json`:** `bbox` `[minLon, minLat, maxLon, maxLat]` (−180 a 180), `width`, `height`, `m_per_cell_x`, `m_per_cell_y`, `lon_convention: "-180..180"`, `nodata`, `crs: "EPSG:4326"`, `row0: "north"`, `dtype: "float32le"`, `fonte?`.
-- **`missions.json`:** lista de `{ id (ex.: "mro-hirise"), nome, instrumento, agencia, link, descricao? }`.
-- **`targets.geojson`:** propriedades `id`, `nome`, `por_que`, `missao` (= `id` de `missions.json`), `mock?`.
-- **Rota (Feature LineString):** propriedades `dist_m`, `tempo_s`, `o2_kg`, `perfil` (lista de `[dist_m, elev_m]`, último = `dist_m`), `veredito?` (`"GO"` | `"NO-GO"`), `ponto_nao_retorno?` (índice do vértice), `mock?`.
+- **`meta.json`:** `bbox` `[minLon, minLat, maxLon, maxLat]` (−180 a 180), `width`, `height`, `m_per_cell_x`, `m_per_cell_y`, `lon_convention: "-180..180"`, `nodata`, `crs: "EPSG:4326"`, `row0: "north"`, `dtype: "float32le"`, `source?`.
+- **`missions.json`:** lista de `{ id (ex.: "mro-hirise"), name, instrument, agency, link, description? }`.
+- **`targets.geojson`:** propriedades `id`, `name`, `why`, `mission` (= `id` de `missions.json`), `mock?`.
+- **Rota (Feature LineString):** propriedades `dist_m`, `time_s`, `o2_kg`, `profile` (lista de `[dist_m, elev_m]`, último = `dist_m`), `verdict?` (`"GO"` | `"NO-GO"`), `point_of_no_return?` (índice do vértice), `mock?`.
 
 A rota em GeoJSON é o ponto de encontro de todas as frentes: o mesmo arquivo alimenta 2D, 3D, painéis e URL.
 
@@ -238,7 +251,7 @@ Princípios:
 - **Leaflet e Cesium só no navegador** — não introduza SSR.
 - **Não versione dado bruto da NASA** (GeoTIFFs de gigabytes). Versione o script do pipeline e os arquivos leves gerados.
 - **Segredos:** o token do Cesium ion vem de variável de ambiente (`VITE_CESIUM_ION_TOKEN`), nunca commitado.
-- Textos da interface, issues, commits e docs em **português**; o vídeo e a página de submissão seguem o idioma confirmado com o evento local (na dúvida, inglês).
+- **Idioma: inglês, sempre.** Veja a "Regra de idioma" no topo deste arquivo.
 
 ---
 

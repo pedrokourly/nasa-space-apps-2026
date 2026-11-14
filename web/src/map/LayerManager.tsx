@@ -4,10 +4,10 @@ import { useMap } from './MapContext';
 import { useAppStore } from '../state/store';
 import { BACKDROP_ID, LAYERS, getLayer, isGlobal, type LayerDef } from './layers';
 
-/** HiRISE Jezero vai até o z17 nativo; acima disso o mapa não deixa dar zoom. */
+/** HiRISE Jezero goes up to native z17; above that the map does not allow zooming. */
 const MAX_ZOOM = 17;
 
-/** Ordem de empilhamento dentro do pane de tiles: fundo < base < overlays. */
+/** Stacking order inside the tile pane: backdrop < base < overlays. */
 const Z_BACKDROP = 1;
 const Z_BASE = 2;
 const Z_OVERLAY = 3;
@@ -27,9 +27,9 @@ function createTileLayer(def: LayerDef, zIndex: number, opacity: number): L.Tile
 }
 
 /**
- * Sincroniza `activeLayers` e `layerOpacity` do store com as camadas de tiles do
- * mapa. Uma base por vez, mais os overlays ligados. Se a base escolhida é local
- * (PNG RGBA transparente fora da cobertura), a MOLA global fica por baixo.
+ * Syncs `activeLayers` and `layerOpacity` from the store with the map's tile layers.
+ * One base at a time, plus the enabled overlays. If the chosen base is local
+ * (RGBA PNG, transparent outside its coverage), the global MOLA stays underneath.
  */
 export default function LayerManager() {
   const map = useMap();
@@ -41,7 +41,7 @@ export default function LayerManager() {
     if (!map) return;
     const current = live.current;
 
-    const base = LAYERS.find((l) => l.tipo === 'base' && activeLayers.includes(l.id));
+    const base = LAYERS.find((l) => l.type === 'base' && activeLayers.includes(l.id));
     const wanted = new Map<string, { def: LayerDef; z: number }>();
     if (base) {
       if (!isGlobal(base)) {
@@ -51,7 +51,7 @@ export default function LayerManager() {
       wanted.set(base.id, { def: base, z: Z_BASE });
     }
     for (const l of LAYERS) {
-      if (l.tipo === 'overlay' && activeLayers.includes(l.id)) wanted.set(l.id, { def: l, z: Z_OVERLAY });
+      if (l.type === 'overlay' && activeLayers.includes(l.id)) wanted.set(l.id, { def: l, z: Z_OVERLAY });
     }
 
     for (const [id, layer] of current) {
@@ -61,7 +61,7 @@ export default function LayerManager() {
       }
     }
     for (const [id, { def, z }] of wanted) {
-      const opacity = layerOpacity[id] ?? def.opacidadePadrao ?? 1;
+      const opacity = layerOpacity[id] ?? def.defaultOpacity ?? 1;
       const existing = current.get(id);
       if (existing) {
         existing.setOpacity(opacity);

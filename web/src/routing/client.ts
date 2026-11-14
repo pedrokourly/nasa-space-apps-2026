@@ -4,11 +4,11 @@ import { NoPathError, StaleRouteError, type RouteRequest, type RouteResponse } f
 import { RequestTracker } from './requestTracker';
 
 export interface RouteClient {
-  /** Pede a rota; rejeita com `StaleRouteError` se um pedido mais novo foi feito, ou `NoPathError`. */
+  /** Requests the route; rejects with `StaleRouteError` if a newer request was made, or `NoPathError`. */
   route(points: LonLat[]): Promise<Route>;
-  /** Invalida o pedido em andamento (a resposta, se vier, é descartada). */
+  /** Invalidates the request in flight (its response, if it arrives, is discarded). */
   cancel(): void;
-  /** Termina o Worker e rejeita os pedidos pendentes. */
+  /** Terminates the Worker and rejects pending requests. */
   terminate(): void;
 }
 
@@ -17,7 +17,7 @@ interface Pending {
   reject: (e: Error) => void;
 }
 
-/** Encapsula o Web Worker de rota. Só o último pedido vence; respostas antigas são descartadas. */
+/** Wraps the route Web Worker. Only the latest request wins; old responses are discarded. */
 export function createRouteClient(): RouteClient {
   const worker = new Worker(new URL('./route.worker.ts', import.meta.url), { type: 'module' });
   const tracker = new RequestTracker();
@@ -37,12 +37,12 @@ export function createRouteClient(): RouteClient {
     else if (res.ok) p.resolve(res.route);
     else p.reject(res.reason === 'no-path' ? new NoPathError(res.message) : new Error(res.message));
   };
-  worker.onerror = (e) => rejectAll(() => new Error(e.message || 'Erro no Worker de rota'));
+  worker.onerror = (e) => rejectAll(() => new Error(e.message || 'Route Worker error'));
 
   return {
     route(points) {
       const id = tracker.next();
-      // Pedidos anteriores ainda sem resposta ficam obsoletos agora.
+      // Earlier requests still without a response become stale now.
       rejectAll(() => new StaleRouteError());
       return new Promise<Route>((resolve, reject) => {
         pending.set(id, { resolve, reject });

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { RequestTracker } from './requestTracker';
 
 describe('RequestTracker', () => {
-  it('ids crescem e só o último é atual', () => {
+  it('ids grow and only the last one is current', () => {
     const t = new RequestTracker();
     const a = t.next();
     expect(t.isCurrent(a)).toBe(true);
@@ -12,7 +12,7 @@ describe('RequestTracker', () => {
     expect(t.isCurrent(b)).toBe(true);
   });
 
-  it('nenhum id é atual antes do primeiro pedido', () => {
+  it('no id is current before the first request', () => {
     expect(new RequestTracker().isCurrent(1)).toBe(false);
   });
 });

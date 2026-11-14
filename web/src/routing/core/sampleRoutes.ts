@@ -1,9 +1,9 @@
 /**
- * Rotas de exemplo (uma GO, uma NO-GO) calculadas sobre um terreno INVENTADO que usa o mesmo
- * `bbox` do mock do contrato (`public/data/mock/meta.json`) e os alvos de `targets.geojson`.
- * Servem para o Mapa 2D e a UI desenharem o que `route()` devolve. NÃO são dados da NASA.
- * Arquivos gerados: `public/data/mock/route-go.geojson` e `route-no-go.geojson`
- * (regerar com `WRITE_MOCKS=1 npm test -- sampleRoutes`).
+ * Sample routes (one GO, one NO-GO) computed over an INVENTED terrain that uses the same
+ * `bbox` as the contract mock (`public/data/mock/meta.json`) and the stops of the mock targets.
+ * They let the 2D map and the UI draw what `route()` returns. NOT NASA data.
+ * Generated files: `public/data/mock/route-go.geojson` and `route-no-go.geojson`
+ * (regenerate with `WRITE_MOCKS=1 npm test -- sampleRoutes`).
  */
 import type { LonLat } from '../../lib/mars-geo';
 import type { Meta, Route } from '../../types/contract';
@@ -11,7 +11,7 @@ import { MOCK_NODATA, buildMockGrid, MOCK_STEEP_DEG } from './mockGrid';
 import { lonLatToCell, type Grid } from './grid';
 import { route } from './route';
 
-/** Mesmo meta de `public/data/mock/meta.json` (conferido por teste). */
+/** Same meta as `public/data/mock/meta.json` (checked by a test). */
 export const SAMPLE_META: Meta = {
   bbox: [77.36, 18.4, 77.5, 18.5],
   width: 512,
@@ -23,19 +23,19 @@ export const SAMPLE_META: Meta = {
   crs: 'EPSG:4326',
   row0: 'north',
   dtype: 'float32le',
-  fonte: 'MOCK — grid inventado para rotas de exemplo',
+  source: 'MOCK: invented grid for sample routes',
 };
 
-/** Paradas do cenário de exemplo: habitat, 3 alvos e volta (coordenadas de `targets.geojson` mock). */
+/** Stops of the sample scenario: habitat, 3 targets and back (coordinates from the mock `targets.geojson`). */
 export const SAMPLE_STOPS: LonLat[] = [
   [77.4508, 18.4447], // habitat
   [77.385, 18.455], // frente-delta
   [77.425, 18.47], // margem-carbonatos
-  [77.47, 18.42], // terceiro alvo
-  [77.4508, 18.4447], // volta ao habitat
+  [77.47, 18.42], // third target
+  [77.4508, 18.4447], // back to the habitat
 ];
 
-/** Terreno ondulado e suave, com uma cratera intransponível entre o habitat e o primeiro alvo. */
+/** Smooth rolling terrain with an impassable crater between the habitat and the first target. */
 export function sampleGrid(): Grid {
   const { width: w, height: h } = SAMPLE_META;
   const elevAt = (col: number, row: number): number =>
@@ -55,15 +55,15 @@ export function sampleGrid(): Grid {
   );
 }
 
-/** O₂ (kg) do cenário NO-GO: pouco demais para a volta pelo mesmo caminho. */
+/** O₂ (kg) of the NO-GO scenario: too little for the return along the same path. */
 export const SAMPLE_NO_GO_O2_KG = 0.2;
 
-/** Rota GO (O₂ padrão) e NO-GO (pouco O₂), marcadas `mock: true`. */
+/** GO route (default O₂) and NO-GO route (little O₂), flagged `mock: true`. */
 export function sampleRoutes(): { go: Route; noGo: Route } {
   const grid = sampleGrid();
   const tag = (r: Route): Route => ({ ...r, properties: { ...r.properties, mock: true } });
   return {
     go: tag(route(grid, SAMPLE_STOPS)),
-    noGo: tag(route(grid, SAMPLE_STOPS, { o2_disponivel_kg: SAMPLE_NO_GO_O2_KG })),
+    noGo: tag(route(grid, SAMPLE_STOPS, { o2_available_kg: SAMPLE_NO_GO_O2_KG })),
   };
 }

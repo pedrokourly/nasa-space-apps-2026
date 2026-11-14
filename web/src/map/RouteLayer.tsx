@@ -6,14 +6,14 @@ import { toLatLng, type LonLat } from '../lib/mars-geo';
 
 const ROUTE_PANE = 'routePane';
 
-/** Desenha `route` do store como polyline (contorno escuro + linha ciano). Filho de `<MapView>`. */
+/** Draws the store's `route` as a polyline (dark outline + cyan line). Child of `<MapView>`. */
 export default function RouteLayer() {
   const map = useMap();
   const route = useAppStore((s) => s.route);
 
   useEffect(() => {
     if (!map) return;
-    // Acima das camadas de tiles/overlays (400) e abaixo dos marcadores (600).
+    // Above the tile/overlay layers (400) and below the markers (600).
     const pane = map.getPane(ROUTE_PANE) ?? map.createPane(ROUTE_PANE);
     pane.style.zIndex = '450';
     pane.style.pointerEvents = 'none';

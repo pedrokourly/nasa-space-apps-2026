@@ -2,16 +2,16 @@ import { haversine, type LonLat } from '../lib/mars-geo';
 import type { Route } from '../types/contract';
 
 /*
- * MOCK: os valores abaixo são SUPOSIÇÕES para a demo, não valores científicos.
- * A frente Roteamento (#37/#38) os substitui pelo modelo real de caminhada e O₂.
+ * MOCK: the values below are ASSUMPTIONS for the demo, not scientific values.
+ * The Routing workstream (#37/#38) replaces them with the real walking and O₂ model.
  */
-/** SUPOSIÇÃO/MOCK: velocidade de caminhada constante (m/s). */
+/** ASSUMPTION/MOCK: constant walking speed (m/s). */
 export const MOCK_SPEED_M_S = 1;
-/** SUPOSIÇÃO/MOCK: consumo de O₂ (kg por hora). */
+/** ASSUMPTION/MOCK: O₂ consumption (kg per hour). */
 export const MOCK_O2_KG_PER_H = 0.1;
-/** Espaçamento máximo entre vértices do traçado (m), para o perfil e o hover terem resolução. */
+/** Maximum spacing between path vertices (m), so the profile and hover have resolution. */
 export const MOCK_STEP_M = 50;
-/** MOCK: elevação sintética determinística (m): base + amplitude * sen(2π · dist / comprimento de onda). */
+/** MOCK: deterministic synthetic elevation (m): base + amplitude * sin(2π · dist / wavelength). */
 const MOCK_ELEV_BASE_M = -2500;
 const MOCK_ELEV_AMPLITUDE_M = 30;
 const MOCK_ELEV_WAVELENGTH_M = 600;
@@ -20,9 +20,9 @@ function mockElevation(distM: number): number {
   return MOCK_ELEV_BASE_M + MOCK_ELEV_AMPLITUDE_M * Math.sin((2 * Math.PI * distM) / MOCK_ELEV_WAVELENGTH_M);
 }
 
-/** Liga os pontos em linha reta, densificando a cada ~50 m. Lógica pura. */
+/** Connects the points with straight lines, densified every ~50 m. Pure logic. */
 export function mockRoute(points: LonLat[]): Route {
-  if (points.length < 2) throw new Error('mockRoute precisa de pelo menos 2 pontos');
+  if (points.length < 2) throw new Error('mockRoute needs at least 2 points');
 
   const verts: LonLat[] = [points[0]!];
   for (let i = 1; i < points.length; i++) {
@@ -35,23 +35,23 @@ export function mockRoute(points: LonLat[]): Route {
     }
   }
 
-  const perfil: [number, number][] = [[0, mockElevation(0)]];
+  const profile: [number, number][] = [[0, mockElevation(0)]];
   let dist = 0;
   for (let i = 1; i < verts.length; i++) {
     dist += haversine(verts[i - 1]!, verts[i]!);
-    perfil.push([dist, mockElevation(dist)]);
+    profile.push([dist, mockElevation(dist)]);
   }
 
-  const tempo_s = dist / MOCK_SPEED_M_S;
+  const time_s = dist / MOCK_SPEED_M_S;
   return {
     type: 'Feature',
     geometry: { type: 'LineString', coordinates: verts },
     properties: {
       dist_m: dist,
-      tempo_s,
-      o2_kg: (tempo_s / 3600) * MOCK_O2_KG_PER_H,
-      perfil,
-      veredito: 'GO',
+      time_s,
+      o2_kg: (time_s / 3600) * MOCK_O2_KG_PER_H,
+      profile,
+      verdict: 'GO',
       mock: true,
     },
   };

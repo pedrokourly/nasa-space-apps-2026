@@ -1,23 +1,23 @@
 /**
- * Utilitários geodésicos para Marte. Lógica pura, sem dependências externas
- * e sem Leaflet, para ser reutilizada no mapa 2D, no roteamento (Web Worker) e na UI.
+ * Geodesy utilities for Mars. Pure logic, no external dependencies
+ * and no Leaflet, so it can be reused in the 2D map, in routing (Web Worker) and in the UI.
  *
- * Atenção às armadilhas de Marte: nunca use o raio da Terra. O `map.distance()`
- * do Leaflet padrão usa o raio terrestre; use sempre `haversine` deste módulo.
+ * Beware of the Mars pitfalls: never use Earth's radius. Stock Leaflet's `map.distance()`
+ * uses the terrestrial radius; always use `haversine` from this module.
  */
 
-/** Raio médio de Marte em metros (3389,5 km). */
+/** Mean radius of Mars in meters (3389.5 km). */
 export const MARS_RADIUS_M = 3389500;
 
 /**
- * Coordenada na ordem GeoJSON: `[lon, lat]`, com longitude em −180 a 180 graus.
- * Atenção: GeoJSON usa [lon, lat], enquanto o Leaflet usa {lat, lng}.
+ * Coordinate in GeoJSON order: `[lon, lat]`, with longitude in −180 to 180 degrees.
+ * Note: GeoJSON uses [lon, lat], while Leaflet uses {lat, lng}.
  */
 export type LonLat = [lon: number, lat: number];
 
 /**
- * Coordenada no formato do Leaflet: `{ lat, lng }`. É compatível
- * estruturalmente com `L.LatLng`, sem importar Leaflet aqui.
+ * Coordinate in Leaflet's format: `{ lat, lng }`. It is structurally
+ * compatible with `L.LatLng`, without importing Leaflet here.
  */
 export interface LatLngLike {
   lat: number;
@@ -27,13 +27,13 @@ export interface LatLngLike {
 const DEG_TO_RAD = Math.PI / 180;
 
 /**
- * Distância ortodrômica (grande círculo) em metros entre dois pontos na esfera de Marte.
- * Usa a fórmula de haversine com R = {@link MARS_RADIUS_M}. Funciona atravessando
- * o antimeridiano, porque o seno da diferença de longitude já trata o wrap.
+ * Great-circle distance in meters between two points on the sphere of Mars.
+ * Uses the haversine formula with R = {@link MARS_RADIUS_M}. Works across
+ * the antimeridian, because the sine of the longitude difference already handles the wrap.
  *
- * @param a ponto de origem em `[lon, lat]` (graus)
- * @param b ponto de destino em `[lon, lat]` (graus)
- * @returns distância em metros
+ * @param a origin point as `[lon, lat]` (degrees)
+ * @param b destination point as `[lon, lat]` (degrees)
+ * @returns distance in meters
  */
 export function haversine(a: LonLat, b: LonLat): number {
   const [lonA, latA] = a;
@@ -46,7 +46,7 @@ export function haversine(a: LonLat, b: LonLat): number {
   const sinHalfDPhi = Math.sin(dPhi / 2);
   const sinHalfDLambda = Math.sin(dLambda / 2);
   const h = sinHalfDPhi * sinHalfDPhi + Math.cos(phi1) * Math.cos(phi2) * sinHalfDLambda * sinHalfDLambda;
-  // Protege contra erros de ponto flutuante que levem h para fora de [0, 1].
+  // Guards against floating-point errors that push h outside [0, 1].
   const clamped = Math.min(1, Math.max(0, h));
   const c = 2 * Math.atan2(Math.sqrt(clamped), Math.sqrt(1 - clamped));
 
@@ -54,32 +54,32 @@ export function haversine(a: LonLat, b: LonLat): number {
 }
 
 /**
- * Normaliza uma longitude qualquer (0–360, negativa ou maior que 360) para o
- * intervalo [−180, 180). Exemplo: 270 vira −90 e 437.45 vira 77.45.
+ * Normalizes any longitude (0–360, negative or greater than 360) to the
+ * range [−180, 180). Example: 270 becomes −90 and 437.45 becomes 77.45.
  *
- * @param lon longitude em graus
- * @returns longitude em graus no intervalo [−180, 180)
+ * @param lon longitude in degrees
+ * @returns longitude in degrees in the range [−180, 180)
  */
 export function normalizeLon(lon: number): number {
   return ((((lon + 180) % 360) + 360) % 360) - 180;
 }
 
 /**
- * Converte `[lon, lat]` (GeoJSON) para `{ lat, lng }` (Leaflet).
+ * Converts `[lon, lat]` (GeoJSON) to `{ lat, lng }` (Leaflet).
  *
- * @param coord coordenada em ordem GeoJSON
- * @returns coordenada no formato do Leaflet
+ * @param coord coordinate in GeoJSON order
+ * @returns coordinate in Leaflet's format
  */
 export function toLatLng([lon, lat]: LonLat): LatLngLike {
   return { lat, lng: lon };
 }
 
 /**
- * Converte `{ lat, lng }` (Leaflet) para `[lon, lat]` (GeoJSON), aplicando
- * {@link normalizeLon} para garantir longitude em −180 a 180.
+ * Converts `{ lat, lng }` (Leaflet) to `[lon, lat]` (GeoJSON), applying
+ * {@link normalizeLon} to guarantee longitude in −180 to 180.
  *
- * @param ll coordenada no formato do Leaflet
- * @returns coordenada em ordem GeoJSON, com longitude normalizada
+ * @param ll coordinate in Leaflet's format
+ * @returns coordinate in GeoJSON order, with normalized longitude
  */
 export function toLonLat(ll: LatLngLike): LonLat {
   return [normalizeLon(ll.lng), ll.lat];

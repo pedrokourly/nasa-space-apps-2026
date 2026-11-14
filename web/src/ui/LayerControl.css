@@ -1,4 +1,4 @@
-/* Baixo-direita, acima da atribuição do Leaflet; zoom (topo-esq), cursor (topo-dir) e escala (baixo-esq) ficam livres. */
+/* Bottom right, above the Leaflet attribution; zoom (top-left), cursor (top-right) and scale (bottom-left) stay free. */
 .layer-control {
   position: absolute;
   right: 0.5rem;

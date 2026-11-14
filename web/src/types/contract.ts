@@ -1,15 +1,15 @@
 /**
- * Tipos do contrato de dados (AGENTS.md, seção 5). Fonte da verdade entre as frentes.
+ * Data contract types (AGENTS.md, section 5). Source of truth between the workstreams.
  *
- * Convenções:
- * - GeoJSON usa `[lon, lat]`; o Leaflet usa `[lat, lng]`. Converta só na borda do mapa.
- * - Longitude só em −180 a 180 (no contrato e no app). Converta 0–360 no pipeline.
- * - Distâncias só com `haversine` de `src/lib/mars-geo.ts` (R = 3389,5 km).
+ * Conventions:
+ * - GeoJSON uses `[lon, lat]`; Leaflet uses `[lat, lng]`. Convert only at the map boundary.
+ * - Longitude only in −180 to 180 (in the contract and in the app). Convert 0–360 in the pipeline.
+ * - Distances only with `haversine` from `src/lib/mars-geo.ts` (R = 3389.5 km).
  */
 
-// --- GeoJSON mínimo, escrito à mão (sem @types/geojson) ---
+// --- Minimal GeoJSON, hand-written (no @types/geojson) ---
 
-/** Posição GeoJSON: `[lon, lat]`. */
+/** GeoJSON position: `[lon, lat]`. */
 export type Position = [lon: number, lat: number];
 
 export interface Point {
@@ -36,66 +36,66 @@ export interface FeatureCollection<G, P> {
 // --- meta.json ---
 
 export interface Meta {
-  /** `[minLon, minLat, maxLon, maxLat]` em graus, longitude −180 a 180. */
+  /** `[minLon, minLat, maxLon, maxLat]` in degrees, longitude −180 to 180. */
   bbox: [minLon: number, minLat: number, maxLon: number, maxLat: number];
-  /** Células por linha. */
+  /** Cells per row. */
   width: number;
-  /** Número de linhas. */
+  /** Number of rows. */
   height: number;
   m_per_cell_x: number;
   m_per_cell_y: number;
   lon_convention: '-180..180';
   nodata: number;
   crs: 'EPSG:4326';
-  /** Linha 0 é a borda norte. */
+  /** Row 0 is the north edge. */
   row0: 'north';
   dtype: 'float32le';
-  fonte?: string;
+  source?: string;
 }
 
 // --- missions.json ---
 
 export interface Mission {
-  /** Identificador estável, ex.: `"mro-hirise"`. */
+  /** Stable identifier, e.g. `"mro-hirise"`. */
   id: string;
-  nome: string;
-  instrumento: string;
-  agencia: string;
+  name: string;
+  instrument: string;
+  agency: string;
   link: string;
-  descricao?: string;
+  description?: string;
 }
 
 // --- targets.geojson ---
 
 export interface TargetProps {
   id: string;
-  nome: string;
-  por_que: string;
-  /** `Mission.id` da missão que revelou o alvo. */
-  missao: string;
+  name: string;
+  why: string;
+  /** `Mission.id` of the mission that revealed the target. */
+  mission: string;
   mock?: boolean;
 }
 
 export type Target = Feature<Point, TargetProps>;
 export type TargetsCollection = FeatureCollection<Point, TargetProps>;
 
-// --- rota ---
+// --- route ---
 
 export interface RouteProps {
   dist_m: number;
-  tempo_s: number;
+  time_s: number;
   o2_kg: number;
-  /** Pares `[distância acumulada em m, elevação em m]`; o último tem `dist_m`. */
-  perfil: [dist_m: number, elev_m: number][];
-  veredito?: 'GO' | 'NO-GO';
-  /** Índice do vértice no LineString. */
-  ponto_nao_retorno?: number;
+  /** `[cumulative distance in m, elevation in m]` pairs; the last one has `dist_m`. */
+  profile: [dist_m: number, elev_m: number][];
+  verdict?: 'GO' | 'NO-GO';
+  /** Vertex index in the LineString. */
+  point_of_no_return?: number;
   mock?: boolean;
 }
 
 export type Route = Feature<LineString, RouteProps>;
 
-// --- estado ---
+// --- state ---
 
 export type RouteStatus = 'idle' | 'computing' | 'ready' | 'error';
 export type LayerId = string;

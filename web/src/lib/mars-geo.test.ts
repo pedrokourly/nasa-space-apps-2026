@@ -9,27 +9,27 @@ import {
 
 const JEZERO: [number, number] = [77.45, 18.44];
 
-describe('haversine (raio de Marte)', () => {
-  it('1° de latitude ≈ 59 158 m na esfera de Marte', () => {
+describe('haversine (Mars radius)', () => {
+  it('1° of latitude ≈ 59,158 m on the sphere of Mars', () => {
     const expected = (2 * Math.PI * MARS_RADIUS_M) / 360;
     const d = haversine([0, 0], [0, 1]);
     expect(d).toBeCloseTo(expected, 3);
-    // Sanidade: está na faixa de ~59 157 a 59 159 m, e não no valor da Terra (~111 km).
+    // Sanity check: within ~59,157 to 59,159 m, not Earth's value (~111 km).
     expect(d).toBeGreaterThan(59157);
     expect(d).toBeLessThan(59159);
   });
 
-  it('distância zero para o mesmo ponto', () => {
+  it('zero distance for the same point', () => {
     expect(haversine(JEZERO, JEZERO)).toBe(0);
   });
 
-  it('é simétrica: haversine(a, b) == haversine(b, a)', () => {
+  it('is symmetric: haversine(a, b) == haversine(b, a)', () => {
     const a: [number, number] = [77.45, 18.44];
     const b: [number, number] = [-120.5, -30.2];
     expect(haversine(a, b)).toBeCloseTo(haversine(b, a), 6);
   });
 
-  it('atravessa o antimeridiano: (179.9, 0) → (−179.9, 0) ≈ 0,2° de arco (~11,8 km)', () => {
+  it('crosses the antimeridian: (179.9, 0) → (−179.9, 0) ≈ 0.2° of arc (~11.8 km)', () => {
     const d = haversine([179.9, 0], [-179.9, 0]);
     const arcDeg = d / (MARS_RADIUS_M * (Math.PI / 180));
     expect(arcDeg).toBeCloseTo(0.2, 6);
@@ -37,13 +37,13 @@ describe('haversine (raio de Marte)', () => {
     expect(d).toBeLessThan(20000);
   });
 
-  it('meio equador entre (0,0) e (180,0) = π·R', () => {
+  it('half the equator between (0,0) and (180,0) = π·R', () => {
     expect(haversine([0, 0], [180, 0])).toBeCloseTo(Math.PI * MARS_RADIUS_M, 3);
   });
 });
 
 describe('normalizeLon', () => {
-  it('normaliza longitudes para o intervalo [−180, 180)', () => {
+  it('normalizes longitudes to the range [−180, 180)', () => {
     expect(normalizeLon(0)).toBeCloseTo(0, 10);
     expect(normalizeLon(360)).toBeCloseTo(0, 10);
     expect(normalizeLon(180)).toBeCloseTo(-180, 10);
@@ -57,7 +57,7 @@ describe('normalizeLon', () => {
 });
 
 describe('toLatLng / toLonLat', () => {
-  it('ida e volta em Jezero preserva lon e lat', () => {
+  it('round trip at Jezero preserves lon and lat', () => {
     const ll = toLatLng(JEZERO);
     expect(ll).toEqual({ lat: 18.44, lng: 77.45 });
     const back = toLonLat(ll);
@@ -65,7 +65,7 @@ describe('toLatLng / toLonLat', () => {
     expect(back[1]).toBeCloseTo(18.44, 10);
   });
 
-  it('toLonLat normaliza a longitude vinda do Leaflet', () => {
+  it('toLonLat normalizes the longitude coming from Leaflet', () => {
     const [lon, lat] = toLonLat({ lat: 10, lng: 437.45 });
     expect(lon).toBeCloseTo(77.45, 10);
     expect(lat).toBe(10);

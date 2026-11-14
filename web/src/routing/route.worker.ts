@@ -2,12 +2,12 @@ import { NoPathError, type RouteFn, type RouteRequest, type RouteResponse } from
 import { mockRoute } from './mockRoute';
 
 /**
- * PONTO DE PLUG DO ROTEAMENTO: a frente Roteamento troca `mockRoute` pelo
- * `route()` real (#37/#38) aqui, sem mexer no mapa nem no cliente.
+ * ROUTING PLUG POINT: the Routing workstream swaps `mockRoute` for the
+ * real `route()` (#37/#38) here, without touching the map or the client.
  */
 const routeImpl: RouteFn = mockRoute;
 
-/** Atraso artificial (ms) só em dev, para ver "Calculando rota…". Desligado por padrão (VITE_ROUTE_MOCK_DELAY_MS). */
+/** Artificial delay (ms) in dev only, to see "Computing route…". Off by default (VITE_ROUTE_MOCK_DELAY_MS). */
 const DEV_DELAY_MS = import.meta.env.DEV ? Number(import.meta.env.VITE_ROUTE_MOCK_DELAY_MS ?? 0) || 0 : 0;
 
 interface WorkerScope {

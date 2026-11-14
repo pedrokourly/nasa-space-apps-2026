@@ -16,12 +16,12 @@ const meta: Meta = {
 };
 
 describe('createGrid', () => {
-  it('aceita matrizes do tamanho de meta', () => {
+  it('accepts arrays sized as meta says', () => {
     const n = meta.width * meta.height;
     expect(() => createGrid({ meta, elevation: new Float32Array(n), slope: new Float32Array(n) })).not.toThrow();
   });
 
-  it('rejeita tamanho errado e meta inválido', () => {
+  it('rejects wrong sizes and invalid meta', () => {
     const n = meta.width * meta.height;
     expect(() => createGrid({ meta, elevation: new Float32Array(n - 1), slope: new Float32Array(n) })).toThrow(/elevation/);
     expect(() => createGrid({ meta, elevation: new Float32Array(n), slope: new Float32Array(n), sand: new Uint8Array(3) })).toThrow(/sand/);
@@ -29,8 +29,8 @@ describe('createGrid', () => {
   });
 });
 
-describe('índices e limites', () => {
-  it('cellIndex é row-major', () => {
+describe('indexes and bounds', () => {
+  it('cellIndex is row-major', () => {
     expect(cellIndex(meta, 3, 2)).toBe(2 * 10 + 3);
   });
 
@@ -44,7 +44,7 @@ describe('índices e limites', () => {
 });
 
 describe('isNoData', () => {
-  it('reconhece nodata gravado em Float32 e NaN, mas não zero', () => {
+  it('recognizes nodata stored as Float32 and NaN, but not zero', () => {
     const f = new Float32Array([meta.nodata, NaN, 0, -2500]);
     expect(isNoData(meta, f[0]!)).toBe(true);
     expect(isNoData(meta, f[1]!)).toBe(true);
@@ -53,8 +53,8 @@ describe('isNoData', () => {
   });
 });
 
-describe('célula ↔ lon/lat', () => {
-  it('a linha 0 é o norte e o centro fica meia célula para dentro', () => {
+describe('cell ↔ lon/lat', () => {
+  it('row 0 is north and the center sits half a cell inside', () => {
     const [lon, lat] = cellToLonLat(meta, 0, 0);
     expect(lon).toBeCloseTo(77.05, 10);
     expect(lat).toBeCloseTo(18.975, 10);
@@ -63,20 +63,20 @@ describe('célula ↔ lon/lat', () => {
     expect(lat2).toBeCloseTo(18.025, 10);
   });
 
-  it('ida e volta devolve a mesma célula', () => {
+  it('round trip returns the same cell', () => {
     for (const [col, row] of [[0, 0], [9, 19], [4, 7], [9, 0]] as const) {
       expect(lonLatToCell(meta, cellToLonLat(meta, col, row))).toEqual({ col, row });
     }
   });
 
-  it('pontos nas bordas pertencem às células de borda e fora do bbox é null', () => {
+  it('points on the edges belong to the edge cells and outside the bbox is null', () => {
     expect(lonLatToCell(meta, [77, 19])).toEqual({ col: 0, row: 0 });
     expect(lonLatToCell(meta, [78, 18])).toEqual({ col: 9, row: 19 });
     expect(lonLatToCell(meta, [76.99, 18.5])).toBeNull();
     expect(lonLatToCell(meta, [77.5, 19.01])).toBeNull();
   });
 
-  it('longitude fica em −180 a 180 num bbox negativo', () => {
+  it('longitude stays in −180 to 180 for a negative bbox', () => {
     const m: Meta = { ...meta, bbox: [-180, -10, -170, 0] };
     const [lon] = cellToLonLat(m, 0, 0);
     expect(lon).toBeGreaterThanOrEqual(-180);

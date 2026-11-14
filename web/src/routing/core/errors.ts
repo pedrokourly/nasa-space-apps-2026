@@ -1,18 +1,21 @@
-/** Erros do núcleo de roteamento. Sem dependências; o Worker os traduz em estados da UI. */
+/** Errors of the routing core. No dependencies; the Worker turns them into UI states. */
 
-/** Não existe caminho possível entre dois pontos (obstáculos, sem dado ou ilha). */
+/** Default message when no path exists between the points (the UI shows it as is). */
+export const NO_PATH_MESSAGE = 'No possible path between the points';
+
+/** No possible path between two points (obstacles, no-data cells or an island). */
 export class NoPathError extends Error {
-  constructor(message = 'Sem caminho possível entre os pontos') {
+  constructor(message = NO_PATH_MESSAGE) {
     super(message);
     this.name = 'NoPathError';
   }
 }
 
-/** Um ponto pedido está fora do grid (`bbox`) carregado. */
+/** A requested point is outside the loaded grid (`bbox`). */
 export class OutOfGridError extends Error {
   readonly point: [lon: number, lat: number];
   constructor(point: [lon: number, lat: number]) {
-    super(`Ponto fora do grid: [${point[0]}, ${point[1]}]`);
+    super(`Point outside the grid: [${point[0]}, ${point[1]}]`);
     this.name = 'OutOfGridError';
     this.point = point;
   }

@@ -14,5 +14,5 @@
   "crs": "EPSG:4326",
   "row0": "north",
   "dtype": "float32le",
-  "fonte": "MOCK — substituir por dado real (bbox ilustrativo em Jezero; sem raster correspondente)"
+  "source": "MOCK — replace with real data (illustrative bbox in Jezero; no matching raster)"
 }

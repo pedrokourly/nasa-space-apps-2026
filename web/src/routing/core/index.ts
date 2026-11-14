@@ -1,4 +1,4 @@
-/** API pública do núcleo puro de roteamento (sem React, Leaflet, DOM ou Worker). */
+/** Public API of the pure routing core (no React, Leaflet, DOM or Worker). */
 export * from './grid';
 export * from './cost';
 export * from './astar';

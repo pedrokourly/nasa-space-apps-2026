@@ -6,7 +6,7 @@ import { createRouteClient } from './client';
 
 const DEBOUNCE_MS = 150;
 
-/** Observa `waypoints` e mantém `route`, `routeStatus` e `routeError` do store atualizados via Worker. */
+/** Watches `waypoints` and keeps the store's `route`, `routeStatus` and `routeError` updated via the Worker. */
 export function useRouting(): void {
   useEffect(() => {
     const client = createRouteClient();

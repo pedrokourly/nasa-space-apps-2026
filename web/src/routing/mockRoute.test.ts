@@ -7,26 +7,26 @@ const B: LonLat = [77.46, 18.44];
 const C: LonLat = [77.46, 18.45];
 
 describe('mockRoute', () => {
-  it('rejeita menos de 2 pontos', () => {
+  it('rejects fewer than 2 points', () => {
     expect(() => mockRoute([])).toThrow();
     expect(() => mockRoute([A])).toThrow();
   });
 
-  it('dist_m bate com a soma dos haversines entre os pontos', () => {
+  it('dist_m matches the sum of haversines between the points', () => {
     const r = mockRoute([A, B, C]);
-    const esperado = haversine(A, B) + haversine(B, C);
-    expect(Math.abs(r.properties.dist_m - esperado) / esperado).toBeLessThan(1e-3);
+    const expected = haversine(A, B) + haversine(B, C);
+    expect(Math.abs(r.properties.dist_m - expected) / expected).toBeLessThan(1e-3);
   });
 
-  it('último ponto do perfil é dist_m e há um ponto de perfil por vértice', () => {
+  it('last profile point is dist_m and there is one profile point per vertex', () => {
     const r = mockRoute([A, B, C]);
-    const { perfil, dist_m } = r.properties;
-    expect(perfil[0]![0]).toBe(0);
-    expect(perfil.at(-1)![0]).toBeCloseTo(dist_m, 6);
-    expect(perfil).toHaveLength(r.geometry.coordinates.length);
+    const { profile, dist_m } = r.properties;
+    expect(profile[0]![0]).toBe(0);
+    expect(profile.at(-1)![0]).toBeCloseTo(dist_m, 6);
+    expect(profile).toHaveLength(r.geometry.coordinates.length);
   });
 
-  it('densifica: nenhum trecho passa de ~50 m e os pontos originais estão no traçado', () => {
+  it('densifies: no segment exceeds ~50 m and the original points are on the path', () => {
     const r = mockRoute([A, B]);
     const cs = r.geometry.coordinates;
     expect(cs.length).toBeGreaterThan(2);
@@ -37,17 +37,17 @@ describe('mockRoute', () => {
     expect(cs.at(-1)).toEqual(B);
   });
 
-  it('marca mock e veredito GO', () => {
+  it('flags mock and GO verdict', () => {
     const r = mockRoute([A, B]);
     expect(r.properties.mock).toBe(true);
-    expect(r.properties.veredito).toBe('GO');
+    expect(r.properties.verdict).toBe('GO');
   });
 
-  it('dobrar a distância dobra tempo e O₂', () => {
-    const curta = mockRoute([A, B]).properties;
-    const longa = mockRoute([A, B, [77.47, 18.44]]).properties;
-    expect(longa.dist_m / curta.dist_m).toBeCloseTo(2, 2);
-    expect(longa.tempo_s / curta.tempo_s).toBeCloseTo(2, 2);
-    expect(longa.o2_kg / curta.o2_kg).toBeCloseTo(2, 2);
+  it('doubling the distance doubles time and O₂', () => {
+    const short = mockRoute([A, B]).properties;
+    const long = mockRoute([A, B, [77.47, 18.44]]).properties;
+    expect(long.dist_m / short.dist_m).toBeCloseTo(2, 2);
+    expect(long.time_s / short.time_s).toBeCloseTo(2, 2);
+    expect(long.o2_kg / short.o2_kg).toBeCloseTo(2, 2);
   });
 });

@@ -1,68 +1,68 @@
-# Roteamento
+# Routing
 
-## Estrutura
+## Structure
 
-- `core/`: lógica pura (grid, custo, A*, métricas). **Proibido** importar React, Leaflet, DOM ou APIs de Worker; roda no navegador, no Worker e no Node.
-- `api.ts`, `client.ts`, `route.worker.ts`, `useRouting.ts`, `RouteController.tsx`: cola com o app (Worker, descarte de pedidos antigos, React). Mantida pelo Mapa 2D; o ponto de plug do `route()` real é `routeImpl` em `route.worker.ts`.
-- Distância: sempre `haversine` de `src/lib/mars-geo.ts` (R = 3389,5 km).
+- `core/`: pure logic (grid, cost, A*, metrics, `route()`). **Do not** import React, Leaflet, the DOM or Worker APIs; it runs in the browser, in the Worker and in Node.
+- `api.ts`, `client.ts`, `route.worker.ts`, `useRouting.ts`, `RouteController.tsx`: glue with the app (Worker, discarding stale requests, React). Maintained by the 2D Map workstream; the plug point for the real `route()` is `routeImpl` in `route.worker.ts`.
+- Distance: always `haversine` from `src/lib/mars-geo.ts` (R = 3389.5 km).
 
-## Formato do grid (premissas até o Dados/GIS confirmar)
+## Grid format (assumptions until Data/GIS confirms)
 
-Base: `Meta` em `src/types/contract.ts` e a seção 5 do `AGENTS.md`.
+Based on `Meta` in `src/types/contract.ts` and section 5 of `AGENTS.md`.
 
-| Item | Premissa |
+| Item | Assumption |
 |---|---|
-| `elevation.bin` | Float32 little-endian, row-major, metros |
-| `slope.bin` | Float32 little-endian, row-major, **graus** (premissa) |
-| Linha 0 | Borda norte (`meta.row0 = 'north'`) |
-| Longitude | −180 a 180 |
-| Célula | Amostra de área: o centro de (col, row) fica meia célula para dentro do `bbox` |
-| Sem dado | `meta.nodata` ou `NaN`; nunca tratado como zero |
-| Areia | Camada opcional `sand` (1 = areia). **Não está no contrato**; depende do Dados/GIS |
+| `elevation.bin` | Float32 little-endian, row-major, meters |
+| `slope.bin` | Float32 little-endian, row-major, **degrees** (assumption) |
+| Row 0 | North edge (`meta.row0 = 'north'`) |
+| Longitude | −180 to 180 |
+| Cell | Area sample: the center of (col, row) sits half a cell inside the `bbox` |
+| No data | `meta.nodata` or `NaN`; never treated as zero |
+| Sand | Optional `sand` layer (1 = sand). **Not in the contract**; depends on Data/GIS |
 
-Perguntas abertas para o Dados/GIS: ordem dos bytes e nodata confirmados? Declividade em graus? Haverá camada de areia? `bbox` é `[lonMin, latMin, lonMax, latMax]`? Só o loader (dados reais) conhece o formato dos `.bin`; o restante usa `Grid` (`core/grid.ts`).
+Open questions for Data/GIS: are the byte order and nodata confirmed? Is the slope in degrees? Will there be a sand layer? Is `bbox` `[lonMin, latMin, lonMax, latMax]`? Only the loader (real data) knows the `.bin` format; everything else uses `Grid` (`core/grid.ts`).
 
-## Testes
+## Tests
 
 ```bash
 cd web && npm test
 ```
 
-## Modelo de custo (S1)
+## Cost model (S1)
 
-`core/cost.ts` (perfil em `DEFAULT_PROFILE`) e `core/astar.ts`.
+`core/cost.ts` (profile in `DEFAULT_PROFILE`) and `core/astar.ts`.
 
-| Regra | Valor | Origem |
+| Rule | Value | Source |
 |---|---|---|
-| Declividade >= 25° | intransponível | Plano inicial do time (suposição de projeto) |
-| Célula sem dado (elevação ou declividade) | intransponível | Regra do `AGENTS.md`: nodata nunca vira zero |
-| Areia | custo × 2 | Plano inicial do time (suposição de projeto) |
-| Termo de declividade | fator = 1 + 2 · (slope / 25°)² | **Hipótese nossa**, sem referência científica; calibrar com dados reais |
+| Slope >= 25° | impassable | Team's initial plan (project assumption) |
+| No-data cell (elevation or slope) | impassable | `AGENTS.md` rule: nodata never becomes zero |
+| Sand | cost × 2 | Team's initial plan (project assumption) |
+| Slope term | factor = 1 + 2 · (slope / 25°)² | **Our hypothesis**, no scientific reference; calibrate with real data |
 
-- Custo do passo = metros do passo × média dos fatores das duas células. Todo fator é >= 1, então a distância reta em metros é uma heurística admissível e o A* é ótimo.
-- 8 vizinhos; a diagonal só é permitida se as duas células ortogonais ao lado estão livres (não corta quina de obstáculo).
-- `findPathDijkstra` é a referência usada nos testes para conferir o A*.
-- Modos de rota (curta, segura) serão outro `CostProfile`, sem mudar arquivos de dados.
+- Step cost = step meters × average factor of the two cells. Every factor is >= 1, so the straight-line distance in meters is an admissible heuristic and A* is optimal.
+- 8 neighbors; a diagonal move is only allowed if both orthogonal cells beside it are free (it does not cut the corner of an obstacle).
+- `findPathDijkstra` is the reference used in tests to check A*.
+- Route modes (shortest, safest) will be another `CostProfile`, with no change to the data files.
 
-## Métricas e `route()` (S2)
+## Metrics and `route()` (S2)
 
-`core/walk.ts` e `core/route.ts`. `route(grid, pontos, opções)` devolve o GeoJSON do contrato (`Route`); `createRouter(grid, opções)` devolve `(pontos) => Route`, a forma que o Worker usa (`RouteFn`, S3).
+`core/walk.ts` and `core/route.ts`. `route(grid, points, options)` returns the contract GeoJSON (`Route`); `createRouter(grid, options)` returns `(points) => Route`, the shape the Worker uses (`RouteFn`, S3).
 
-| Item | Valor | Origem |
+| Item | Value | Source |
 |---|---|---|
-| Velocidade por inclinação | Tobler (1993), normalizada: plano = `speedFlatMS` | Referência publicada; usa o gradiente com sinal entre vértices |
-| Velocidade no plano | 1,0 m/s | **Suposição** (astronauta de traje) |
-| Consumo de O₂ no plano | 0,1 kg/h | **Suposição** (mesmo valor do mock do Mapa 2D) |
-| Acréscimo de O₂ ao subir | × (1 + 4 · gradiente) | **Suposição** |
-| O₂ disponível na saída | 1,0 kg (opção `o2_disponivel_kg`) | **Suposição**, ~10 h no plano |
-| Gravidade de Marte (0,38 g) | não modelada | Simplificação |
+| Speed by slope | Tobler (1993), normalized: flat = `speedFlatMS` | Published reference; uses the signed gradient between vertices |
+| Flat speed | 1.0 m/s | **Assumption** (suited astronaut) |
+| O₂ consumption on flat terrain | 0.1 kg/h | **Assumption** (same value as the 2D Map mock) |
+| O₂ increase when climbing | × (1 + 4 · gradient) | **Assumption** |
+| O₂ available at departure | 1.0 kg (`o2_available_kg` option) | **Assumption**, ~10 h on flat terrain |
+| Mars gravity (0.38 g) | not modeled | Simplification |
 
-- Os vértices são centros de célula; a distância usa `haversine` (R = 3389,5 km).
-- **Veredito:** GO se o O₂ do trajeto, mais o da volta pelo mesmo caminho quando o último ponto não é o primeiro, cabe no disponível. Para circuito (habitat → alvos → habitat) basta o do trajeto.
-- **Ponto de não retorno** (`ponto_nao_retorno`, índice do vértice): primeiro vértice em que o O₂ já gasto somado ao da volta pelo mesmo caminho passa do disponível; ausente se isso nunca acontece. O retorno ótimo é do S5.
-- Erros: `OutOfGridError` (ponto fora do grid), `NoPathError` (sem caminho), `Error` (menos de 2 pontos).
-- O O₂ disponível **não** vai na rota (o contrato não tem o campo). Se a UI precisar mostrar a margem, é mudança de contrato (atualizar a seção 5 do `AGENTS.md` no mesmo PR).
+- Vertices are cell centers; distance uses `haversine` (R = 3389.5 km).
+- **Verdict:** GO if the O₂ of the trip, plus that of the return along the same path when the last point is not the first, fits in what is available. For a loop (habitat → targets → habitat) the O₂ of the trip is enough.
+- **Point of no return** (`point_of_no_return`, vertex index): first vertex where the O₂ already spent plus that of the way back along the same path exceeds what is available; absent if that never happens. The optimal return is S5's.
+- Errors: `OutOfGridError` (point outside the grid), `NoPathError` (no path), `Error` (fewer than 2 points).
+- The available O₂ is **not** part of the route (the contract has no such field). If the UI needs to show the margin, that is a contract change (update section 5 of `AGENTS.md` in the same PR).
 
-### Rotas de exemplo
+### Sample routes
 
-`public/data/mock/route-go.geojson` e `route-no-go.geojson`: mesmo trajeto (habitat, 3 alvos mock, habitat) sobre terreno inventado com o bbox do mock, uma com O₂ padrão (GO) e outra com 0,2 kg (NO-GO, com `ponto_nao_retorno`). Marcadas `mock: true`. Regerar: `WRITE_MOCKS=1 npm test -- sampleRoutes`.
+`public/data/mock/route-go.geojson` and `route-no-go.geojson`: the same trip (habitat, 3 mock targets, habitat) over an invented terrain with the mock bbox, one with the default O₂ (GO) and one with 0.2 kg (NO-GO, with `point_of_no_return`). Flagged `mock: true`. Regenerate with `WRITE_MOCKS=1 npm test -- sampleRoutes`.
