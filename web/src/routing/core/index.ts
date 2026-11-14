@@ -6,3 +6,4 @@ export * from './mockGrid';
 export * from './errors';
 export * from './walk';
 export * from './route';
+export * from './gridBinary';

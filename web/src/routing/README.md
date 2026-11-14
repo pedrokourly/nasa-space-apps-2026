@@ -66,3 +66,10 @@ cd web && npm test
 ### Sample routes
 
 `public/data/mock/route-go.geojson` and `route-no-go.geojson`: the same trip (habitat, 3 mock targets, habitat) over an invented terrain with the mock bbox, one with the default O₂ (GO) and one with 0.2 kg (NO-GO, with `point_of_no_return`). Flagged `mock: true`. Regenerate with `WRITE_MOCKS=1 npm test -- sampleRoutes`.
+
+## Worker (S3)
+
+- `route.worker.ts` runs the real `route()` (via `createRouter`). On the first request it loads the grid with `loadGrid(GRID_BASE_URL)`: `meta.json`, `elevation.bin` and `slope.bin` from `data/mock/` (same source as `loadData('mock')` in `App.tsx`). If loading fails, the next request tries again.
+- `core/gridBinary.ts` decodes the `.bin` files (Float32 LE via `DataView`) and checks sizes and `bbox`; `meta.json` is validated by `parseMeta`.
+- `public/data/mock/elevation.bin` and `slope.bin` are the **invented** sample terrain (1 MiB each, 512 × 512): rolling hills and an impassable crater between the habitat and the delta front. They do **not** match the imagery; S4 (#39) swaps them for the real Jezero grid by changing `GRID_BASE_URL`.
+- Discarding stale requests and debouncing stay in `client.ts` / `useRouting.ts` (2D Map workstream). Errors: `NoPathError` → `no-path`; anything else (e.g. `OutOfGridError`) → `error` with its message.

@@ -2,18 +2,54 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { parseMeta, parseRoute } from '../../lib/loadData';
-import { SAMPLE_META, sampleRoutes } from './sampleRoutes';
+import { loadGrid } from '../loadGrid';
+import { encodeFloat32LE } from './gridBinary';
+import { createRouter } from './route';
+import { SAMPLE_META, SAMPLE_STOPS, sampleGrid, sampleRoutes } from './sampleRoutes';
 
 const dir = new URL('../../../public/data/mock/', import.meta.url);
 const file = (name: string) => new URL(name, dir);
 const serialize = (r: unknown) => JSON.stringify(r, null, 2) + '\n';
 
 const { go, noGo } = sampleRoutes();
+const grid = sampleGrid();
 
 if (process.env.WRITE_MOCKS) {
   writeFileSync(file('route-go.geojson'), serialize(go));
   writeFileSync(file('route-no-go.geojson'), serialize(noGo));
+  writeFileSync(file('elevation.bin'), encodeFloat32LE(grid.elevation));
+  writeFileSync(file('slope.bin'), encodeFloat32LE(grid.slope));
 }
+
+/** `fetch` that reads from `public/data/mock/` on disk, to test the Worker loading path in Node. */
+const diskFetch = async (url: string): Promise<Response> => {
+  const name = url.slice(url.lastIndexOf('/') + 1);
+  if (!existsSync(file(name))) return new Response(null, { status: 404 });
+  return new Response(readFileSync(file(name)));
+};
+
+describe('mock grid files (elevation.bin, slope.bin)', () => {
+  it('exist with the size meta.json implies and match the sample terrain', () => {
+    for (const [name, values] of [['elevation.bin', grid.elevation], ['slope.bin', grid.slope]] as const) {
+      expect(existsSync(file(name)), `${name} does not exist; generate with WRITE_MOCKS=1 npm test -- sampleRoutes`).toBe(true);
+      const bytes = readFileSync(file(name));
+      expect(bytes.byteLength).toBe(SAMPLE_META.width * SAMPLE_META.height * 4);
+      expect(Buffer.compare(bytes, Buffer.from(encodeFloat32LE(values)))).toBe(0);
+    }
+  });
+
+  it('loading meta.json + .bin the way the Worker does gives the same GO route', async () => {
+    const loaded = await loadGrid('/data/mock/', diskFetch);
+    const fromFiles = createRouter(loaded)(SAMPLE_STOPS);
+    expect(fromFiles.geometry).toEqual(go.geometry);
+    expect(fromFiles.properties.verdict).toBe('GO');
+    expect(fromFiles.properties.o2_kg).toBeCloseTo(go.properties.o2_kg, 10);
+  });
+
+  it('a missing file gives a clear error', async () => {
+    await expect(loadGrid('/data/nothing/', async () => new Response(null, { status: 404 }))).rejects.toThrow(/HTTP 404/);
+  });
+});
 
 describe('sample routes', () => {
   it('the sample terrain uses the same meta as the contract mock', () => {
