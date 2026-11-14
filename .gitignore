@@ -151,3 +151,11 @@ vite.config.ts.timestamp-*
 # Worktrees e config local do Claude Code
 .claude/worktrees/
 .claude/settings.local.json
+
+# Pipeline de Dados/GIS: dado bruto e ambiente Python (nao versionar)
+data/raw/
+*.tif
+*.tiff
+*.cub
+.venv/
+__pycache__/
