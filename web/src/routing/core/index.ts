@@ -3,3 +3,6 @@ export * from './grid';
 export * from './cost';
 export * from './astar';
 export * from './mockGrid';
+export * from './errors';
+export * from './walk';
+export * from './route';

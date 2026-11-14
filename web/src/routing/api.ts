@@ -15,13 +15,8 @@ export type RouteResponse =
  */
 export type RouteFn = (points: LonLat[]) => Route | Promise<Route>;
 
-/** Lançado pela função de rota quando não existe caminho possível entre os pontos. */
-export class NoPathError extends Error {
-  constructor(message = 'Sem caminho possível entre os pontos') {
-    super(message);
-    this.name = 'NoPathError';
-  }
-}
+/** Lançado pela função de rota quando não existe caminho possível entre os pontos (definido no núcleo). */
+export { NoPathError } from './core/errors';
 
 /** Resposta antiga descartada porque um pedido mais novo já foi feito (ou o cliente foi cancelado). */
 export class StaleRouteError extends Error {
