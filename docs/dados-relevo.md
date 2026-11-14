@@ -115,6 +115,34 @@ Comparação feita com as 708 paradas do rover publicadas pelo MMGIS/NASA (`http
 
 **Raio.** Os metros por célula usam o raio do app (3389,5 km). Com o raio do DTM (3396,19 km) eles seriam ~0,2% maiores; a diferença não importa para a rota, mas não se deve misturar os dois raios no mesmo cálculo.
 
+## elevation.bin (issue #24)
+
+Gerado por `pipeline/export_elevation.py` a partir do DTM de 1 m, em `web/public/data/elevation.bin`.
+
+| Item | Valor |
+|---|---|
+| Formato | Float32 little-endian, row-major, linha 0 = norte, 512 × 512 |
+| Tamanho | 1.048.576 bytes (512 × 512 × 4) |
+| Células válidas | 262.144 de 262.144 (nenhuma nodata dentro do bbox) |
+| Elevação | mín −2.646,73 m, máx −2.392,54 m, média −2.537,21 m |
+| Reprodutível | Duas execuções geram bytes idênticos |
+| Leitura | `numpy.fromfile(..., dtype="<f4").reshape(512, 512)` |
+| Proveniência | MRO, HiRISE, USGS Astrogeology, DOI 10.5066/P9REJ9JN (campo `source` do `meta.json`) |
+
+**Como foi feito.** O script lê só a janela do DTM que cobre o bbox (cerca de 8.300 × 5.900 pixels, não o arquivo inteiro de 21.400 × 21.488) e reamostra por **média de blocos** (`Resampling.average`) para a grade de 512 × 512. Não há reprojeção: o DTM já é uma grade lon/lat (`x = R·lon`, `y = R·lat`, R = 3.396.190 m), com longitude −180 a 180.
+
+**Regra de nodata.** O nodata do DTM (`-3.4028226550889045e+38`) vira o do contrato (`-3.4028234663852886e+38`, menor float32). Uma célula do grid é nodata se **qualquer** pixel de 1 m dentro dela era nodata, e nunca vira 0. Hoje isso não ocorre, mas vale para o bbox futuro.
+
+**Validação.** Com as 313 paradas do rover dentro do bbox (MMGIS/NASA, `elev_geoid`):
+
+| Comparação | Mediana | Desvio | Máx. \|dif\| |
+|---|---|---|---|
+| DTM de 1 m − altitude do rover | 0,00 m | 0,06 m | 0,43 m |
+| `elevation.bin` − DTM de 1 m (mesmo ponto) | 0,02 m | 0,37 m | 2,14 m |
+| `elevation.bin` − altitude do rover | 0,03 m | 0,37 m | 2,17 m |
+
+A diferença do grid vem da média em células de 15 × 12 m sobre terreno inclinado, não de deslocamento. Para o alinhamento horizontal, sobrepus um hillshade do `elevation.bin` (azimute 315°, altitude 45°) aos tiles HiRISE de 25 cm do Mars Trek, com 50% de opacidade: as feições (bordas de crateras, escarpa do delta, montículos pequenos) aparecem nítidas, sem bordas duplicadas, e a escarpa do delta continua sem quebra através da borda do bbox. Um deslocamento de uma célula (~12 px no zoom usado) seria visível. A checagem visual foi feita por inspeção em uma página de teste fora do repositório; a validação sistemática contra o Mars Trek continua sendo a #32.
+
 ## Ressalvas
 
 - **Datum vertical não declarado.** Nem o PDS3 Label nem o XML FGDC dizem qual é a superfície de referência de altitude, só "metros". O nome do produto (`MOLAtopography_DeltaGeoid`) sugere referência ao MOLA/geoide de Marte, mas isso é **inferência do nome**. Há porém evidência empírica de que o DTM concorda com a altitude `elev_geoid` publicada pela Perseverance (ver "Validação do bbox" abaixo). Para declividade e rota só importam diferenças de altitude, então não bloqueia o roteamento.
@@ -135,6 +163,9 @@ python -m venv pipeline/.venv
 pipeline/.venv/Scripts/python -m pip install -r pipeline/requirements.txt
 curl -L -C - -o data/raw/JEZ_hirise_soc_006_DTM_MOLAtopography_DeltaGeoid_1m_Eqc_latTs0_lon0_blend40.tif "https://planetarymaps.usgs.gov/mosaic/mars2020_trn/HiRISE/JEZ_hirise_soc_006_DTM_MOLAtopography_DeltaGeoid_1m_Eqc_latTs0_lon0_blend40.tif"
 pipeline/.venv/Scripts/python pipeline/inspect_dtm.py
+pipeline/.venv/Scripts/python pipeline/jezero_grid.py        # meta.json (#23)
+pipeline/.venv/Scripts/python pipeline/export_elevation.py   # elevation.bin + meta.json (#24)
+pipeline/.venv/Scripts/python -m pytest pipeline/tests
 ```
 
 `data/raw/` e `*.tif` estão no `.gitignore`: o dado bruto não é versionado.
