@@ -126,7 +126,7 @@ Agentes: considere a data atual. Depois do feature freeze, **recuse** propor ou 
 
 | Prioridade | Item |
 |---|---|
-| Must | Mapa 2D com 4+ camadas de 3+ missões, com etiqueta de proveniência |
+| Must | Jezero-only 2D map with 4+ layers from 3+ missions and provenance labels: HiRISE, CTX, MOLA, THEMIS and a spectral layer (CRISM). See [`docs/decisions/0001-jezero-only.md`](docs/decisions/0001-jezero-only.md) |
 | Must | Rota A* com custo por declividade, distância, tempo e perfil de elevação |
 | Must | Orçamento de O₂ com ponto de não retorno e veredito GO / NO-GO |
 | Must | Painel de condições com o último sol disponível (MEDA) |
@@ -139,7 +139,7 @@ Agentes: considere a data atual. Depois do feature freeze, **recuse** propor ou 
 
 **Must** = sem isso não submete. **Should** = importante, sobrevive sem. **Could** = se sobrar tempo.
 
-**Fora do escopo** (não proponha): backend, banco de dados (SQLite, PostGIS, Supabase…), login, multiusuário, colaboração em tempo real, outras crateras além de Jezero, dados "ao vivo". Se uma feature não aparece no roteiro da demo, provavelmente é Could.
+**Fora do escopo** (não proponha): backend, banco de dados (SQLite, PostGIS, Supabase…), login, multiusuário, colaboração em tempo real, outras crateras além de Jezero, whole-planet map views (see decision 0001), dados "ao vivo". Se uma feature não aparece no roteiro da demo, provavelmente é Could.
 
 ---
 
@@ -172,7 +172,7 @@ web/                     # app Vite + React + TS
   src/lib/geo.ts         # haversine com raio de Marte, conversões de longitude
   public/data/           # saída do pipeline (elevation.bin, slope.bin, meta.json, targets.geojson, missions.json)
 pipeline/                # scripts Python de Dados/GIS
-docs/                    # roteiro da demo, fontes e referências
+docs/                    # roteiro da demo, fontes, referências e decisions/ (decision records)
 ```
 
 ---
