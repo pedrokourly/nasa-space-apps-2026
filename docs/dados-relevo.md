@@ -143,6 +143,35 @@ Gerado por `pipeline/export_elevation.py` a partir do DTM de 1 m, em `web/public
 
 A diferença do grid vem da média em células de 15 × 12 m sobre terreno inclinado, não de deslocamento. Para o alinhamento horizontal, sobrepus um hillshade do `elevation.bin` (azimute 315°, altitude 45°) aos tiles HiRISE de 25 cm do Mars Trek, com 50% de opacidade: as feições (bordas de crateras, escarpa do delta, montículos pequenos) aparecem nítidas, sem bordas duplicadas, e a escarpa do delta continua sem quebra através da borda do bbox. Um deslocamento de uma célula (~12 px no zoom usado) seria visível. A checagem visual foi feita por inspeção em uma página de teste fora do repositório; a validação sistemática contra o Mars Trek continua sendo a #32.
 
+## slope.bin (issue #25)
+
+Gerado por `pipeline/export_slope.py` a partir do `elevation.bin` e do `meta.json`, em `web/public/data/slope.bin`.
+
+| Item | Valor |
+|---|---|
+| Formato | Float32 little-endian, row-major, linha 0 = norte, 512 × 512, em **graus** |
+| Tamanho | 1.048.576 bytes, o mesmo grid do `elevation.bin` |
+| Células válidas | 260.100 de 262.144; nodata: 2.044 (a borda de 1 célula do grid) |
+| Declividade | mín 0,00°, máx 43,75°, média 3,59°, mediana 2,28° |
+| Células acima de 10° / 15° / 25° | 6,74% / 2,94% / 0,46% |
+| Proveniência | MRO, HiRISE, USGS Astrogeology, DOI 10.5066/P9REJ9JN (mesma do `elevation.bin`) |
+
+**Método.** Declividade de Horn (a mesma do `gdaldem slope`): `dz/dx` e `dz/dy` por kernel 3 × 3 ponderado, com os metros reais por célula do `meta.json` (x = 15,345 m, y = 11,554 m), e `slope = degrees(arctan(hypot(dz/dx, dz/dy)))`. Usar o mesmo tamanho de célula nos dois eixos daria resposta errada, e um teste automatizado cobre isso (rampa de 10° em y com células de tamanhos diferentes devolve 10° com tolerância de 0,1°).
+
+**Regra de nodata.** A célula só tem valor se as 9 células do kernel forem válidas. Uma célula nodata contamina as 8 vizinhas, e a **borda de 1 célula do grid fica nodata** (sem vizinhos), nunca 0. Hoje o `elevation.bin` não tem buracos, então só a borda é nodata.
+
+**Suposição: escala da declividade.** A declividade sai do **grid de 512 × 512 (~15 × 12 m)**, não do DTM de 1 m. Motivo: é a escala do roteamento (o A* anda de célula em célula) e mantém `slope.bin` coerente com o `elevation.bin`. É uma suposição, não uma verdade física. Comparação nas mesmas 262.144 células (`pipeline/slope_scale_check.py`):
+
+| Escala | Média | > 15° | > 25° | Correlação com o grid |
+|---|---|---|---|---|
+| A) grid de ~15 m (`slope.bin`) | 3,59° | 2,94% | 0,46% | n/a |
+| B) DTM de 1 m, média por célula | 4,85° | 3,62% | 0,58% | 0,93 |
+| C) DTM de 1 m, máximo por célula | 9,60° | 14,72% | 3,47% | 0,76 |
+
+A escala A tende a **subestimar** degraus e rochas de poucos metros; o DTM de 1 m tem pixels com até 74,9° e 0,78% acima de 25°. A escala C é bem mais conservadora (34% das células acima de 10°), e poderia alimentar um modo "mais segura" no roteamento, mas exigiria outro arquivo. O limite de declividade intransponível continua sendo decisão do Roteamento.
+
+**Sanidade com dado real.** Nas 310 paradas da Perseverance dentro do bbox com declividade válida, a declividade fica em média 3,92°, com máximo de 16,97° e nenhuma acima de 25°. Isso é coerente com um rover que evita terreno íngreme, mas não é uma validação forte: o grid inteiro também é suave (média 3,59°).
+
 ## Ressalvas
 
 - **Datum vertical não declarado.** Nem o PDS3 Label nem o XML FGDC dizem qual é a superfície de referência de altitude, só "metros". O nome do produto (`MOLAtopography_DeltaGeoid`) sugere referência ao MOLA/geoide de Marte, mas isso é **inferência do nome**. Há porém evidência empírica de que o DTM concorda com a altitude `elev_geoid` publicada pela Perseverance (ver "Validação do bbox" abaixo). Para declividade e rota só importam diferenças de altitude, então não bloqueia o roteamento.
@@ -165,6 +194,8 @@ curl -L -C - -o data/raw/JEZ_hirise_soc_006_DTM_MOLAtopography_DeltaGeoid_1m_Eqc
 pipeline/.venv/Scripts/python pipeline/inspect_dtm.py
 pipeline/.venv/Scripts/python pipeline/jezero_grid.py        # meta.json (#23)
 pipeline/.venv/Scripts/python pipeline/export_elevation.py   # elevation.bin + meta.json (#24)
+pipeline/.venv/Scripts/python pipeline/export_slope.py       # slope.bin (#25)
+pipeline/.venv/Scripts/python pipeline/slope_scale_check.py  # compara escalas de declividade (opcional)
 pipeline/.venv/Scripts/python -m pytest pipeline/tests
 ```
 
