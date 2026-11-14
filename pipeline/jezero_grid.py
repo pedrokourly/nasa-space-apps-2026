@@ -41,6 +41,11 @@ SOURCE = (
 )
 
 META_PATH = Path("web/public/data/meta.json")
+ELEVATION_PATH = Path("web/public/data/elevation.bin")
+
+# Raio da esfera de Marte da projecao do DTM (Equirectangular, paralelo padrao 0):
+# x = R * lon (rad) e y = R * lat (rad). Nao e o raio do app (MARS_RADIUS_APP_M).
+DTM_RADIUS_M = 3_396_190.0
 
 
 def haversine(a: tuple[float, float], b: tuple[float, float], radius: float = MARS_RADIUS_APP_M) -> float:
@@ -80,6 +85,13 @@ def build_meta() -> dict:
     }
 
 
+def write_meta(path: Path = META_PATH) -> dict:
+    """Grava o meta.json do contrato e devolve o conteudo."""
+    meta = build_meta()
+    path.write_text(json.dumps(meta, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    return meta
+
+
 def bbox_inside(inner: tuple[float, float, float, float], outer: tuple[float, float, float, float]) -> bool:
     return inner[0] >= outer[0] and inner[1] >= outer[1] and inner[2] <= outer[2] and inner[3] <= outer[3]
 
@@ -89,7 +101,7 @@ def dtm_nodata_percent(tif: Path, bbox: tuple[float, float, float, float] = BBOX
     import rasterio
     from rasterio.windows import Window
 
-    r_dtm = 3_396_190.0  # raio da projecao do DTM
+    r_dtm = DTM_RADIUS_M
     with rasterio.open(tif) as ds:
         left, top = ds.bounds.left, ds.bounds.top
         c0 = int(r_dtm * math.radians(bbox[0]) - left)
@@ -121,7 +133,7 @@ def main() -> None:
 
     if check_only:
         return
-    META_PATH.write_text(json.dumps(meta, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    write_meta()
     print(f"gravado {META_PATH}")
 
 
