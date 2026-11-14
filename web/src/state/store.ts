@@ -7,6 +7,8 @@ export interface AppState {
   waypoints: LonLat[];
   route: Route | null;
   routeStatus: RouteStatus;
+  /** Mensagem do último erro de rota (quando `routeStatus === 'error'`). */
+  routeError: string | null;
   selectedTargetId: string | null;
   hoverProfileIndex: number | null;
   activeLayers: LayerId[];
@@ -19,6 +21,7 @@ export interface AppState {
   removeWaypoint: (i: number) => void;
   setRoute: (r: Route | null) => void;
   setRouteStatus: (s: RouteStatus) => void;
+  setRouteError: (m: string | null) => void;
   selectTarget: (id: string | null) => void;
   setHoverProfileIndex: (i: number | null) => void;
   toggleLayer: (id: LayerId) => void;
@@ -31,6 +34,7 @@ export const useAppStore = create<AppState>()((set) => ({
   waypoints: [],
   route: null,
   routeStatus: 'idle',
+  routeError: null,
   selectedTargetId: null,
   hoverProfileIndex: null,
   activeLayers: [DEFAULT_BASE_ID],
@@ -45,6 +49,7 @@ export const useAppStore = create<AppState>()((set) => ({
   removeWaypoint: (i) => set((s) => ({ waypoints: s.waypoints.filter((_, k) => k !== i) })),
   setRoute: (route) => set({ route }),
   setRouteStatus: (routeStatus) => set({ routeStatus }),
+  setRouteError: (routeError) => set({ routeError }),
   selectTarget: (selectedTargetId) => set({ selectedTargetId }),
   setHoverProfileIndex: (hoverProfileIndex) => set({ hoverProfileIndex }),
   toggleLayer: (id) =>

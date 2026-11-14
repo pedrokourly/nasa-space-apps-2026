@@ -6,6 +6,9 @@ import TargetCard from './ui/TargetCard'
 import WaypointsLayer from './map/WaypointsLayer'
 import LayerManager from './map/LayerManager'
 import LayerControl from './ui/LayerControl'
+import RouteController from './routing/RouteController'
+import RouteLayer from './map/RouteLayer'
+import RouteSummary from './ui/RouteSummary'
 
 export default function App() {
   const [data, setData] = useState<AppData | null>(null)
@@ -24,6 +27,9 @@ export default function App() {
         <MapView>
           <LayerManager />
           <LayerControl />
+          <RouteController />
+          <RouteLayer />
+          <RouteSummary />
           <WaypointsLayer meta={data?.meta ?? null} />
           {data && <TargetsLayer targets={data.targets} />}
           {data && <TargetCard targets={data.targets} missions={data.missions} />}
