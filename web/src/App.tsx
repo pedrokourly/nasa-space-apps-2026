@@ -12,6 +12,8 @@ import RouteController from './routing/RouteController'
 import RouteLayer from './map/RouteLayer'
 import RouteMarkers from './map/RouteMarkers'
 import RouteSummary from './ui/RouteSummary'
+import SimulationLayer from './map/SimulationLayer'
+import SimulationControl from './ui/SimulationControl'
 import TileHealth from './map/TileHealth'
 import DataStatus from './ui/DataStatus'
 import ViewToggle, { type ViewMode } from './ui/ViewToggle'
@@ -53,7 +55,9 @@ export default function App() {
             <RouteController />
             <RouteLayer />
             <RouteMarkers />
+            <SimulationLayer />
             <RouteSummary />
+            <SimulationControl />
             <TileHealth />
             <DataStatus loading={!data && !error} error={error} />
             <PlanningAreaFocus meta={data?.meta ?? null} />
