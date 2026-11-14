@@ -10,6 +10,8 @@ import RouteController from './routing/RouteController'
 import RouteLayer from './map/RouteLayer'
 import RouteMarkers from './map/RouteMarkers'
 import RouteSummary from './ui/RouteSummary'
+import TileHealth from './map/TileHealth'
+import DataStatus from './ui/DataStatus'
 
 export default function App() {
   const [data, setData] = useState<AppData | null>(null)
@@ -32,6 +34,8 @@ export default function App() {
           <RouteLayer />
           <RouteMarkers />
           <RouteSummary />
+          <TileHealth />
+          <DataStatus loading={!data && !error} error={error} />
           <WaypointsLayer meta={data?.meta ?? null} />
           {data && <TargetsLayer targets={data.targets} />}
           {data && <TargetCard targets={data.targets} missions={data.missions} />}
