@@ -3,6 +3,7 @@ import { loadData, type AppData } from './lib/loadData'
 import MapView from './map/MapView'
 import TargetsLayer from './map/TargetsLayer'
 import TargetCard from './ui/TargetCard'
+import WaypointsLayer from './map/WaypointsLayer'
 
 export default function App() {
   const [data, setData] = useState<AppData | null>(null)
@@ -19,6 +20,7 @@ export default function App() {
       </header>
       <main id="map-area" className="map-area" aria-label="Área do mapa">
         <MapView>
+          <WaypointsLayer meta={data?.meta ?? null} />
           {data && <TargetsLayer targets={data.targets} />}
           {data && <TargetCard targets={data.targets} missions={data.missions} />}
         </MapView>
