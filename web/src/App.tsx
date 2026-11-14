@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { loadData, type AppData } from './lib/loadData'
 import MapView from './map/MapView'
 import TargetsLayer from './map/TargetsLayer'
@@ -12,10 +12,15 @@ import RouteMarkers from './map/RouteMarkers'
 import RouteSummary from './ui/RouteSummary'
 import TileHealth from './map/TileHealth'
 import DataStatus from './ui/DataStatus'
+import ViewToggle, { type ViewMode } from './ui/ViewToggle'
+
+// Cesium is heavy: the 3D view is its own chunk, fetched only when the user switches to it.
+const ThreeDView = lazy(() => import('./three-d/ThreeDView'))
 
 export default function App() {
   const [data, setData] = useState<AppData | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [view, setView] = useState<ViewMode>('2d')
 
   useEffect(() => {
     loadData('mock').then(setData, (e: unknown) => setError(e instanceof Error ? e.message : String(e)))
@@ -25,21 +30,28 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <h1>Martian Map · Jezero</h1>
+        <ViewToggle view={view} onChange={setView} />
       </header>
       <main id="map-area" className="map-area" aria-label="Map area">
-        <MapView>
-          <LayerManager />
-          <LayerControl missions={data?.missions ?? []} />
-          <RouteController />
-          <RouteLayer />
-          <RouteMarkers />
-          <RouteSummary />
-          <TileHealth />
-          <DataStatus loading={!data && !error} error={error} />
-          <WaypointsLayer meta={data?.meta ?? null} />
-          {data && <TargetsLayer targets={data.targets} />}
-          {data && <TargetCard targets={data.targets} missions={data.missions} />}
-        </MapView>
+        {view === '3d' ? (
+          <Suspense fallback={<div className="three-d-loading">Loading 3D view…</div>}>
+            <ThreeDView targets={data?.targets ?? null} />
+          </Suspense>
+        ) : (
+          <MapView>
+            <LayerManager />
+            <LayerControl missions={data?.missions ?? []} />
+            <RouteController />
+            <RouteLayer />
+            <RouteMarkers />
+            <RouteSummary />
+            <TileHealth />
+            <DataStatus loading={!data && !error} error={error} />
+            <WaypointsLayer meta={data?.meta ?? null} />
+            {data && <TargetsLayer targets={data.targets} />}
+            {data && <TargetCard targets={data.targets} missions={data.missions} />}
+          </MapView>
+        )}
       </main>
       <footer className="app-footer">
         {error

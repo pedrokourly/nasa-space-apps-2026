@@ -1,0 +1,85 @@
+.three-d {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #0b0d12;
+}
+
+.three-d__canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.three-d__message {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  text-align: center;
+  color: #e8e6e3;
+  font-size: 1rem;
+  pointer-events: none;
+}
+
+.three-d__legend {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 5;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #2a2f3a;
+  border-radius: 6px;
+  background: rgba(17, 20, 27, 0.88);
+  color: #e8e6e3;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.three-d__legend-title {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.three-d__legend-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.three-d__legend-source {
+  margin-top: 0.35rem;
+  color: #aab0bd;
+  font-size: 0.72rem;
+}
+
+.three-d__swatch {
+  display: inline-block;
+  width: 1.4rem;
+  height: 0.3rem;
+  border-radius: 2px;
+}
+
+.three-d__hint,
+.three-d__busy {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid #2a2f3a;
+  border-radius: 6px;
+  background: rgba(17, 20, 27, 0.88);
+  color: #e8e6e3;
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+.three-d__hint {
+  bottom: 3rem;
+}
+
+.three-d__busy {
+  top: 0.75rem;
+}

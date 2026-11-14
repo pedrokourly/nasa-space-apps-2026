@@ -27,7 +27,18 @@ body,
   height: 100%;
 }
 
+.three-d-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #aab0bd;
+}
+
 .app-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
   padding: 0.75rem 1rem;
   border-bottom: 1px solid #2a2f3a;
   background: #11141b;
