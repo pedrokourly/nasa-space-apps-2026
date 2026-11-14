@@ -13,6 +13,7 @@ import RouteLayer from './map/RouteLayer'
 import RouteMarkers from './map/RouteMarkers'
 import RouteSummary from './ui/RouteSummary'
 import TileHealth from './map/TileHealth'
+import TileLoading from './map/TileLoading'
 import DataStatus from './ui/DataStatus'
 import ViewToggle, { type ViewMode } from './ui/ViewToggle'
 
@@ -55,6 +56,7 @@ export default function App() {
             <RouteMarkers />
             <RouteSummary />
             <TileHealth />
+            <TileLoading />
             <DataStatus loading={!data && !error} error={error} />
             <PlanningAreaFocus meta={data?.meta ?? null} />
             <WaypointsLayer meta={data?.meta ?? null} />
