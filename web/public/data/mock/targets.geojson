@@ -1,0 +1,73 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.4508,
+          18.4447
+        ]
+      },
+      "properties": {
+        "id": "habitat",
+        "nome": "Habitat (ponto de pouso)",
+        "por_que": "Ponto A da EVA. Texto provisório (MOCK): região do pouso do Perseverance.",
+        "missao": "mars2020-meda",
+        "mock": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.385,
+          18.455
+        ]
+      },
+      "properties": {
+        "id": "frente-delta",
+        "nome": "Frente do delta",
+        "por_que": "Texto provisório (MOCK): sedimentos de um antigo delta fluvial, candidatos a preservar sinais de vida passada.",
+        "missao": "mro-hirise",
+        "mock": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.425,
+          18.47
+        ]
+      },
+      "properties": {
+        "id": "margem-carbonatos",
+        "nome": "Margem com carbonatos",
+        "por_que": "Texto provisório (MOCK): assinatura espectral de carbonatos na margem da cratera.",
+        "missao": "mro-crism",
+        "mock": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.47,
+          18.42
+        ]
+      },
+      "properties": {
+        "id": "amostra",
+        "nome": "Local de amostra",
+        "por_que": "Texto provisório (MOCK): afloramento de rocha ígnea para comparação com os sedimentos.",
+        "missao": "mro-ctx",
+        "mock": true
+      }
+    }
+  ]
+}

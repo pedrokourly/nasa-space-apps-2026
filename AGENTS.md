@@ -176,6 +176,14 @@ Cada frente trabalha com **mock exatamente neste formato** até o dado real cheg
 | `missions.json` | Lista: `nome`, `instrumento`, `agencia`, `link` (+ descrição) | Produto/pitch | UI (proveniência) |
 | Rota | GeoJSON LineString em lon/lat −180 a 180, propriedades `dist_m`, `tempo_s`, `o2_kg` e perfil de elevação | Roteamento | Mapa 2D, UI, 3D, URL |
 
+Nomes de campo exatos (tipos em `web/src/types/contract.ts`; mocks em `web/public/data/mock/`):
+
+- **Grade (`elevation.bin`, `slope.bin`):** Float32 little-endian, row-major, **linha 0 = norte**.
+- **`meta.json`:** `bbox` `[minLon, minLat, maxLon, maxLat]` (−180 a 180), `width`, `height`, `m_per_cell_x`, `m_per_cell_y`, `lon_convention: "-180..180"`, `nodata`, `crs: "EPSG:4326"`, `row0: "north"`, `dtype: "float32le"`, `fonte?`.
+- **`missions.json`:** lista de `{ id (ex.: "mro-hirise"), nome, instrumento, agencia, link, descricao? }`.
+- **`targets.geojson`:** propriedades `id`, `nome`, `por_que`, `missao` (= `id` de `missions.json`), `mock?`.
+- **Rota (Feature LineString):** propriedades `dist_m`, `tempo_s`, `o2_kg`, `perfil` (lista de `[dist_m, elev_m]`, último = `dist_m`), `veredito?` (`"GO"` | `"NO-GO"`), `ponto_nao_retorno?` (índice do vértice), `mock?`.
+
 A rota em GeoJSON é o ponto de encontro de todas as frentes: o mesmo arquivo alimenta 2D, 3D, painéis e URL.
 
 ---
