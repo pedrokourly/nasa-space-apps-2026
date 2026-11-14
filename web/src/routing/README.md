@@ -71,7 +71,8 @@ cd web && npm test
 
 ## Worker (S3)
 
-- `route.worker.ts` runs the real `route()` (via `createRouter`). On the first request it loads the grid with `loadGrid(GRID_BASE_URL)`: `meta.json`, `elevation.bin` and `slope.bin` from `data/mock/` (same source as `loadData('mock')` in `App.tsx`). If loading fails, the next request tries again.
+- `route.worker.ts` runs the real `route()` (via `createRouter`). On the first request it loads the grid with `loadGrid(GRID_BASE_URL)`: `meta.json`, `elevation.bin` and `slope.bin` from `data/` (the real Jezero grid, S4). If loading fails, the next request tries again.
 - `core/gridBinary.ts` decodes the `.bin` files (Float32 LE via `DataView`) and checks sizes and `bbox`; `meta.json` is validated by `parseMeta`.
-- `public/data/mock/elevation.bin` and `slope.bin` are the **invented** sample terrain (1 MiB each, 512 × 512): rolling hills and an impassable crater between the habitat and the delta front. They do **not** match the imagery; S4 (#39) swaps them for the real Jezero grid by changing `GRID_BASE_URL`.
+- `public/data/mock/elevation.bin` and `slope.bin` are the **invented** sample terrain (1 MiB each, 512 × 512) used by tests and the sample routes. They do not match the imagery and the app no longer uses them.
+- `realGrid.test.ts` checks the real grid in `public/data/` (geometry, units, holes, demo loop GO in under 1 s). Calibration results: `docs/routing-assumptions.md`.
 - Discarding stale requests and debouncing stay in `client.ts` / `useRouting.ts` (2D Map workstream). Errors: `NoPathError` → `no-path`; anything else (e.g. `OutOfGridError`) → `error` with its message.

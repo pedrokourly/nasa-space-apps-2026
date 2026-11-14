@@ -10,7 +10,7 @@ Code: `web/src/routing/core/cost.ts` (`DEFAULT_PROFILE`).
 |---|---|---|---|
 | `maxSlopeDeg` | 25° | **Assumption** (team's initial plan) | Cells with slope >= 25° are impassable |
 | `sandMultiplier` | 2× | **Assumption** (team's initial plan) | Only applies when Data/GIS ships `sand.bin` (`sand_layer: true`); otherwise no cell is sand |
-| `slopeWeight` | 2 | **Assumption** (ours) | Cost factor = 1 + 2 · (slope / 25°)². Calibrate with the real grid (#39) |
+| `slopeWeight` | 2 | **Assumption** (ours), checked on the real grid | Cost factor = 1 + 2 · (slope / 25°)². See "Calibration on the real grid" below |
 | No-data cells | impassable | Rule (`AGENTS.md`) | Never treated as zero or flat. Values of magnitude >= 1e30 also count as no data (the HiRISE DTM uses −3.4028226550889045e+38) |
 
 ## Walking speed and O₂
@@ -36,10 +36,28 @@ Code: `web/src/routing/core/route.ts`.
 - **`point_of_no_return`**: index of the first vertex from which the astronaut can no longer get back to the habitat with the O₂ left (turning back the same way or, on a loop, carrying on to the end, whichever is cheaper). The last safe vertex is the one before. It is present exactly when the verdict is NO-GO.
 - The optimal return (cheapest path home from any cell) is not computed yet (#40).
 
+## Calibration on the real grid (#39)
+
+Measured on `web/public/data/` (MRO/HiRISE DTM resampled to 512 × 512 by the Data/GIS pipeline), from the habitat `[77.4508, 18.4447]` to each of the three mock targets:
+
+| `slopeWeight` | Habitat → delta front | Habitat → carbonate margin | Habitat → third target |
+|---|---|---|---|
+| 0 (distance only) | max slope 19.9°, mean 3.2° | max 22.9°, mean 4.6° | max 9.7°, mean 3.6° |
+| 1, 2, 4 | max 6.4°, mean 1.9° | max 22.9°, mean 3.0° | max 6.2°, mean 2.1° |
+| 8 | same as above | max 22.9°, mean 3.0° (+7 m) | same as above |
+
+- Paths are 4% to 10% longer than the straight line in every case, so the slope term costs almost no distance.
+- Any weight from 1 to 8 gives the same paths, so **2 stays**: the result is not sensitive to this guess. With 0 the route climbs slopes up to ~20° to save a few meters.
+- The 22.9° on the carbonate leg is the target itself: the mock "Carbonate margin" point sits on a ~19° slope next to cells of 27° to 29°, so the last ~10 cells have to climb. Worth telling Product/Data/GIS when they place the real targets (#28).
+- Grid facts: no elevation holes; slope no-data only on the 1-cell border; max slope 43.7°; 0.46% of cells at >= 25°, 1.2% at >= 20°.
+- Demo loop (habitat, 3 targets, habitat): 12.7 km, 3.8 h, 0.42 kg O₂, GO, computed in ~60 ms in Node.
+
+The slope comes from the 15 m grid, which underestimates steps of a few meters (Data/GIS measured 0.78% of 1 m pixels above 25°). A stricter "safest" mode could use a max-per-cell slope file later.
+
 ## Grid format expected from Data/GIS
 
 Code: `web/src/routing/core/grid.ts`, `gridBinary.ts`. Contract: `AGENTS.md`, section 5.
 
-- `elevation.bin` in meters and `slope.bin` in **degrees**, Float32 little-endian, row-major, row 0 = north. Degrees still to be confirmed by Data/GIS.
+- `elevation.bin` in meters and `slope.bin` in **degrees** (confirmed: `pipeline/export_slope.py`, Horn method with the real meters per cell), Float32 little-endian, row-major, row 0 = north.
 - Cell values are area samples: the center of cell (col, row) sits half a cell inside the `bbox`.
-- When reducing the 1 m DTM to the app grid, keep the **maximum** (or the 90th percentile) slope of each block, not the mean: the mean hides short steep steps.
+- Data/GIS computes the slope on the 15 m grid (documented as an assumption in `docs/dados-relevo.md`). A max-per-cell slope from the 1 m DTM would be more conservative.

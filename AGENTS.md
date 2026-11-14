@@ -193,7 +193,7 @@ Cada frente trabalha com **mock exatamente neste formato** até o dado real cheg
 Nomes de campo exatos (tipos em `web/src/types/contract.ts`; mocks em `web/public/data/mock/`):
 
 - **Grade (`elevation.bin`, `slope.bin`):** Float32 little-endian, row-major, **linha 0 = norte**.
-- **Units:** `elevation.bin` in meters; `slope.bin` in **degrees** (0 to 90), computed with the real meters per cell in x and y. No-data cells hold the `nodata` value (never 0). Degrees still to be confirmed by Data/GIS.
+- **Units:** `elevation.bin` in meters; `slope.bin` in **degrees** (0 to 90), computed with the real meters per cell in x and y. No-data cells hold the `nodata` value (never 0). Degrees confirmed by the Data/GIS pipeline (`pipeline/export_slope.py`).
 - **`sand.bin` (optional):** one Uint8 per cell, same size and order as the grid, 1 = sand (Routing makes it cost 2×), 0 = not sand. Shipped only together with `sand_layer: true` in `meta.json`; without it there is no sand layer.
 - **`meta.json`:** `bbox` `[minLon, minLat, maxLon, maxLat]` (−180 a 180), `width`, `height`, `m_per_cell_x`, `m_per_cell_y`, `lon_convention: "-180..180"`, `nodata`, `crs: "EPSG:4326"`, `row0: "north"`, `dtype: "float32le"`, `source?`, `sand_layer?` (`true` when `sand.bin` exists).
 - **`missions.json`:** lista de `{ id (ex.: "mro-hirise"), name, instrument, agency, link, description? }`.
