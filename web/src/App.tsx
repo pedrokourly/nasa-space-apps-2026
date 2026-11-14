@@ -12,6 +12,8 @@ import RouteController from './routing/RouteController'
 import RouteLayer from './map/RouteLayer'
 import RouteMarkers from './map/RouteMarkers'
 import RouteSummary from './ui/RouteSummary'
+import SimulationLayer from './map/SimulationLayer'
+import SimulationControl from './ui/SimulationControl'
 import TileHealth from './map/TileHealth'
 import TileLoading from './map/TileLoading'
 import DataStatus from './ui/DataStatus'
@@ -54,7 +56,9 @@ export default function App() {
             <RouteController />
             <RouteLayer />
             <RouteMarkers />
+            <SimulationLayer />
             <RouteSummary />
+            <SimulationControl />
             <TileHealth />
             <TileLoading />
             <DataStatus loading={!data && !error} error={error} />
