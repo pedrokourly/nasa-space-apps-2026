@@ -53,7 +53,7 @@ web/                 # app Vite + React + TypeScript
 
 ## Deploy e regra da `main`
 
-Deploy runs on Cloudflare Pages, connected to `main` (preview per branch): root directory `web`, build command `npm run build`, output directory `dist`, environment variable `NODE_VERSION=22`.
+Deploy runs on Cloudflare Workers (static assets, `web/wrangler.jsonc`) with Workers Builds connected to `main`: root directory `web`, build command `npm run build`, deploy command `npx wrangler deploy`.
 
 **A `main` está sempre deployável:** nunca quebre a `main`; trabalhe em branch e abra PR pequeno. Veja as regras completas em [`AGENTS.md`](AGENTS.md).
 
