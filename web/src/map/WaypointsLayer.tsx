@@ -8,7 +8,7 @@ import type { Meta } from '../types/contract';
 import './WaypointsLayer.css';
 
 const MSG_OUTSIDE =
-  'Outside the area of interest (terrain data). Pick a point inside the rectangle.';
+  'Outside the EVA planning area (terrain data). Pick a point inside the highlighted area.';
 
 function makeIcon(index: number): L.DivIcon {
   const start = index === 0;
@@ -71,22 +71,6 @@ export default function WaypointsLayer({ meta }: Props) {
       map.off('click', onClick);
     };
   }, [map]);
-
-  // Bbox rectangle (valid area), non-interactive.
-  useEffect(() => {
-    if (!map || !meta) return;
-    const [minLon, minLat, maxLon, maxLat] = meta.bbox;
-    const rect = L.rectangle(
-      [
-        [minLat, minLon],
-        [maxLat, maxLon],
-      ],
-      { color: '#e8e6e3', weight: 1, opacity: 0.6, dashArray: '6 6', fill: false, interactive: false },
-    ).addTo(map);
-    return () => {
-      rect.remove();
-    };
-  }, [map, meta]);
 
   // Syncs markers with the store (diff by index).
   useEffect(() => {

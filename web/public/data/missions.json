@@ -1,0 +1,50 @@
+[
+  {
+    "id": "mro-hirise",
+    "name": "Mars Reconnaissance Orbiter",
+    "instrument": "HiRISE",
+    "agency": "NASA",
+    "link": "https://www.uahirise.org/",
+    "description": "High Resolution Imaging Science Experiment: telescopic camera imaging the surface at about 25 to 30 cm per pixel. Source of the Jezero orthomosaic and of the 1 m terrain model used for routes."
+  },
+  {
+    "id": "mro-ctx",
+    "name": "Mars Reconnaissance Orbiter",
+    "instrument": "CTX",
+    "agency": "NASA",
+    "link": "https://www.msss.com/all_projects/mro-ctx.php",
+    "description": "Context Camera: black-and-white images at about 6 m per pixel covering almost all of Mars. Base map of the crater."
+  },
+  {
+    "id": "mro-crism",
+    "name": "Mars Reconnaissance Orbiter",
+    "instrument": "CRISM",
+    "agency": "NASA",
+    "link": "https://pds-geosciences.wustl.edu/missions/mro/crism.htm",
+    "description": "Compact Reconnaissance Imaging Spectrometer for Mars: visible and infrared spectra that map minerals from orbit, such as the olivine and carbonates of Jezero."
+  },
+  {
+    "id": "odyssey-themis",
+    "name": "Mars Odyssey",
+    "instrument": "THEMIS",
+    "agency": "NASA",
+    "link": "https://themis.asu.edu/",
+    "description": "Thermal Emission Imaging System: infrared images at about 100 m per pixel that separate rock, dust and sand by how they heat up and cool down."
+  },
+  {
+    "id": "mgs-mola",
+    "name": "Mars Global Surveyor",
+    "instrument": "MOLA",
+    "agency": "NASA",
+    "link": "https://science.nasa.gov/mission/mars-global-surveyor/",
+    "description": "Mars Orbiter Laser Altimeter: laser measurements of surface height that form the global topography of Mars, at about 463 m per pixel."
+  },
+  {
+    "id": "mars2020-meda",
+    "name": "Mars 2020 (Perseverance)",
+    "instrument": "MEDA",
+    "agency": "NASA",
+    "link": "https://science.nasa.gov/mission/mars-2020-perseverance/science-instruments/",
+    "description": "Mars Environmental Dynamics Analyzer: the rover's weather sensors at Jezero (temperature, pressure, wind, humidity and dust)."
+  }
+]

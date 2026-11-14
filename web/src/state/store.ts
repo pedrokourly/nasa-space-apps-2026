@@ -15,6 +15,9 @@ export interface AppState {
   /** Opacity (0 to 1) per layer; missing = the layer's default. */
   layerOpacity: Record<LayerId, number>;
 
+  /** Dims the map outside the EVA planning area (the `meta.json` bbox). */
+  focusPlanningArea: boolean;
+
   setWaypoints: (pts: LonLat[]) => void;
   addWaypoint: (p: LonLat) => void;
   moveWaypoint: (i: number, p: LonLat) => void;
@@ -28,6 +31,7 @@ export interface AppState {
   /** Switches the active base (one at a time), keeping the overlays. */
   setBaseLayer: (id: LayerId) => void;
   setLayerOpacity: (id: LayerId, opacity: number) => void;
+  setFocusPlanningArea: (on: boolean) => void;
 }
 
 export const useAppStore = create<AppState>()((set) => ({
@@ -41,6 +45,7 @@ export const useAppStore = create<AppState>()((set) => ({
   layerOpacity: Object.fromEntries(
     LAYERS.flatMap((l) => (l.defaultOpacity === undefined ? [] : [[l.id, l.defaultOpacity] as const])),
   ),
+  focusPlanningArea: true,
 
   setWaypoints: (waypoints) => set({ waypoints }),
   addWaypoint: (p) => set((s) => ({ waypoints: [...s.waypoints, p] })),
@@ -63,4 +68,5 @@ export const useAppStore = create<AppState>()((set) => ({
     }),
   setLayerOpacity: (id, opacity) =>
     set((s) => ({ layerOpacity: { ...s.layerOpacity, [id]: Math.min(1, Math.max(0, opacity)) } })),
+  setFocusPlanningArea: (focusPlanningArea) => set({ focusPlanningArea }),
 }));

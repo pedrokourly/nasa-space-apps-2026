@@ -188,6 +188,7 @@ Cada frente trabalha com **mock exatamente neste formato** até o dado real cheg
 | `meta.json` | `bbox`, `width`, `height`, metros por célula, convenção de longitude, valor de nodata | Dados/GIS | Roteamento, Mapa 2D |
 | `targets.geojson` | FeatureCollection de Points com `name`, `why`, `mission` | Dados/GIS (+ textos de Produto) | Mapa 2D, UI, 3D |
 | `missions.json` | Lista: `name`, `instrument`, `agency`, `link` (+ descrição) | Produto/pitch | UI (proveniência) |
+| `conditions.json` | MEDA conditions per sol: pressure, air temperature, humidity, wind, dust (min, mean, max or "unavailable") | Data/GIS | UI (conditions panel) |
 | Rota | GeoJSON LineString em lon/lat −180 a 180, propriedades `dist_m`, `time_s`, `o2_kg` e perfil de elevação | Roteamento | Mapa 2D, UI, 3D, URL |
 
 Nomes de campo exatos (tipos em `web/src/types/contract.ts`; mocks em `web/public/data/mock/`):
@@ -198,8 +199,9 @@ Nomes de campo exatos (tipos em `web/src/types/contract.ts`; mocks em `web/publi
 - **`meta.json`:** `bbox` `[minLon, minLat, maxLon, maxLat]` (−180 a 180), `width`, `height`, `m_per_cell_x`, `m_per_cell_y`, `lon_convention: "-180..180"`, `nodata`, `crs: "EPSG:4326"`, `row0: "north"`, `dtype: "float32le"`, `source?`, `sand_layer?` (`true` when `sand.bin` exists).
 - **`missions.json`:** lista de `{ id (ex.: "mro-hirise"), name, instrument, agency, link, description? }`.
 - **`targets.geojson`:** propriedades `id`, `name`, `why`, `mission` (= `id` de `missions.json`), `mock?`.
-- **Rota (Feature LineString):** propriedades `dist_m`, `time_s`, `o2_kg`, `profile` (lista de `[dist_m, elev_m]`, último = `dist_m`), `verdict?` (`"GO"` | `"NO-GO"`), `point_of_no_return?` (índice do vértice), `mock?`.
-- **`point_of_no_return` meaning:** index of the FIRST vertex from which the astronaut can no longer get back to the habitat (the route's first point) with the O₂ left; the last safe vertex is that index − 1. Present only when `verdict` is `"NO-GO"`.
+- **`conditions.json`:** `{ source, latest_sol, sols }`. `source` has `mission`, `mission_id`, `instrument`, `bundle`, `release`, `doi`, `url` and `note`. `sols` is a list (latest first) of `{ sol, utc_start, utc_end, variables }`, where `variables` has `pressure` (Pa), `air_temperature` (K), `relative_humidity` (%), `wind` and `dust`. Each variable is either `{ status: "ok", unit, min, mean, max, n, level, product, column }` or `{ status: "unavailable", reason }`. An unavailable variable never carries a number. Show "last available data, sol X", never "live". Types in `web/src/types/contract.ts`.
+- **Rota (Feature LineString):** propriedades `dist_m`, `time_s`, `o2_kg`, `profile` (lista de `[dist_m, elev_m]`, último = `dist_m`), `legs?` (one per pair of consecutive requested points: `from_vertex`, `to_vertex`, `dist_m`, `time_s`, `o2_kg`; their sums equal the totals), `verdict?` (`"GO"` | `"NO-GO"`), `point_of_no_return?` (índice do vértice), `mock?`.
+- **`point_of_no_return` meaning:** index of the FIRST vertex from which the astronaut can no longer get back to the habitat (the route's first point) with the O₂ left, by the least-O₂ way home; the last safe vertex is that index − 1. Present only when `verdict` is `"NO-GO"`.
 
 A rota em GeoJSON é o ponto de encontro de todas as frentes: o mesmo arquivo alimenta 2D, 3D, painéis e URL.
 
