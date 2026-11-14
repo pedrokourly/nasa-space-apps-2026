@@ -6,6 +6,13 @@ Resultado do spike da issue #22. Todos os números da seção "O que o arquivo d
 
 Usaremos o **DTM HiRISE de 1 m (Mars 2020 Terrain Relative Navigation HiRISE DTM Mosaic)** como fonte de relevo de Jezero, porque tem resolução de sobra para o grid de ~20 m do app, cobre o local de pouso da Perseverance e já vem em longitude −180 a 180.
 
+## O que este arquivo é e o que não é
+
+- **É** um DTM (mapa de altitude) de 1 m, gerado pelo USGS a partir de **pares estéreo de imagens da câmera HiRISE** (6 pares, 7 DTMs; ver "Completeness Report" na página do produto). Por isso a missão é MRO e o instrumento é HiRISE.
+- **Não é** uma imagem: tem uma única banda, de altitude em metros. Não contém dado óptico, térmico nem espectral.
+- **Não é dado MOLA.** O "MOLA" no nome (`MOLAtopography_DeltaGeoid`) parece indicar a referência vertical das altitudes (inferência, ver Ressalvas). O MOLA global tem centenas de metros por pixel; este arquivo tem 1 m.
+- **A camada óptica HiRISE do mapa** (a imagem que o astronauta vê) vem dos **tiles do Mars Trek**, carregados sob demanda no Leaflet, não deste arquivo. Este `.tif` só alimenta o pipeline (`elevation.bin`, `slope.bin`) e o roteamento.
+
 ## Proveniência
 
 | Campo | Valor |
@@ -70,9 +77,47 @@ Varredura completa do arquivo (459.843.200 pixels):
 
 O roteamento deve tratar nodata como **intransponível**, nunca como zero.
 
+## Grid do app (issue #23)
+
+Geometria fixada em `pipeline/jezero_grid.py` e gravada em `web/public/data/meta.json` (mesmo formato do mock de `web/public/data/mock/meta.json`, que o app já usa).
+
+| Item | Valor |
+|---|---|
+| bbox `[minLon, minLat, maxLon, maxLat]` | `[77.36, 18.40, 77.50, 18.50]` |
+| Tamanho do bbox (haversine, R = 3389,5 km) | 7,86 km (x) × 5,92 km (y), dentro da faixa de 5 a 15 km |
+| Dentro da cobertura do DTM | Sim (lon 77,2229 a 77,5840; lat 18,3068 a 18,6693) |
+| nodata do DTM dentro do bbox | 0,00% (leitura decimada) |
+| Elevação no bbox | de −2.647 m a −2.392 m (amostra decimada) |
+| Grade | 512 × 512 células |
+| Metros por célula | x = 15,345 m, y = 11,554 m (R = 3389,5 km) |
+| CRS | EPSG:4326 (lon/lat), linha 0 = norte |
+| nodata gravado nos `.bin` | `-3.4028234663852886e+38` (menor float32, igual ao mock) |
+| Longitude | −180 a 180, positiva a leste |
+
+### Validação do bbox contra o traverse real da Perseverance
+
+Comparação feita com as 708 paradas do rover publicadas pelo MMGIS/NASA (`https://mars.nasa.gov/mmgis-maps/M20/Layers/json/M20_waypoints.json`, lido em memória, não versionado; campos `sol`, `lon`, `lat`, `elev_geoid`).
+
+- **Local de pouso:** o primeiro waypoint (sol 13) está em 77,4509°E, 18,4446°N, o mesmo ponto do habitat do mock, dentro do bbox. Coordenadas conferem com Wikidata e com o NASA GISS Mars24 (Octavia E. Butler Landing).
+- **Cobertura do traverse:** 313 das 708 paradas caem dentro do bbox, todas dos sóis 13 a 886 (piso da cratera e campanha na frente do delta). A partir do sol ~896 o rover sobe para oeste (lon < 77,36) e, do sol 1815 em diante, sai até da cobertura do DTM (lon < 77,2229). **O bbox não cobre o traverse completo, só a primeira parte.**
+- **Delta:** um artigo do JGR (Sun et al., 2023, doi:10.1029/2022JE007613) situa o pouso a ~2 km da frente oeste do delta, ou seja, em torno de 77,41°E, dentro do bbox. A posição exata dos alvos reais será fixada na #28.
+- **Altitude do DTM contra a do rover** (612 paradas com dado válido): diferença DTM − rover com mediana 0,00 m, média 0,57 m, desvio 1,41 m, percentis 5 e 95 de −0,09 e 4,11 m, máximo 5,37 m. Isso indica que o DTM usa a mesma referência vertical do rover e que o registro horizontal está bom. Não é uma declaração do USGS, é medida nossa.
+
+**Por que mantivemos o bbox do mock.** Ele cai inteiro sobre dado válido do DTM e já contém os pontos dos alvos e da rota de mock (habitat em 77,4508°E 18,4447°N, frente do delta, margem de carbonatos). Trocar o bbox obrigaria a mexer em todos os mocks sem ganho. O `meta.json` real ficou igual ao mock, exceto pelo campo `source`.
+
+**Por que grade lon/lat (EPSG:4326) e não grade métrica local.**
+- O Mars Trek e o Leaflet do app usam EPSG:4326: a rota, os alvos e os overlays (como `slope.png`) ficam no mesmo sistema, sem reprojetar no navegador.
+- O contrato e `web/src/types/contract.ts` já fixam `crs: "EPSG:4326"`; mudar exigiria alterar todas as frentes.
+- O DTM de origem já é uma grade de lon/lat (Equirectangular com paralelo padrão 0): cada pixel mede o mesmo ângulo em x e y. Reamostrar para o grid do app é uma média de blocos, sem distorção.
+- O custo é que a célula não é quadrada em metros (15,3 × 11,6 m). Isso é descrito por `m_per_cell_x` e `m_per_cell_y`; o roteamento e a declividade (#25) devem usar os dois valores, nunca um só.
+
+**Atenção na reamostragem (#24).** Os 1 m do DTM ficam em x ≈ 0,948 m no solo e y = 1,000 m; o bbox ocupa ~8.300 × 5.917 pixels do DTM. A redução para 512 × 512 deve ser por média (`Resampling.average`), e o nodata do DTM (`-3.4028226550889045e+38`) deve ser convertido para o nodata do contrato.
+
+**Raio.** Os metros por célula usam o raio do app (3389,5 km). Com o raio do DTM (3396,19 km) eles seriam ~0,2% maiores; a diferença não importa para a rota, mas não se deve misturar os dois raios no mesmo cálculo.
+
 ## Ressalvas
 
-- **Datum vertical não confirmado.** Nem o PDS3 Label nem o XML FGDC dizem qual é a superfície de referência de altitude, só "metros". O nome do produto (`MOLAtopography_DeltaGeoid`) sugere referência ao MOLA/geoide de Marte, mas isso é **inferência**. Para declividade e rota só importam diferenças de altitude, então não bloqueia o roteamento; falta resolver se o painel exibir altitude absoluta.
+- **Datum vertical não declarado.** Nem o PDS3 Label nem o XML FGDC dizem qual é a superfície de referência de altitude, só "metros". O nome do produto (`MOLAtopography_DeltaGeoid`) sugere referência ao MOLA/geoide de Marte, mas isso é **inferência do nome**. Há porém evidência empírica de que o DTM concorda com a altitude `elev_geoid` publicada pela Perseverance (ver "Validação do bbox" abaixo). Para declividade e rota só importam diferenças de altitude, então não bloqueia o roteamento.
 - **Faixa oeste de baixa qualidade.** O USGS avisa que o par estéreo "Jezero_CR" (borda da cratera, extremo oeste) tem problemas de paralaxe em y e deve ser usado com cautela. Fica fora da elipse de pouso.
 - **Cobertura limitada.** O mosaico cobre ~21 × 21,5 km, não a cratera inteira. Os alvos e a rota da demo precisam cair dentro dele (conferir no #23).
 - **Precisão.** O registro horizontal entre imagens é melhor que 3 m no percentil 99; o USGS informa um deslocamento vertical mediano de ~0,4 m em relação ao DTM CTX.
