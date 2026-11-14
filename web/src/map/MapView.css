@@ -1,0 +1,29 @@
+.map-view {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.map-view__canvas {
+  width: 100%;
+  height: 100%;
+  background: #0b0d12;
+}
+
+.map-view__canvas.leaflet-container {
+  background: #0b0d12;
+}
+
+.map-view__coords {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 1000;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  background: rgb(11 13 18 / 80%);
+  color: #e8e6e3;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
