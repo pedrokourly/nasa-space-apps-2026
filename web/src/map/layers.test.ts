@@ -4,7 +4,7 @@ import { DEFAULT_BASE_ID, LAYERS, getLayer, isTileLayer } from './layers';
 import { useAppStore } from '../state/store';
 
 const missions = JSON.parse(
-  readFileSync(new URL('../../public/data/mock/missions.json', import.meta.url), 'utf8'),
+  readFileSync(new URL('../../public/data/missions.json', import.meta.url), 'utf8'),
 ) as { id: string }[];
 
 describe('layer registry', () => {

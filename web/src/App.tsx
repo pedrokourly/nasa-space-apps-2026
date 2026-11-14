@@ -20,8 +20,8 @@ import ViewToggle, { type ViewMode } from './ui/ViewToggle'
 const ThreeDView = lazy(() => import('./three-d/ThreeDView'))
 
 // Real data replaces mocks file by file. meta.json is the real Jezero grid and targets.geojson
-// the real science targets (#28); missions stay mock until a real missions.json is published.
-const DATA_SOURCES: DataSources = { meta: 'real', targets: 'real', missions: 'mock' }
+// the real science targets (#28); missions.json lists the missions behind every layer and target.
+const DATA_SOURCES: DataSources = { meta: 'real', targets: 'real', missions: 'real' }
 
 const label = (s: DataSource) => (s === 'real' ? 'real' : 'MOCK')
 
