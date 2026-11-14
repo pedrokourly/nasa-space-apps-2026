@@ -19,6 +19,8 @@ export default function LayerControl({
   const layerOpacity = useAppStore((s) => s.layerOpacity);
   const toggleLayer = useAppStore((s) => s.toggleLayer);
   const setLayerOpacity = useAppStore((s) => s.setLayerOpacity);
+  const focusPlanningArea = useAppStore((s) => s.focusPlanningArea);
+  const setFocusPlanningArea = useAppStore((s) => s.setFocusPlanningArea);
 
   const bases = LAYERS.filter((l) => l.type === 'base');
   const details = LAYERS.filter((l) => l.type === 'detail');
@@ -67,6 +69,14 @@ export default function LayerControl({
       </button>
       {open && (
         <div className="layer-control__body">
+          <label className="layer-control__row layer-control__focus">
+            <input
+              type="checkbox"
+              checked={focusPlanningArea}
+              onChange={(e) => setFocusPlanningArea(e.target.checked)}
+            />
+            <span className="layer-control__name">Dim outside planning area</span>
+          </label>
           <fieldset className="layer-control__group">
             <legend>Base map · always on</legend>
             {bases.map((l) => (

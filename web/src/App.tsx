@@ -4,6 +4,7 @@ import MapView from './map/MapView'
 import TargetsLayer from './map/TargetsLayer'
 import TargetCard from './ui/TargetCard'
 import WaypointsLayer from './map/WaypointsLayer'
+import PlanningAreaFocus from './map/PlanningAreaFocus'
 import LayerManager from './map/LayerManager'
 import SlopeLayer from './map/SlopeLayer'
 import LayerControl from './ui/LayerControl'
@@ -55,6 +56,7 @@ export default function App() {
             <RouteSummary />
             <TileHealth />
             <DataStatus loading={!data && !error} error={error} />
+            <PlanningAreaFocus meta={data?.meta ?? null} />
             <WaypointsLayer meta={data?.meta ?? null} />
             {data && <TargetsLayer targets={data.targets} />}
             {data && <TargetCard targets={data.targets} missions={data.missions} />}

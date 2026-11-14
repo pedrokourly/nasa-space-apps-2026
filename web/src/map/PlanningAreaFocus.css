@@ -1,0 +1,19 @@
+/* Soft glow around the planning-area outline. */
+.planning-area-outline {
+  filter: drop-shadow(0 0 4px rgb(255 180 84 / 85%));
+}
+
+.planning-area-label {
+  position: absolute;
+  bottom: 5px;
+  left: 0;
+  padding: 2px 8px;
+  border: 1px solid rgb(255 180 84 / 70%);
+  border-radius: 999px;
+  background: rgb(11 13 18 / 90%);
+  color: #ffb454;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+}

@@ -51,4 +51,12 @@ describe('store', () => {
     expect(s().hoverProfileIndex).toBe(3);
     expect(s().route).toBeNull();
   });
+
+  it('dims outside the planning area by default and can toggle it', () => {
+    const s = () => useAppStore.getState();
+    expect(s().focusPlanningArea).toBe(true);
+    s().setFocusPlanningArea(false);
+    expect(s().focusPlanningArea).toBe(false);
+    s().setFocusPlanningArea(true);
+  });
 });
