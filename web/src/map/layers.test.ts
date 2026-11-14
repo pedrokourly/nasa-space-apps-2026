@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_BASE_ID, LAYERS, getLayer } from './layers';
+import { DEFAULT_BASE_ID, LAYERS, getLayer, isTileLayer } from './layers';
 import { useAppStore } from '../state/store';
 
 const missions = JSON.parse(
@@ -23,7 +23,8 @@ describe('layer registry', () => {
     for (const l of LAYERS) {
       expect(l.product.trim(), l.id).not.toBe('');
       expect(l.sourceUrl.trim(), l.id).not.toBe('');
-      expect(l.sourceUrl).toContain(l.product);
+      // Tile layers link their own Mars Trek product page.
+      if (isTileLayer(l)) expect(l.sourceUrl).toContain(l.product);
     }
   });
 
@@ -42,7 +43,7 @@ describe('layer registry', () => {
   it('every layer has an attribution and a max native zoom', () => {
     for (const l of LAYERS) {
       expect(l.attribution).not.toBe('');
-      expect(l.maxNativeZoom).toBeGreaterThan(0);
+      if (isTileLayer(l)) expect(l.maxNativeZoom).toBeGreaterThan(0);
     }
   });
 

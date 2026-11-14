@@ -18,8 +18,13 @@ export interface LegendDef {
 export interface LayerDef {
   id: string;
   name: string;
-  /** Tile `{z}/{y}/{x}` template. */
-  url: string;
+  /**
+   * How the layer is drawn: `tiles` (default, Mars Trek WMTS, handled by LayerManager) or a
+   * data-driven overlay with its own component (`slope` = SlopeLayer).
+   */
+  kind?: 'tiles' | 'slope';
+  /** Tile `{z}/{y}/{x}` template (tile layers only). */
+  url?: string;
   /**
    * `base`: the permanent imagery under everything (always on).
    * `detail`: sharper imagery of the area of interest, drawn over the base (on by default).
@@ -30,9 +35,9 @@ export interface LayerDef {
   missionId: string;
   /** Short mission/instrument label for the interface. */
   shortLabel: string;
-  format: 'jpg' | 'png';
+  format?: 'jpg' | 'png';
   minNativeZoom?: number;
-  maxNativeZoom: number;
+  maxNativeZoom?: number;
   /** Coverage `[[south, west], [north, east]]`, longitude −180..180. */
   bounds: L.LatLngBoundsLiteral;
   attribution: string;
@@ -40,13 +45,15 @@ export interface LayerDef {
   zoomOffset?: number;
   /** Initial opacity (default 1). */
   defaultOpacity?: number;
-  /** Product ID on Mars Trek. */
+  /** What the layer shows, for the provenance line (default `Imagery`). */
+  dataKind?: string;
+  /** Product ID on Mars Trek (or the source product for derived layers). */
   product: string;
   /** Version/date, only when it appears in the product ID itself. */
   versionOrDate?: string;
   /** Resolution, only when it appears in the product ID itself. */
   resolution?: string;
-  /** Product WMTSCapabilities on Mars Trek (verifiable). */
+  /** Product WMTSCapabilities on Mars Trek, or the product page for other sources (verifiable). */
   sourceUrl: string;
   legend?: LegendDef;
 }
@@ -141,7 +148,42 @@ export const LAYERS: LayerDef[] = [
     sourceUrl: wmts('THEMIS_DayIR_ControlledMosaics_100m_v2_oct2018'),
     defaultOpacity: 0.6,
   },
+  {
+    // Derived from the real terrain grid (slope.bin) and drawn in the browser by SlopeLayer.
+    id: 'slope',
+    name: 'Slope hazard (red = steep)',
+    kind: 'slope',
+    type: 'overlay',
+    defaultOpacity: 0.6,
+    missionId: 'mro-hirise',
+    shortLabel: 'MRO/HiRISE DTM',
+    dataKind: 'Slope from the elevation model',
+    // Placeholder: SlopeLayer positions the image with the bbox of meta.json.
+    bounds: [
+      [18.4, 77.36],
+      [18.5, 77.5],
+    ],
+    attribution: 'USGS Astrogeology · MRO/HiRISE DTM',
+    product: 'Mars 2020 TRN HiRISE DTM Mosaic',
+    versionOrDate: 'published 2020-07-24',
+    resolution: '~12–15 m/cell (1 m DTM resampled)',
+    sourceUrl: 'https://doi.org/10.5066/P9REJ9JN',
+    legend: {
+      title: 'Slope',
+      gradient: ['#ffe94d', '#ff9a1f', '#e0201b', '#e0201b'],
+      minLabel: '10°',
+      maxLabel: '≥ 25° (route avoids)',
+      note: 'Below 10° is transparent; 25° is the routing limit (assumption)',
+    },
+  },
 ];
+
+/** A layer drawn as Leaflet tiles. */
+export type TileLayerDef = LayerDef & { url: string; maxNativeZoom: number };
+
+export function isTileLayer(def: LayerDef): def is TileLayerDef {
+  return (def.kind ?? 'tiles') === 'tiles' && def.url !== undefined && def.maxNativeZoom !== undefined;
+}
 
 /** The permanent base: controlled CTX mosaic of the whole crater. */
 export const DEFAULT_BASE_ID = 'ctx-jezero';

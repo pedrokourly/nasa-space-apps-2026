@@ -5,6 +5,7 @@ import TargetsLayer from './map/TargetsLayer'
 import TargetCard from './ui/TargetCard'
 import WaypointsLayer from './map/WaypointsLayer'
 import LayerManager from './map/LayerManager'
+import SlopeLayer from './map/SlopeLayer'
 import LayerControl from './ui/LayerControl'
 import RouteController from './routing/RouteController'
 import RouteLayer from './map/RouteLayer'
@@ -46,6 +47,7 @@ export default function App() {
         ) : (
           <MapView>
             <LayerManager />
+            <SlopeLayer meta={data?.meta ?? null} />
             <LayerControl missions={data?.missions ?? []} terrainSource={data?.meta.source} />
             <RouteController />
             <RouteLayer />
