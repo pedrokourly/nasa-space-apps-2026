@@ -1,4 +1,4 @@
-"""Testes da geometria do grid de Jezero (issue #23)."""
+"""Tests for the Jezero grid geometry (issue #23)."""
 
 import json
 import sys
@@ -43,7 +43,7 @@ def test_m_per_cell_matches_haversine_sides():
 
 def test_haversine_uses_mars_radius_not_earth():
     one_degree = g.haversine((0.0, 0.0), (1.0, 0.0))
-    assert abs(one_degree - 59_158.0) < 5  # 3389,5 km * pi/180
+    assert abs(one_degree - 59_158.0) < 5  # 3389.5 km * pi/180
 
 
 def test_committed_meta_is_in_sync_with_the_script():

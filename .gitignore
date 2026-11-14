@@ -148,14 +148,14 @@ vite.config.ts.timestamp-*
 # Turbo Repo
 .turbo
 
-# Worktrees e config local do Claude Code
+# Worktrees and local Claude Code config
 .claude/worktrees/
 .claude/settings.local.json
 
 # Wrangler local state
 .wrangler/
 
-# Pipeline de Dados/GIS: dado bruto e ambiente Python (nao versionar)
+# Data/GIS pipeline: raw data and Python environment (do not version)
 data/raw/
 *.tif
 *.tiff

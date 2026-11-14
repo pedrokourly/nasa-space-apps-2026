@@ -1,18 +1,18 @@
-"""Calcula a declividade do elevation.bin e gera slope.bin (issue #25).
+"""Compute the slope of elevation.bin and build slope.bin (issue #25).
 
-Le web/public/data/elevation.bin e meta.json e grava, no MESMO grid:
+Reads web/public/data/elevation.bin and meta.json and writes, on the SAME grid:
 
-    web/public/data/slope.bin   Float32 little-endian, row-major, linha 0 = norte, em graus
+    web/public/data/slope.bin   Float32 little-endian, row-major, row 0 = north, in degrees
 
-Metodo (suposicao registrada em docs/dados-relevo.md):
-- Declividade de Horn (a mesma do `gdaldem slope`) sobre o grid de 512x512, com os
-  metros reais por celula em x e y do meta.json: dz/dx e dz/dy por kernel 3x3 ponderado,
+Method (assumption recorded in docs/terrain-data.md):
+- Horn slope (the same as `gdaldem slope`) on the 512x512 grid, using the real meters per
+  cell in x and y from meta.json: dz/dx and dz/dy from a weighted 3x3 kernel,
   slope = degrees(arctan(hypot(dz/dx, dz/dy))).
-- A celula so tem valor se as 9 celulas do kernel forem validas. Logo, uma celula nodata
-  contamina as 8 vizinhas, e a borda de 1 celula do grid fica nodata (sem vizinhos).
-- nodata = o do meta.json. Nunca vira 0.
+- A cell only has a value if all 9 cells of the kernel are valid. So a nodata cell
+  contaminates its 8 neighbours, and the 1-cell border of the grid is nodata (no neighbours).
+- nodata = the one in meta.json. It never becomes 0.
 
-Uso (a partir da raiz do repositorio):
+Usage (from the repository root):
     pipeline/.venv/Scripts/python pipeline/export_slope.py
 """
 
@@ -29,12 +29,12 @@ SLOPE_PATH = Path("web/public/data/slope.bin")
 
 
 def horn_slope(z: np.ndarray, dx: float, dy: float, nodata: float) -> np.ndarray:
-    """Declividade em graus (float32) pelo kernel de Horn.
+    """Slope in degrees (float32) using the Horn kernel.
 
-    z: grade (linhas x colunas), linha 0 = norte. dx, dy: metros reais por celula em x e y.
+    z: grid (rows x columns), row 0 = north. dx, dy: real meters per cell in x and y.
     """
     if z.ndim != 2 or min(z.shape) < 3:
-        raise ValueError("a grade precisa ter ao menos 3x3 celulas")
+        raise ValueError("the grid needs at least 3x3 cells")
     nd = np.float32(nodata)
     invalid = (z == nd) | ~np.isfinite(z)
     zz = np.where(invalid, 0.0, z).astype(np.float64)
@@ -46,7 +46,7 @@ def horn_slope(z: np.ndarray, dx: float, dy: float, nodata: float) -> np.ndarray
     dzdy = ((g + 2 * h + i) - (a + 2 * b + c)) / (8.0 * dy)
     inner_slope = np.degrees(np.arctan(np.hypot(dzdx, dzdy)))
 
-    # Qualquer celula nodata no kernel 3x3 invalida o resultado.
+    # Any nodata cell inside the 3x3 kernel invalidates the result.
     bad = np.zeros_like(inner_slope, dtype=bool)
     for r in range(3):
         for col in range(3):
@@ -64,7 +64,7 @@ def export(elevation: Path = ELEVATION_PATH, meta_path: Path = META_PATH, out: P
     w, h = meta["width"], meta["height"]
     expected = w * h * 4
     if elevation.stat().st_size != expected:
-        raise ValueError(f"{elevation} tem {elevation.stat().st_size} bytes, esperado {expected}")
+        raise ValueError(f"{elevation} has {elevation.stat().st_size} bytes, expected {expected}")
     z = np.fromfile(elevation, dtype="<f4").reshape(h, w)
     slope = horn_slope(z, meta["m_per_cell_x"], meta["m_per_cell_y"], meta["nodata"])
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -77,12 +77,12 @@ def main() -> None:
     slope = export()
     nd = np.float32(meta["nodata"])
     valid = slope != nd
-    print(f"gravado {SLOPE_PATH} ({SLOPE_PATH.stat().st_size} bytes, {meta['width']}x{meta['height']} float32 little-endian)")
-    print(f"celulas validas: {int(valid.sum())} de {slope.size}; nodata: {int((~valid).sum())} (borda de 1 celula = {2 * (meta['width'] + meta['height']) - 4})")
+    print(f"wrote {SLOPE_PATH} ({SLOPE_PATH.stat().st_size} bytes, {meta['width']}x{meta['height']} float32 little-endian)")
+    print(f"valid cells: {int(valid.sum())} of {slope.size}; nodata: {int((~valid).sum())} (1-cell border = {2 * (meta['width'] + meta['height']) - 4})")
     v = slope[valid]
-    print(f"declividade: min={v.min():.2f} max={v.max():.2f} media={v.mean():.2f} mediana={np.median(v):.2f} graus")
+    print(f"slope: min={v.min():.2f} max={v.max():.2f} mean={v.mean():.2f} median={np.median(v):.2f} degrees")
     for t in (10, 15, 25):
-        print(f"  > {t} graus: {100 * (v > t).mean():.2f}% das celulas validas")
+        print(f"  > {t} degrees: {100 * (v > t).mean():.2f}% of the valid cells")
 
 
 if __name__ == "__main__":

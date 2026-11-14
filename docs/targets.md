@@ -30,7 +30,7 @@ Elevation and slope are read from `elevation.bin` and `slope.bin`.
 
 `mission` points to an entry of `missions.json`. Here it means the MRO instrument whose data shows or revealed the feature:
 
-- `mro-hirise` for the habitat, Artuby Ridge, the delta front and the upper fan: all are visible on the HiRISE basemap, which is also the source of the terrain model (`docs/dados-relevo.md`).
+- `mro-hirise` for the habitat, Artuby Ridge, the delta front and the upper fan: all are visible on the HiRISE basemap, which is also the source of the terrain model (`docs/terrain-data.md`).
 - `mro-crism` for Séítah: the olivine and carbonate terrain of Jezero comes from orbital near-infrared spectroscopy. Beyssac et al. (2023, JGR Planets) suggest Séítah belongs to the regional olivine-carbonate unit seen from orbit.
 
 ## Checks

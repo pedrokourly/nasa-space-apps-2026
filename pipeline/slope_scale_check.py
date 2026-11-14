@@ -1,9 +1,9 @@
-"""Compara escalas de declividade (issue #25): grid de ~15 m x DTM de 1 m agregado por celula.
+"""Compare slope scales (issue #25): ~15 m grid vs 1 m DTM aggregated per cell.
 
-Evidencia da decisao registrada em docs/dados-relevo.md. Nao gera arquivo do app.
+Evidence for the decision recorded in docs/terrain-data.md. It does not write app files.
 
-Uso (a partir da raiz do repositorio):
-    pipeline/.venv/Scripts/python pipeline/slope_scale_check.py [caminho_do_dtm.tif]
+Usage (from the repository root):
+    pipeline/.venv/Scripts/python pipeline/slope_scale_check.py [path_to_dtm.tif]
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ NODATA_F32 = np.float32(NODATA)
 
 
 def slope_1m(dtm: Path, strip: int = 500) -> tuple[np.ndarray, "rasterio.Affine", object]:
-    """Declividade de Horn sobre o DTM de 1 m dentro do bbox, em faixas de linhas."""
+    """Horn slope on the 1 m DTM inside the bbox, computed in strips of rows."""
     west, south = lonlat_to_xy(BBOX[0], BBOX[1])
     east, north = lonlat_to_xy(BBOX[2], BBOX[3])
     with rasterio.open(dtm) as ds:
@@ -40,7 +40,7 @@ def slope_1m(dtm: Path, strip: int = 500) -> tuple[np.ndarray, "rasterio.Affine"
         transform, crs = ds.window_transform(window), ds.crs
 
     mid_lat = (BBOX[1] + BBOX[3]) / 2
-    dx, dy = math.cos(math.radians(mid_lat)), 1.0  # metros no solo por pixel de 1 m (projecao Equirectangular)
+    dx, dy = math.cos(math.radians(mid_lat)), 1.0  # ground meters per 1 m pixel (Equirectangular projection)
     out = np.full(z.shape, NODATA_F32, dtype=np.float32)
     for r in range(0, z.shape[0], strip):
         lo, hi = max(0, r - 1), min(z.shape[0], r + strip + 1)
@@ -65,7 +65,7 @@ def to_grid(field: np.ndarray, transform, crs, method: Resampling) -> np.ndarray
 def summary(name: str, s: np.ndarray, ref: np.ndarray | None = None) -> None:
     ok = s != NODATA_F32
     v = s[ok]
-    line = f"{name:34s} media={v.mean():5.2f}  mediana={np.median(v):5.2f}  max={v.max():5.2f}"
+    line = f"{name:34s} mean={v.mean():5.2f}  median={np.median(v):5.2f}  max={v.max():5.2f}"
     line += "".join(f"  >{t}={100 * (v > t).mean():5.2f}%" for t in (10, 15, 25))
     if ref is not None:
         both = ok & (ref != NODATA_F32)
@@ -80,12 +80,12 @@ def main() -> None:
     field, transform, crs = slope_1m(dtm)
     px = field != NODATA_F32
     v1 = field[px]
-    print(f"declividade em pixels de 1 m (bbox): n={v1.size}  media={v1.mean():.2f}  mediana={np.median(v1):.2f}  "
-          f"max={v1.max():.2f}  >25 graus={100 * (v1 > 25).mean():.2f}%  >45 graus={100 * (v1 > 45).mean():.2f}%")
-    print("celulas do grid de 512x512 (mesmas celulas do slope.bin):")
-    summary("A) grid ~15 m (slope.bin)", grid_scale)
-    summary("B) 1 m, media por celula", to_grid(field, transform, crs, Resampling.average), grid_scale)
-    summary("C) 1 m, maximo por celula", to_grid(field, transform, crs, Resampling.max), grid_scale)
+    print(f"slope on 1 m pixels (bbox): n={v1.size}  mean={v1.mean():.2f}  median={np.median(v1):.2f}  "
+          f"max={v1.max():.2f}  >25 degrees={100 * (v1 > 25).mean():.2f}%  >45 degrees={100 * (v1 > 45).mean():.2f}%")
+    print("cells of the 512x512 grid (same cells as slope.bin):")
+    summary("A) ~15 m grid (slope.bin)", grid_scale)
+    summary("B) 1 m, mean per cell", to_grid(field, transform, crs, Resampling.average), grid_scale)
+    summary("C) 1 m, max per cell", to_grid(field, transform, crs, Resampling.max), grid_scale)
 
 
 if __name__ == "__main__":
