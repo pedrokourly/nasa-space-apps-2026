@@ -6,7 +6,7 @@
 
 ## Context
 
-Routing, the O₂ budget and the science targets only work inside the Jezero terrain grid (`meta.json` bbox), because that is the only place with a detailed elevation model (HiRISE DTM, see [`docs/dados-relevo.md`](../dados-relevo.md)). A whole-planet map view was tried on Nov 14 (global CTX + MOLA, opening flight from the planet into the crater) and then reverted: it added a second, unrelated story to a 2-minute demo and made the imagery jump between very different resolutions.
+Routing, the O₂ budget and the science targets only work inside the Jezero terrain grid (`meta.json` bbox), because that is the only place with a detailed elevation model (HiRISE DTM, see [`docs/terrain-data.md`](../terrain-data.md)). A whole-planet map view was tried on Nov 14 (global CTX + MOLA, opening flight from the planet into the crater) and then reverted: it added a second, unrelated story to a 2-minute demo and made the imagery jump between very different resolutions.
 
 ## Decision
 

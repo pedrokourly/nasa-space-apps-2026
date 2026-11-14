@@ -60,4 +60,4 @@ Code: `web/src/routing/core/grid.ts`, `gridBinary.ts`. Contract: `AGENTS.md`, se
 
 - `elevation.bin` in meters and `slope.bin` in **degrees** (confirmed: `pipeline/export_slope.py`, Horn method with the real meters per cell), Float32 little-endian, row-major, row 0 = north.
 - Cell values are area samples: the center of cell (col, row) sits half a cell inside the `bbox`.
-- Data/GIS computes the slope on the 15 m grid (documented as an assumption in `docs/dados-relevo.md`). A max-per-cell slope from the 1 m DTM would be more conservative.
+- Data/GIS computes the slope on the 15 m grid (documented as an assumption in `docs/terrain-data.md`). A max-per-cell slope from the 1 m DTM would be more conservative.
