@@ -51,6 +51,13 @@ describe('isNoData', () => {
     expect(isNoData(meta, f[2]!)).toBe(false);
     expect(isNoData(meta, f[3]!)).toBe(false);
   });
+
+  it('catches the HiRISE DTM sentinel even if meta.json declares another nodata', () => {
+    const dtm = new Float32Array([-3.4028226550889045e38, Infinity, -Infinity]);
+    for (const v of dtm) expect(isNoData({ ...meta, nodata: -9999 }, v)).toBe(true);
+    expect(isNoData({ ...meta, nodata: -9999 }, -9999)).toBe(true);
+    expect(isNoData({ ...meta, nodata: -9999 }, -2665.37)).toBe(false);
+  });
 });
 
 describe('cell ↔ lon/lat', () => {

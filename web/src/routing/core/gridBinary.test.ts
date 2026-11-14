@@ -30,6 +30,21 @@ describe('gridFromBuffers', () => {
     expect(g.slope[0]).toBe(10);
   });
 
+  it('reads the optional sand layer only when meta.sand_layer is true', () => {
+    const sand = new Uint8Array([0, 1, 0, 0, 1, 1]).buffer;
+    const g = gridFromBuffers({ ...meta, sand_layer: true }, buf(six), buf(six), sand);
+    expect(Array.from(g.sand!)).toEqual([0, 1, 0, 0, 1, 1]);
+    expect(gridFromBuffers(meta, buf(six), buf(six)).sand).toBeUndefined();
+    expect(() => gridFromBuffers({ ...meta, sand_layer: true }, buf(six), buf(six))).toThrow(/sand\.bin is missing/);
+    expect(() => gridFromBuffers(meta, buf(six), buf(six), sand)).toThrow(/sand_layer/);
+  });
+
+  it('rejects a sand layer with a wrong size or values other than 0 and 1', () => {
+    const m = { ...meta, sand_layer: true };
+    expect(() => gridFromBuffers(m, buf(six), buf(six), new Uint8Array(5).buffer)).toThrow(/sand\.bin has 5 bytes/);
+    expect(() => gridFromBuffers(m, buf(six), buf(six), new Uint8Array([0, 0, 2, 0, 0, 0]).buffer)).toThrow(/value 2/);
+  });
+
   it('rejects an inverted bbox, a zero cell size or a size mismatch', () => {
     expect(() => gridFromBuffers({ ...meta, bbox: [78, 18, 77, 19] }, buf(six), buf(six))).toThrow(/bbox/);
     expect(() => gridFromBuffers({ ...meta, m_per_cell_x: 0 }, buf(six), buf(six))).toThrow(/m_per_cell/);

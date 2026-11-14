@@ -1,5 +1,7 @@
 # Routing
 
+All constants and their sources: [`docs/routing-assumptions.md`](../../../docs/routing-assumptions.md).
+
 ## Structure
 
 - `core/`: pure logic (grid, cost, A*, metrics, `route()`). **Do not** import React, Leaflet, the DOM or Worker APIs; it runs in the browser, in the Worker and in Node.
@@ -17,8 +19,8 @@ Based on `Meta` in `src/types/contract.ts` and section 5 of `AGENTS.md`.
 | Row 0 | North edge (`meta.row0 = 'north'`) |
 | Longitude | −180 to 180 |
 | Cell | Area sample: the center of (col, row) sits half a cell inside the `bbox` |
-| No data | `meta.nodata` or `NaN`; never treated as zero |
-| Sand | Optional `sand` layer (1 = sand). **Not in the contract**; depends on Data/GIS |
+| No data | `meta.nodata`, non-finite or magnitude >= 1e30; never treated as zero |
+| Sand | Optional `sand.bin` (Uint8, 1 = sand), read only when `meta.sand_layer` is `true` (contract, section 5) |
 
 Open questions for Data/GIS: are the byte order and nodata confirmed? Is the slope in degrees? Will there be a sand layer? Is `bbox` `[lonMin, latMin, lonMax, latMax]`? Only the loader (real data) knows the `.bin` format; everything else uses `Grid` (`core/grid.ts`).
 
@@ -59,7 +61,7 @@ cd web && npm test
 
 - Vertices are cell centers; distance uses `haversine` (R = 3389.5 km).
 - **Verdict:** GO if the O₂ of the trip, plus that of the return along the same path when the last point is not the first, fits in what is available. For a loop (habitat → targets → habitat) the O₂ of the trip is enough.
-- **Point of no return** (`point_of_no_return`, vertex index): first vertex where the O₂ already spent plus that of the way back along the same path exceeds what is available; absent if that never happens. The optimal return is S5's.
+- **Point of no return** (`point_of_no_return`, vertex index): first vertex from which the astronaut can no longer get back to the habitat with the O₂ left, turning back the same way or, on a loop, carrying on to the end (whichever is cheaper). The last safe vertex is the one before. Present exactly when the verdict is NO-GO. The optimal return is S5's.
 - Errors: `OutOfGridError` (point outside the grid), `NoPathError` (no path), `Error` (fewer than 2 points).
 - The available O₂ is **not** part of the route (the contract has no such field). If the UI needs to show the margin, that is a contract change (update section 5 of `AGENTS.md` in the same PR).
 

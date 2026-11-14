@@ -102,6 +102,48 @@ describe('route(): verdict and point of no return', () => {
     expect(r.properties.verdict).toBe('GO');
     expect(r.properties.point_of_no_return).toBeUndefined();
   });
+
+  it('loop that is GO by a small margin has no point of no return (going on home is cheaper than turning back)', () => {
+    // Triangle habitat → B → C → habitat. Near the end, turning back the same way would cost
+    // almost the whole trip again, but carrying on to the habitat costs little.
+    const tri = flatGrid(40, 40, 20);
+    const H = cellPt(tri, 2, 37);
+    const pts = [H, cellPt(tri, 37, 37), cellPt(tri, 20, 2), H];
+    const total = route(tri, pts).properties.o2_kg;
+    const r = route(tri, pts, { o2_available_kg: total * 1.01 });
+    expect(r.properties.verdict).toBe('GO');
+    expect(r.properties.point_of_no_return).toBeUndefined();
+  });
+
+  it('loop that is NO-GO: the point of no return comes after the last safe vertex', () => {
+    const tri = flatGrid(40, 40, 20);
+    const H = cellPt(tri, 2, 37);
+    const pts = [H, cellPt(tri, 37, 37), cellPt(tri, 20, 2), H];
+    const total = route(tri, pts).properties.o2_kg;
+    const r = route(tri, pts, { o2_available_kg: total * 0.6 });
+    expect(r.properties.verdict).toBe('NO-GO');
+    const pnr = r.properties.point_of_no_return!;
+    expect(pnr).toBeGreaterThan(0);
+    expect(pnr).toBeLessThan(r.geometry.coordinates.length);
+  });
+
+  it('the point of no return exists if and only if the verdict is NO-GO', () => {
+    const tri = flatGrid(40, 40, 20);
+    const H = cellPt(tri, 2, 37);
+    const routes = [
+      [H, cellPt(tri, 37, 37)],
+      [H, cellPt(tri, 37, 37), H],
+      [H, cellPt(tri, 37, 37), cellPt(tri, 20, 2), H],
+      [H, cellPt(tri, 20, 2), cellPt(tri, 37, 20)],
+    ];
+    for (const pts of routes) {
+      const total = route(tri, pts).properties.o2_kg;
+      for (const k of [0.3, 0.5, 0.9, 1.0, 1.01, 1.5, 2.01, 5]) {
+        const p = route(tri, pts, { o2_available_kg: total * k }).properties;
+        expect(p.point_of_no_return !== undefined).toBe(p.verdict === 'NO-GO');
+      }
+    }
+  });
 });
 
 describe('route(): errors', () => {

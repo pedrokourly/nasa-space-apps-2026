@@ -5,7 +5,8 @@
  * Conventions:
  * - Line vertices are cell centers (the requested point is "snapped" to its cell).
  * - Distances use `haversine` (R = 3389.5 km), as the contract requires.
- * - Return trip: in this version the way back is along the same path. The optimal return is S5's.
+ * - Return trip: back along the same path or, on a loop, forward to the end. The optimal return
+ *   (cheapest path home from any cell) is S5's.
  */
 import { haversine, type LonLat } from '../../lib/mars-geo';
 import type { Route } from '../../types/contract';
@@ -26,10 +27,12 @@ export interface RouteOptions {
  * Route through all `points`, in order.
  * Throws `OutOfGridError` (point outside the grid), `NoPathError` (no path) or `Error` (fewer than 2 points).
  *
- * Verdict: GO if the O₂ of the trip, plus that of the return along the same path when the last
- * point is not the first, fits in the available amount. `point_of_no_return` is the first vertex
- * where the O₂ already spent plus the O₂ to go back the way it came exceeds what is available
- * (absent if that never happens).
+ * The habitat is the first point. Verdict: GO if the O₂ of the trip, plus that of the return along
+ * the same path when the last point is not the habitat, fits in the available amount.
+ *
+ * `point_of_no_return`: index of the FIRST vertex from which the astronaut can no longer get back
+ * to the habitat with the O₂ left (going back the way they came or, on a loop, carrying on to the
+ * end). The last safe vertex is `point_of_no_return − 1`. Present only when the verdict is NO-GO.
  */
 export function route(grid: Grid, points: LonLat[], options: RouteOptions = {}): Route {
   if (points.length < 2) throw new Error('route needs at least 2 points');
@@ -76,11 +79,17 @@ export function route(grid: Grid, points: LonLat[], options: RouteOptions = {}):
   const first = stops[0]!;
   const end = stops[stops.length - 1]!;
   const isLoop = first.col === end.col && first.row === end.row;
-  const needed = fwd[last]! + (isLoop ? 0 : back[last]!);
+
+  // O₂ to get back to the habitat (first point) from vertex i: back along the same path or,
+  // when the route itself ends at the habitat, by carrying on to the end, whichever is cheaper.
+  const returnFrom = (i: number): number => (isLoop ? Math.min(back[i]!, fwd[last]! - fwd[i]!) : back[i]!);
+  // fwd[i] + returnFrom(i) never decreases along the route, so once it exceeds what is
+  // available it stays above it: the point of no return exists if and only if the verdict is NO-GO.
+  const needed = fwd[last]! + returnFrom(last);
 
   let pnr: number | undefined;
   for (let i = 0; i <= last; i++) {
-    if (fwd[i]! + back[i]! > available) {
+    if (fwd[i]! + returnFrom(i) > available) {
       pnr = i;
       break;
     }

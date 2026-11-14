@@ -58,9 +58,17 @@ export function inBounds(meta: Meta, col: number, row: number): boolean {
   return Number.isInteger(col) && Number.isInteger(row) && col >= 0 && col < meta.width && row >= 0 && row < meta.height;
 }
 
-/** No-data value: `NaN` or equal to the meta `nodata` (compared as Float32). Never treat as zero. */
+/** Any value this large in magnitude is a no-data sentinel, not a real elevation or slope. */
+const NODATA_MAGNITUDE = 1e30;
+
+/**
+ * No-data value: not finite, equal to the meta `nodata` (compared as Float32), or a huge sentinel.
+ * The sentinel check matters because the HiRISE DTM uses -3.4028226550889045e+38 (not exactly
+ * the Float32 minimum), so a `meta.json` with a slightly different `nodata` must still not let
+ * holes through. Never treat no data as zero.
+ */
 export function isNoData(meta: Meta, value: number): boolean {
-  return Number.isNaN(value) || value === Math.fround(meta.nodata);
+  return !Number.isFinite(value) || Math.abs(value) >= NODATA_MAGNITUDE || value === Math.fround(meta.nodata);
 }
 
 /** Center of the cell as `[lon, lat]`, longitude −180 to 180. */
