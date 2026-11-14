@@ -1,4 +1,4 @@
-"""Testes da declividade (issue #25)."""
+"""Tests for the slope (issue #25)."""
 
 import json
 import math
@@ -17,15 +17,15 @@ REPO = Path(__file__).resolve().parents[2]
 SLOPE = REPO / "web/public/data/slope.bin"
 ELEVATION = REPO / "web/public/data/elevation.bin"
 ND = g.NODATA
-DX, DY = 15.345, 11.554  # metros por celula diferentes em x e y (como no meta.json real)
+DX, DY = 15.345, 11.554  # different meters per cell in x and y (as in the real meta.json)
 N = 40
 
 
 def plane(angle_deg: float, direction_deg: float, dx: float = DX, dy: float = DY, n: int = N) -> np.ndarray:
-    """Plano inclinado `angle_deg`, com a subida na direcao `direction_deg` (0 = leste, 90 = norte)."""
+    """Plane tilted `angle_deg`, rising toward `direction_deg` (0 = east, 90 = north)."""
     rows, cols = np.mgrid[0:n, 0:n]
     x = cols * dx
-    y = -rows * dy  # linha 0 = norte, y cresce para o norte
+    y = -rows * dy  # row 0 = north, y grows to the north
     t = math.radians(direction_deg)
     return (math.tan(math.radians(angle_deg)) * (x * math.cos(t) + y * math.sin(t))).astype(np.float32)
 
@@ -42,7 +42,7 @@ def test_10_degree_ramp_in_x_returns_10_degrees():
 def test_10_degree_ramp_in_y_with_different_cell_sizes_returns_10_degrees():
     s = es.horn_slope(plane(10, 90), DX, DY, ND)
     assert np.allclose(interior(s), 10.0, atol=0.1)
-    # Se o codigo usasse o mesmo tamanho de celula nos dois eixos, o resultado seria outro.
+    # If the code used the same cell size on both axes, the result would be different.
     wrong = es.horn_slope(plane(10, 90), DX, DX, ND)
     assert not np.allclose(interior(wrong), 10.0, atol=0.1)
 
@@ -70,7 +70,7 @@ def test_nodata_cell_contaminates_itself_and_its_8_neighbours_only():
     s = es.horn_slope(z, DX, DY, ND)
     bad = s[1:-1, 1:-1] == np.float32(ND)
     expected = np.zeros_like(bad)
-    expected[19 - 1 : 22 - 1, 19 - 1 : 22 - 1] = True  # 3x3 ao redor de (20, 20) no interior
+    expected[19 - 1 : 22 - 1, 19 - 1 : 22 - 1] = True  # 3x3 around (20, 20) in the interior
     assert np.array_equal(bad, expected)
 
 
@@ -99,7 +99,7 @@ def test_export_writes_exact_size_and_same_grid(tmp_path):
     assert np.array_equal(back, s)
 
 
-@pytest.mark.skipif(not (SLOPE.exists() and ELEVATION.exists()), reason="slope.bin ainda nao gerado")
+@pytest.mark.skipif(not (SLOPE.exists() and ELEVATION.exists()), reason="slope.bin not generated yet")
 class TestCommittedSlope:
     meta = g.build_meta()
 
@@ -115,7 +115,7 @@ class TestCommittedSlope:
         assert (slope[valid] >= 0).all() and (slope[valid] <= 90).all()
         assert np.isfinite(slope).all()
         assert not (slope == 0).all()
-        # Onde a elevacao e nodata, a declividade tambem e.
+        # Where the elevation is nodata, the slope is nodata too.
         assert (slope[elev == nd] == nd).all()
 
     def test_only_the_border_is_nodata_when_elevation_has_no_holes(self):

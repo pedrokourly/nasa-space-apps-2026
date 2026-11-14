@@ -1,21 +1,21 @@
-"""Recorta o DTM HiRISE de Jezero e gera elevation.bin (issue #24).
+"""Crop the Jezero HiRISE DTM and build elevation.bin (issue #24).
 
-Le o GeoTIFF por janela (nunca o arquivo inteiro), reamostra por media de
-blocos para a grade de web/public/data/meta.json (512x512, lon/lat) e grava:
+Reads the GeoTIFF by window (never the whole file), resamples by block average to the
+web/public/data/meta.json grid (512x512, lon/lat) and writes:
 
-    web/public/data/elevation.bin   Float32 little-endian, row-major, linha 0 = norte
-    web/public/data/meta.json       mesmo conteudo da #23
+    web/public/data/elevation.bin   Float32 little-endian, row-major, row 0 = north
+    web/public/data/meta.json       same content as #23
 
-Uso (a partir da raiz do repositorio):
-    pipeline/.venv/Scripts/python pipeline/export_elevation.py [caminho_do_dtm.tif]
+Usage (from the repository root):
+    pipeline/.venv/Scripts/python pipeline/export_elevation.py [path_to_dtm.tif]
 
-Decisoes:
-- O DTM e uma grade Equirectangular com paralelo padrao 0: x = R*lon e y = R*lat
-  (R = 3.396.190 m), ou seja, ja e uma grade lon/lat com longitude -180..180 positiva
-  a leste. Reamostrar para o grid do app e so uma media de blocos, sem reprojetar.
-- Reamostragem por media (Resampling.average): preserva o relevo medio de cada celula.
-- nodata: o do DTM (-3.4028226550889045e+38) vira o do contrato (menor float32). Uma
-  celula do grid e nodata se QUALQUER pixel de 1 m dentro dela era nodata. Nunca vira 0.
+Decisions:
+- The DTM is an Equirectangular grid with standard parallel 0: x = R*lon and y = R*lat
+  (R = 3,396,190 m), so it already is a lon/lat grid with longitude -180..180 positive
+  east. Resampling to the app grid is just a block average, with no reprojection.
+- Resampling by average (Resampling.average) keeps the mean relief of each cell.
+- nodata: the DTM one (-3.4028226550889045e+38) becomes the contract one (lowest float32).
+  A grid cell is nodata if ANY 1 m pixel inside it was nodata. It never becomes 0.
 """
 
 from __future__ import annotations
@@ -45,7 +45,7 @@ NODATA_F32 = np.float32(NODATA)
 
 
 def lonlat_to_xy(lon: float, lat: float) -> tuple[float, float]:
-    """lon/lat (graus) para metros da projecao Equirectangular do DTM."""
+    """lon/lat (degrees) to meters of the DTM Equirectangular projection."""
     return DTM_RADIUS_M * math.radians(lon), DTM_RADIUS_M * math.radians(lat)
 
 
@@ -55,13 +55,13 @@ def resample_to_grid(
     width: int = WIDTH,
     height: int = HEIGHT,
 ) -> np.ndarray:
-    """Devolve o grid (height, width) float32, linha 0 = norte, nodata = NODATA."""
+    """Return the (height, width) float32 grid, row 0 = north, nodata = NODATA."""
     min_lon, min_lat, max_lon, max_lat = bbox
     west, south = lonlat_to_xy(min_lon, min_lat)
     east, north = lonlat_to_xy(max_lon, max_lat)
 
     with rasterio.open(dtm) as ds:
-        # Janela do DTM que cobre o bbox, com 2 pixels de folga.
+        # DTM window covering the bbox, with a 2 pixel margin.
         col0 = max(0, int(math.floor(west - ds.bounds.left)) - 2)
         col1 = min(ds.width, int(math.ceil(east - ds.bounds.left)) + 2)
         row0 = max(0, int(math.floor(ds.bounds.top - north)) - 2)
@@ -69,7 +69,7 @@ def resample_to_grid(
         window = Window(col0, row0, col1 - col0, row1 - row0)
         if (west < ds.bounds.left or east > ds.bounds.right
                 or south < ds.bounds.bottom or north > ds.bounds.top):
-            raise ValueError("bbox fora da cobertura do DTM")
+            raise ValueError("bbox outside the DTM coverage")
 
         masked = ds.read(1, window=window, masked=True)
         win_transform = ds.window_transform(window)
@@ -92,7 +92,7 @@ def resample_to_grid(
         resampling=Resampling.average,
     )
 
-    # Fracao de pixels nodata em cada celula: qualquer buraco vira nodata.
+    # Fraction of nodata pixels in each cell: any hole makes the cell nodata.
     hole_fraction = np.zeros((height, width), dtype=np.float32)
     reproject(
         source=nodata_src.astype(np.float32),
@@ -118,12 +118,12 @@ def export(dtm: Path = DEFAULT_DTM, out: Path = ELEVATION_PATH) -> np.ndarray:
 def main() -> None:
     dtm = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_DTM
     if not dtm.exists():
-        raise SystemExit(f"DTM nao encontrado: {dtm}\nBaixe conforme docs/dados-relevo.md.")
+        raise SystemExit(f"DTM not found: {dtm}\nDownload it as described in docs/terrain-data.md.")
     grid = export(dtm)
     valid = grid != NODATA_F32
-    print(f"gravado {ELEVATION_PATH} ({ELEVATION_PATH.stat().st_size} bytes, {WIDTH}x{HEIGHT} float32 little-endian)")
-    print(f"celulas validas: {int(valid.sum())} de {grid.size}; nodata: {int((~valid).sum())}")
-    print(f"elevacao: min={grid[valid].min():.2f} max={grid[valid].max():.2f} media={grid[valid].mean():.2f} m")
+    print(f"wrote {ELEVATION_PATH} ({ELEVATION_PATH.stat().st_size} bytes, {WIDTH}x{HEIGHT} float32 little-endian)")
+    print(f"valid cells: {int(valid.sum())} of {grid.size}; nodata: {int((~valid).sum())}")
+    print(f"elevation: min={grid[valid].min():.2f} max={grid[valid].max():.2f} mean={grid[valid].mean():.2f} m")
 
 
 if __name__ == "__main__":

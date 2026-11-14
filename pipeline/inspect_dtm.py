@@ -1,10 +1,10 @@
-"""Inspeciona o DTM HiRISE de Jezero (issue #22) e imprime os achados.
+"""Inspect the Jezero HiRISE DTM (issue #22) and print the findings.
 
-Uso (a partir da raiz do repositorio):
-    pipeline/.venv/Scripts/python pipeline/inspect_dtm.py [caminho.tif]
+Usage (from the repository root):
+    pipeline/.venv/Scripts/python pipeline/inspect_dtm.py [path.tif]
 
-So le metadados do GeoTIFF (e uma amostra em baixa resolucao para estimar
-min/max); nao altera o arquivo.
+Reads the GeoTIFF metadata and scans the raster in strips of rows (nodata, min/max and the
+bbox of the valid pixels). It does not change the file.
 """
 
 from __future__ import annotations
@@ -18,37 +18,37 @@ import rasterio
 from rasterio.enums import Resampling
 
 DEFAULT = Path("data/raw/JEZ_hirise_soc_006_DTM_MOLAtopography_DeltaGeoid_1m_Eqc_latTs0_lon0_blend40.tif")
-APP_RADIUS_M = 3_389_500.0  # raio de Marte usado no app (src/lib/geo.ts)
+APP_RADIUS_M = 3_389_500.0  # Mars radius used by the app (src/lib/mars-geo.ts)
 
 
 def main() -> None:
     path = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT
     with rasterio.open(path) as ds:
-        print(f"arquivo: {path.name}")
-        print(f"driver: {ds.driver}  tamanho: {ds.width} x {ds.height}  bandas: {ds.count}")
+        print(f"file: {path.name}")
+        print(f"driver: {ds.driver}  size: {ds.width} x {ds.height}  bands: {ds.count}")
         print(f"dtype: {ds.dtypes[0]}  nodata: {ds.nodata}")
         print(f"CRS (WKT):\n{ds.crs.to_wkt() if ds.crs else None}")
         print(f"transform: {ds.transform}")
-        print(f"pixel (unidades do CRS): x={ds.res[0]} y={ds.res[1]}")
-        print(f"bbox (unidades do CRS): {tuple(ds.bounds)}")
+        print(f"pixel (CRS units): x={ds.res[0]} y={ds.res[1]}")
+        print(f"bbox (CRS units): {tuple(ds.bounds)}")
         print(f"tags: {ds.tags()}")
-        print(f"tags banda 1: {ds.tags(1)}  descricao: {ds.descriptions[0]}  unidade: {ds.units[0]}")
+        print(f"band 1 tags: {ds.tags(1)}  description: {ds.descriptions[0]}  unit: {ds.units[0]}")
 
-        # Parametros da projecao (raio, paralelo padrao, meridiano central).
+        # Projection parameters (radius, standard parallel, central meridian).
         crs = ds.crs
         try:
             print(f"PROJ4: {crs.to_proj4()}")
         except Exception as exc:  # pragma: no cover
-            print(f"PROJ4 indisponivel: {exc}")
+            print(f"PROJ4 unavailable: {exc}")
 
-        # Estimativa em baixa resolucao (decimada) de min/max/nodata.
+        # Quick estimate from a decimated read of min/max/nodata.
         scale = max(ds.width, ds.height) // 2048 or 1
         out_h, out_w = ds.height // scale, ds.width // scale
         arr = ds.read(1, out_shape=(out_h, out_w), resampling=Resampling.nearest, masked=True)
-        print(f"amostra {out_w}x{out_h}: min={arr.min():.2f} max={arr.max():.2f} m, "
-              f"pixels mascarados (nodata)={int(arr.mask.sum()) if np.ma.is_masked(arr) else 0}")
+        print(f"sample {out_w}x{out_h}: min={arr.min():.2f} max={arr.max():.2f} m, "
+              f"masked pixels (nodata)={int(arr.mask.sum()) if np.ma.is_masked(arr) else 0}")
 
-        # Varredura completa em faixas de linhas: nodata, min/max e bbox dos pixels validos.
+        # Full scan in strips of rows: nodata, min/max and bbox of the valid pixels.
         total = valid = 0
         vmin, vmax = math.inf, -math.inf
         rmin = rmax = cmin = cmax = None
@@ -69,32 +69,29 @@ def main() -> None:
                 rmax = r0 + int(rows[-1])
                 cmin = int(cols[0]) if cmin is None else min(cmin, int(cols[0]))
                 cmax = int(cols[-1]) if cmax is None else max(cmax, int(cols[-1]))
-        print(f"VARREDURA COMPLETA: pixels={total} validos={valid} ({100 * valid / total:.1f}%) "
+        print(f"FULL SCAN: pixels={total} valid={valid} ({100 * valid / total:.1f}%) "
               f"nodata={total - valid} ({100 * (total - valid) / total:.1f}%)")
-        print(f"elevacao valida: min={vmin:.2f} max={vmax:.2f} m")
-        print(f"bbox dos pixels validos (linha {rmin}-{rmax}, coluna {cmin}-{cmax})")
+        print(f"valid elevation: min={vmin:.2f} max={vmax:.2f} m")
+        print(f"bbox of the valid pixels (rows {rmin}-{rmax}, columns {cmin}-{cmax})")
 
-        # Metros reais por pixel. Em Equirectangular com paralelo padrao 0,
-        # x_solo = pixel * cos(lat); y_solo = pixel. Raio do proprio CRS.
+        # Real meters per pixel. In Equirectangular with standard parallel 0,
+        # ground_x = pixel * cos(lat); ground_y = pixel. Uses the CRS own radius.
         left, bottom, right, top = ds.bounds
-        print(f"extensao: {(right - left) / 1000:.2f} km (x) x {(top - bottom) / 1000:.2f} km (y)")
+        print(f"extent: {(right - left) / 1000:.2f} km (x) x {(top - bottom) / 1000:.2f} km (y)")
         if crs and crs.is_projected:
-            print("CRS e projetado: res em metros; ver metros por pixel acima e latitude de Jezero na secao abaixo.")
-            # Lon/lat do centro e dos cantos
+            print("the CRS is projected: res is in meters; see the ground meters per pixel by latitude below.")
             from rasterio.warp import transform as warp_transform
 
             xs = [left, (left + right) / 2, right, (left + right) / 2]
             ys = [(bottom + top) / 2, top, (bottom + top) / 2, bottom]
             lons, lats = warp_transform(crs, crs.geodetic_crs, xs, ys)
-            print("lon/lat (E, N, O, S, nesta ordem: esq, topo, dir, base):")
-            for name, lo, la in zip(("esq", "topo", "dir", "base"), lons, lats):
+            print("lon/lat of the edges (west, north, east, south):")
+            for name, lo, la in zip(("west", "north", "east", "south"), lons, lats):
                 print(f"  {name}: lon={lo:.5f} lat={la:.5f}")
             lat = math.radians(18.4)
-            ell = crs.ellipsoid_params if hasattr(crs, "ellipsoid_params") else None
-            print(f"elipsoide: {ell}")
-            print(f"cos(18,4 graus)={math.cos(lat):.5f}; raio do app={APP_RADIUS_M} m")
-            for nome, la in (("base", lats[3]), ("centro", (lats[1] + lats[3]) / 2), ("topo", lats[1])):
-                print(f"  m/pixel no solo em lat {la:.4f} ({nome}): x={ds.res[0] * math.cos(math.radians(la)):.4f} y={ds.res[1]:.4f}")
+            print(f"cos(18.4 degrees)={math.cos(lat):.5f}; app radius={APP_RADIUS_M} m")
+            for name, la in (("south", lats[3]), ("center", (lats[1] + lats[3]) / 2), ("north", lats[1])):
+                print(f"  ground m/pixel at lat {la:.4f} ({name}): x={ds.res[0] * math.cos(math.radians(la)):.4f} y={ds.res[1]:.4f}")
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ import { loadGrid } from './loadGrid';
 
 /**
  * Where the Worker reads the grid from: the real Jezero grid made by the Data/GIS pipeline
- * (MRO/HiRISE DTM resampled to 512 × 512, see `docs/dados-relevo.md`). Its `meta.json` has the same
+ * (MRO/HiRISE DTM resampled to 512 × 512, see `docs/terrain-data.md`). Its `meta.json` has the same
  * bbox and size as `data/mock/`, so targets and clicks line up. The invented terrain stays in
  * `data/mock/` for tests.
  */
