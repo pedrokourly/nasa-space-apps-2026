@@ -7,7 +7,7 @@
 import { readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { LonLat } from '../lib/mars-geo';
-import { parseMeta } from '../lib/loadData';
+import { parseMeta, parseTargets } from '../lib/loadData';
 import { cellIndex, isNoData, lonLatToCell, type Grid } from './core/grid';
 import { route } from './core/route';
 import { loadGrid } from './loadGrid';
@@ -17,9 +17,14 @@ const diskFetch = async (url: string): Promise<Response> =>
   new Response(readFileSync(new URL(url.slice(url.lastIndexOf('/') + 1), dataDir)));
 const readJson = (url: URL): unknown => JSON.parse(readFileSync(url, 'utf8'));
 
-/** Demo stops: habitat and the three targets (coordinates of the mock `targets.geojson`), back to the habitat. */
-const HABITAT: LonLat = [77.4508, 18.4447];
-const DEMO: LonLat[] = [HABITAT, [77.385, 18.455], [77.425, 18.47], [77.47, 18.42], HABITAT];
+/** Demo stops from the real `targets.geojson` (#28): habitat, every science target, back to the habitat. */
+const targets = parseTargets(readJson(new URL('targets.geojson', dataDir))).features;
+const HABITAT: LonLat = targets.find((t) => t.properties.id === 'habitat')!.geometry.coordinates;
+const DEMO: LonLat[] = [
+  HABITAT,
+  ...targets.filter((t) => t.properties.id !== 'habitat').map((t) => t.geometry.coordinates),
+  HABITAT,
+];
 
 let grid: Grid;
 beforeAll(async () => {
@@ -86,15 +91,31 @@ describe('real Jezero grid (public/data)', () => {
     }
   });
 
-  it('demo loop (habitat, 3 targets, habitat) is found, GO with the default O₂, in well under 1 s', () => {
+  it('demo loop (habitat, every target, habitat) is found, GO with the default O₂, in well under 1 s', () => {
     const t0 = performance.now();
     const r = route(grid, DEMO);
     const ms = performance.now() - t0;
     expect(r.properties.verdict).toBe('GO');
     expect(r.properties.point_of_no_return).toBeUndefined();
-    expect(r.properties.dist_m).toBeGreaterThan(10_000);
+    expect(r.properties.dist_m).toBeGreaterThan(5_000);
     expect(r.properties.dist_m).toBeLessThan(15_000);
     expect(ms).toBeLessThan(1000);
+  });
+
+  it('demo loop legs: one per pair of stops, adding up to the totals', () => {
+    const p = route(grid, DEMO).properties;
+    expect(p.legs).toHaveLength(DEMO.length - 1);
+    const sum = (k: 'dist_m' | 'time_s' | 'o2_kg') => p.legs!.reduce((s, l) => s + l[k], 0);
+    expect(sum('dist_m')).toBeCloseTo(p.dist_m, 6);
+    expect(sum('time_s')).toBeCloseTo(p.time_s, 6);
+    expect(sum('o2_kg')).toBeCloseTo(p.o2_kg, 10);
+  });
+
+  it('demo loop with too little O₂ is NO-GO and marks a point of no return', () => {
+    const total = route(grid, DEMO).properties.o2_kg;
+    const r = route(grid, DEMO, { o2_available_kg: total * 0.5 });
+    expect(r.properties.verdict).toBe('NO-GO');
+    expect(r.properties.point_of_no_return).toBeGreaterThan(0);
   });
 
   it('no route cell is impassable', () => {

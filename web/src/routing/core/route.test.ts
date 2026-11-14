@@ -173,6 +173,60 @@ describe('route(): verdict and point of no return', () => {
   });
 });
 
+describe('route(): legs and optimal return (S5)', () => {
+  const tri = flatGrid(40, 40, 20);
+  const H = cellPt(tri, 2, 37);
+  const B = cellPt(tri, 37, 37);
+  const C = cellPt(tri, 20, 2);
+
+  it('one leg per pair of stops; legs cover the line and add up to the totals', () => {
+    const r = route(tri, [H, B, C, H]);
+    const p = r.properties;
+    const legs = p.legs!;
+    expect(legs).toHaveLength(3);
+    expect(legs[0]!.from_vertex).toBe(0);
+    expect(legs[2]!.to_vertex).toBe(r.geometry.coordinates.length - 1);
+    for (let k = 1; k < legs.length; k++) expect(legs[k]!.from_vertex).toBe(legs[k - 1]!.to_vertex);
+    const sum = (key: 'dist_m' | 'time_s' | 'o2_kg') => legs.reduce((s, l) => s + l[key], 0);
+    expect(sum('dist_m')).toBeCloseTo(p.dist_m, 6);
+    expect(sum('time_s')).toBeCloseTo(p.time_s, 6);
+    expect(sum('o2_kg')).toBeCloseTo(p.o2_kg, 10);
+  });
+
+  it('one-way trip: the verdict counts the shortcut home, not retracing the way out', () => {
+    // H → B → C ends far from home. Retracing costs the whole trip again (H→B is 35 cells,
+    // B→C ~39 cells); the direct way home from C is ~38 cells, much cheaper.
+    const out = route(tri, [H, B, C]).properties.o2_kg;
+    const homeFromC = route(tri, [C, H]).properties.o2_kg;
+    const enough = (out + homeFromC) * 1.01;
+    expect(enough).toBeLessThan(2 * out); // retracing would not fit
+    const r = route(tri, [H, B, C], { o2_available_kg: enough });
+    expect(r.properties.verdict).toBe('GO');
+    expect(r.properties.point_of_no_return).toBeUndefined();
+  });
+
+  it('known point of no return on a loop: the first vertex where spent + least O₂ home exceeds what is available', () => {
+    // Flat ground, H at the corner, out along the bottom edge to B (35 steps east). Each straight
+    // step costs `step` kg; the least O₂ home from vertex i on that edge is i·step, so spent + home
+    // = 2·i·step. With 9.5·step available it first exceeds at i = 5.
+    const p = route(tri, [H, cellPt(tri, 3, 37)]).properties;
+    const step = p.o2_kg; // one straight step
+    const r = route(tri, [H, B, C, H], { o2_available_kg: 9.5 * step });
+    expect(r.properties.verdict).toBe('NO-GO');
+    expect(r.properties.point_of_no_return).toBe(5);
+  });
+
+  it('the point of no return still exists if and only if the verdict is NO-GO', () => {
+    for (const pts of [[H, B], [H, B, H], [H, B, C, H], [H, C, B]]) {
+      const total = route(tri, pts).properties.o2_kg;
+      for (const k of [0.3, 0.5, 0.9, 1.0, 1.01, 1.5, 2.01, 5]) {
+        const p = route(tri, pts, { o2_available_kg: total * k }).properties;
+        expect(p.point_of_no_return !== undefined).toBe(p.verdict === 'NO-GO');
+      }
+    }
+  });
+});
+
 describe('route(): errors', () => {
   it('fewer than 2 points', () => {
     const g = flatGrid(5, 5);

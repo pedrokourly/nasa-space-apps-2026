@@ -44,12 +44,13 @@ On a 10% climb the model slows to 0.70 m/s and spends 514 W, i.e. about 1.8× mo
 
 ## Verdict and point of no return
 
-Code: `web/src/routing/core/route.ts`.
+Code: `web/src/routing/core/route.ts`, `returnField.ts`.
 
 - The habitat is the route's first point.
-- **GO** when the O₂ of the trip, plus the return along the same path if the route does not end at the habitat, fits in the O₂ available.
-- **`point_of_no_return`**: index of the first vertex from which the astronaut can no longer get back to the habitat with the O₂ left (turning back the same way or, on a loop, carrying on to the end, whichever is cheaper). The last safe vertex is the one before. It is present exactly when the verdict is NO-GO.
-- The optimal return (cheapest path home from any cell) is not computed yet (#40).
+- **Optimal return:** one backward Dijkstra from the habitat gives, for every cell, the least O₂ needed to walk back home over passable cells, with the same walking model and step lengths as the route. Walking is direction-dependent: coming home uphill costs more than going out downhill. It is cached per habitat (~200 ms the first time on the 512 × 512 grid).
+- **GO** when the O₂ of the trip plus the optimal return from its last point (zero when it ends at the habitat) fits in the O₂ available.
+- **`point_of_no_return`**: index of the first vertex where the O₂ already spent plus the optimal return exceeds what is available. The last safe vertex is the one before. It is present exactly when the verdict is NO-GO: going home through the next vertex is always an option, so spent + home never decreases along the route.
+- **`legs`**: one entry per pair of consecutive requested points, with distance, time and O₂; they add up to the totals.
 
 ## Calibration on the real grid (#39)
 
