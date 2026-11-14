@@ -147,3 +147,7 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Worktrees e config local do Claude Code
+.claude/worktrees/
+.claude/settings.local.json
