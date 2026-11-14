@@ -52,12 +52,12 @@ cd web && npm test
 
 | Item | Value | Source |
 |---|---|---|
-| Speed by slope | Tobler (1993), normalized: flat = `speedFlatMS` | Published reference; uses the signed gradient between vertices |
-| Flat speed | 1.0 m/s | **Assumption** (suited astronaut) |
-| O₂ consumption on flat terrain | 0.1 kg/h | **Assumption** (same value as the 2D Map mock) |
-| O₂ increase when climbing | × (1 + 4 · gradient) | **Assumption** |
-| O₂ available at departure | 1.0 kg (`o2_available_kg` option) | **Assumption**, ~10 h on flat terrain |
-| Mars gravity (0.38 g) | not modeled | Simplification |
+| Speed by slope | Tobler (1993), normalized: flat = 1.0 m/s (**assumption**) | Published reference, fitted on Earth hikers |
+| Metabolic power | Pandolf et al. (1977), load and walking terms × g_Mars / g_Earth | Published reference; the gravity scaling is our first-order **assumption** |
+| Masses, terrain | astronaut 75 kg, suit + backpack 90 kg, η = 1.1 | **Assumptions** |
+| Energy → O₂ | 20.1 kJ per liter of O₂, 1.429 g per liter | Indirect calorimetry (Weir 1949) |
+| Flat walking | ≈ 396 W, ≈ 0.10 kg O₂/h | Above the Apollo EVA range (230 to 350 W, NASA TN D-7883): conservative |
+| O₂ available at departure | 1.0 kg (`o2_available_kg` option) | **Assumption** |
 
 - Vertices are cell centers; distance uses `haversine` (R = 3389.5 km).
 - **Verdict:** GO if the O₂ of the trip, plus that of the return along the same path when the last point is not the first, fits in what is available. For a loop (habitat → targets → habitat) the O₂ of the trip is enough.

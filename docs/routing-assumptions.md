@@ -17,15 +17,30 @@ Code: `web/src/routing/core/cost.ts` (`DEFAULT_PROFILE`).
 
 Code: `web/src/routing/core/walk.ts` (`DEFAULT_WALK`, `DEFAULT_O2_AVAILABLE_KG`).
 
-| Constant | Value | Status | Notes |
+The O₂ comes from the energy the body spends, not from distance or time directly:
+
+```
+gradient → speed (Tobler) → metabolic power in watts (Pandolf, scaled to Mars gravity)
+         → energy (watts × seconds) → O₂ (about 20.1 kJ per liter, 1.429 g per liter)
+```
+
+| Step | Formula / value | Status | Source and notes |
 |---|---|---|---|
-| Speed vs. gradient | `v = speedFlatMS · exp(−3.5 · (|S + 0.05| − 0.05))` | **Reference**, adapted | Tobler's hiking function (Tobler, W. 1993, *Three presentations on geographical analysis and modeling*, NCGIA Technical Report 93-1), normalized so flat terrain gives `speedFlatMS`. Built for people on Earth, not for suited astronauts in 0.38 g |
-| `speedFlatMS` | 1.0 m/s | **Assumption** | Suited astronaut on flat terrain |
+| Speed vs. gradient | `v = speedFlatMS · exp(−3.5 · (\|S + 0.05\| − 0.05))` | **Reference**, adapted | Tobler, W. (1993), *Three presentations on geographical analysis and modeling*, NCGIA Technical Report 93-1. Normalized so flat terrain gives `speedFlatMS`. Fitted to hikers on Earth, not suited astronauts |
+| `speedFlatMS` | 1.0 m/s | **Assumption** | Suited pace on flat ground (Tobler gives 1.4 m/s unsuited) |
 | `minSpeedMS` | 0.1 m/s | Implementation floor | Avoids dividing by almost zero on steep descents |
-| `o2BaseKgPerH` | 0.1 kg/h | **Assumption** | Same value as the 2D Map mock route |
-| `o2UphillGain` | 4 | **Assumption** | Consumption × (1 + 4 · uphill gradient) |
-| `DEFAULT_O2_AVAILABLE_KG` | 1.0 kg | **Assumption** | About 10 h of walking on flat terrain |
-| Mars gravity (0.38 g) | not modeled | Simplification | |
+| Metabolic power | `M = 1.5·W + f·[2.0·(W+L)·(L/W)² + η·(W+L)·(1.5·V² + 0.35·V·G)]` (W) | **Reference**, adapted | Pandolf, K. B., Givoni, B. & Goldman, R. F. (1977), *Predicting energy expenditure with loads while standing or walking very slowly*, J. Appl. Physiol. 43(4):577–581. W, L in kg; V in m/s; G in percent; η terrain factor. `f` is our gravity scaling (below) |
+| `bodyMassKg` (W) | 75 kg | **Assumption** | Astronaut |
+| `loadMassKg` (L) | 90 kg | **Assumption** | Suit + life-support backpack, order of the Apollo A7L with PLSS (not verified). Heavier than Pandolf's fitted loads: an extrapolation |
+| `terrainFactor` (η) | 1.1 | **Assumption** | Pandolf's "dirt road" for packed regolith (paved 1.0, loose sand 2.1) |
+| `gravityRatio` (f) | 3.721 / 9.80665 ≈ 0.379 | **Assumption** (first-order) | Multiplies the load and walking terms, not the standing term (mostly the body's own upkeep). Not a measured Mars law: stiff pressurized joints cost energy at any gravity, so real costs may be higher |
+| Downhill | grade term clamped at 0 | **Assumption** (conservative) | Pandolf has no downhill data; a descent costs at least flat walking at the same speed. A published downhill correction exists (Pimental & Pandolf 1979; Santee et al. 2003) but is not used |
+| Energy → O₂ | 20.1 kJ per liter of O₂; 1.429 g per liter | **Reference** | Energy equivalent of oxygen for a mixed diet, ≈ 4.8 kcal/L (indirect calorimetry, Weir 1949); O₂ density at 0 °C and 1 atm |
+| Result on flat ground | ≈ 396 W, ≈ 0.10 kg O₂/h | Derived | |
+| Sanity check | Apollo lunar EVAs: 822 to 1267 kJ/h ≈ 230 to 350 W per crew member | **Reference** | Waligora, J. M. et al. (1975), *Apollo experience report: assessment of metabolic expenditures*, NASA TN D-7883. Our flat-walking power is above that range, so the O₂ estimate errs on the safe side |
+| `DEFAULT_O2_AVAILABLE_KG` | 1.0 kg | **Assumption** | About 10 h of flat walking with this model |
+
+On a 10% climb the model slows to 0.70 m/s and spends 514 W, i.e. about 1.8× more O₂ per meter than on flat ground.
 
 ## Verdict and point of no return
 

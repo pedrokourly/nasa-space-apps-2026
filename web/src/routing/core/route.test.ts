@@ -3,7 +3,7 @@ import { NoPathError, OutOfGridError } from './errors';
 import { cellToLonLat } from './grid';
 import { buildMockGrid, flatGrid, wallWithGapGrid, mockMeta } from './mockGrid';
 import { createRouter, route } from './route';
-import { DEFAULT_WALK, segmentCost, walkingSpeed } from './walk';
+import { DEFAULT_WALK, metabolicPowerW, o2KgForEnergy, segmentCost, walkingSpeed } from './walk';
 
 const cellPt = (g: ReturnType<typeof flatGrid>, col: number, row: number) => cellToLonLat(g.meta, col, row);
 
@@ -19,6 +19,33 @@ describe('walking model', () => {
     const up = segmentCost(100, 20);
     expect(up.time_s).toBeGreaterThan(flat.time_s);
     expect(up.o2_kg).toBeGreaterThan(flat.o2_kg);
+  });
+
+  it('Pandolf on Earth (gravity 1, paved) matches the published formula', () => {
+    const earth = { ...DEFAULT_WALK, gravityRatio: 1, terrainFactor: 1, bodyMassKg: 70, loadMassKg: 20 };
+    // 1.5·70 + 2·90·(20/70)² + 1·90·(1.5·1.2² + 0.35·1.2·5) = 105 + 14.694 + 383.4
+    expect(metabolicPowerW(1.2, 0.05, earth)).toBeCloseTo(105 + 2 * 90 * (20 / 70) ** 2 + 90 * (1.5 * 1.44 + 0.35 * 1.2 * 5), 6);
+  });
+
+  it('Mars gravity lowers the load and walking cost but not the standing term', () => {
+    const mars = metabolicPowerW(1, 0);
+    const earth = metabolicPowerW(1, 0, { ...DEFAULT_WALK, gravityRatio: 1 });
+    expect(mars).toBeLessThan(earth);
+    expect(metabolicPowerW(0, 0, { ...DEFAULT_WALK, gravityRatio: 0 })).toBeCloseTo(1.5 * DEFAULT_WALK.bodyMassKg, 10);
+  });
+
+  it('a descent never costs less than flat walking at the same speed', () => {
+    expect(metabolicPowerW(0.8, -0.2)).toBeCloseTo(metabolicPowerW(0.8, 0), 10);
+  });
+
+  it('O₂ from energy: 20.1 kJ uses one liter (1.429 g) of O₂', () => {
+    expect(o2KgForEnergy(20_100)).toBeCloseTo(0.001429, 12);
+  });
+
+  it('flat walking with the defaults uses about 0.10 kg O₂ per hour (~400 W)', () => {
+    const perHour = segmentCost(3600 * DEFAULT_WALK.speedFlatMS, 0).o2_kg;
+    expect(perHour).toBeGreaterThan(0.09);
+    expect(perHour).toBeLessThan(0.11);
   });
 
   it('zero distance costs nothing', () => {

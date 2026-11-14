@@ -3088,7 +3088,7 @@
   "properties": {
     "dist_m": 12683.960929089646,
     "time_s": 12702.265690851473,
-    "o2_kg": 0.3631812712502082,
+    "o2_kg": 0.3728051899213245,
     "profile": [
       [
         0,
@@ -6172,7 +6172,7 @@
       ]
     ],
     "verdict": "NO-GO",
-    "point_of_no_return": 219,
+    "point_of_no_return": 214,
     "mock": true
   }
 }
