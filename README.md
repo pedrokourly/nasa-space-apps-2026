@@ -4,7 +4,7 @@ Desenvolvimento e submissão do desafio "Interplanetary Survival Guide: Martian 
 
 Planejador de Marswalk para a cratera Jezero: mapa 2D em camadas de várias missões da NASA, rota segura sobre relevo real e visão 3D opcional. App 100% estático, sem backend.
 
-**Demo:** a definir.
+**Live demo:** https://martian-map.pedrokourly.dev
 
 ## Como rodar
 
