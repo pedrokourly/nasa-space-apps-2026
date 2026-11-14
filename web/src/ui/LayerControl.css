@@ -88,3 +88,8 @@
   max-height: calc(100% - 4.5rem);
   overflow-y: auto;
 }
+
+.layer-control__mock {
+  color: #ffb74d;
+  font-weight: 600;
+}

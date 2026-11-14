@@ -3,6 +3,7 @@ import type { LonLat } from '../lib/mars-geo';
 import type { LayerId, Route, RouteStatus } from '../types/contract';
 import { clampEvaParams, DEFAULT_EVA_PARAMS, type EvaParams } from '../routing/core/walk';
 import { DEFAULT_ACTIVE_LAYERS, LAYERS } from '../map/layers';
+import type { LoadedCrism } from '../lib/crism';
 
 export interface AppState {
   waypoints: LonLat[];
@@ -18,6 +19,8 @@ export interface AppState {
 
   /** Dims the map outside the EVA planning area (the `meta.json` bbox). */
   focusPlanningArea: boolean;
+  /** CRISM overlay data (JSON metadata + PNG URL), set by `CrismLayer` once loaded. */
+  crism: LoadedCrism | null;
 
   /** EVA parameters (ASSUMPTIONS, see `routing/core/walk.ts`); changing them recomputes the route. */
   evaParams: EvaParams;
@@ -38,6 +41,7 @@ export interface AppState {
   setBaseLayer: (id: LayerId) => void;
   setLayerOpacity: (id: LayerId, opacity: number) => void;
   setFocusPlanningArea: (on: boolean) => void;
+  setCrism: (c: LoadedCrism | null) => void;
 }
 
 export const useAppStore = create<AppState>()((set) => ({
@@ -52,6 +56,7 @@ export const useAppStore = create<AppState>()((set) => ({
     LAYERS.flatMap((l) => (l.defaultOpacity === undefined ? [] : [[l.id, l.defaultOpacity] as const])),
   ),
   focusPlanningArea: true,
+  crism: null,
 
   evaParams: { ...DEFAULT_EVA_PARAMS },
   setEvaParams: (partial) => set((s) => ({ evaParams: { ...s.evaParams, ...clampEvaParams(partial) } })),
@@ -78,4 +83,5 @@ export const useAppStore = create<AppState>()((set) => ({
   setLayerOpacity: (id, opacity) =>
     set((s) => ({ layerOpacity: { ...s.layerOpacity, [id]: Math.min(1, Math.max(0, opacity)) } })),
   setFocusPlanningArea: (focusPlanningArea) => set({ focusPlanningArea }),
+  setCrism: (crism) => set({ crism }),
 }));

@@ -19,6 +19,7 @@ export default function LayerControl({
   const layerOpacity = useAppStore((s) => s.layerOpacity);
   const toggleLayer = useAppStore((s) => s.toggleLayer);
   const setLayerOpacity = useAppStore((s) => s.setLayerOpacity);
+  const crism = useAppStore((s) => s.crism);
   const focusPlanningArea = useAppStore((s) => s.focusPlanningArea);
   const setFocusPlanningArea = useAppStore((s) => s.setFocusPlanningArea);
 
@@ -34,7 +35,10 @@ export default function LayerControl({
       <div key={l.id} className="layer-control__overlay">
         <label className="layer-control__row">
           <input type="checkbox" checked={on} onChange={() => toggleLayer(l.id)} />
-          <span className="layer-control__name">{l.name}</span>
+          <span className="layer-control__name">
+            {l.name}
+            {l.kind === 'crism' && crism?.source === 'mock' && <span className="layer-control__mock"> · MOCK</span>}
+          </span>
           <span className="layer-control__mission">{l.shortLabel}</span>
         </label>
         <input

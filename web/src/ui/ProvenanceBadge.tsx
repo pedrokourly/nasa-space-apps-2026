@@ -1,5 +1,7 @@
 import type { Mission } from '../types/contract';
-import { LAYERS, isTileLayer, type LayerDef } from '../map/layers';
+import { LAYERS, isTileLayer, type LayerDef, type LegendDef } from '../map/layers';
+import { crismProvenanceParts } from '../lib/crism';
+import { useAppStore } from '../state/store';
 import './ProvenanceBadge.css';
 
 /** Provenance text of a layer: imagery, mission, resolution and version/date. */
@@ -17,10 +19,26 @@ function provenanceParts(def: LayerDef, mission: Mission | undefined): string[] 
   ];
 }
 
-/** Generic color legend (bar + labels), used by any `LayerDef.legend`. */
-export function Legend({ def }: { def: LayerDef }) {
-  const l = def.legend;
+/** Generic color legend (gradient bar or categorical swatches), used by any `LayerDef.legend`. */
+export function Legend({ def, legend }: { def: LayerDef; legend?: LegendDef }) {
+  const l = legend ?? def.legend;
   if (!l) return null;
+  if ('entries' in l) {
+    return (
+      <div className="provenance__legend">
+        <span className="provenance__legend-title">{l.title}</span>
+        <ul className="provenance__legend-entries" aria-label={`${l.title}: color key`}>
+          {l.entries.map((e) => (
+            <li key={`${e.color}-${e.label}`}>
+              <span className="provenance__legend-swatch" style={{ background: e.color }} aria-hidden="true" />
+              {e.label}
+            </li>
+          ))}
+        </ul>
+        {l.note && <span className="provenance__legend-note">{l.note}</span>}
+      </div>
+    );
+  }
   return (
     <div className="provenance__legend">
       <span className="provenance__legend-title">{l.title}</span>
@@ -51,6 +69,7 @@ export default function ProvenanceBadge({
   terrainSource?: string;
 }) {
   const active = LAYERS.filter((l) => activeLayers.includes(l.id));
+  const crism = useAppStore((s) => s.crism);
   const doi = terrainSource?.match(/DOI\s+(10\.\S+?)[),\s]/)?.[1];
   return (
     <div className="provenance" aria-label="Provenance of the active layers">
@@ -74,17 +93,22 @@ export default function ProvenanceBadge({
         return (
           <div key={l.id} className="provenance__item">
             <p className="provenance__line">
-              {provenanceParts(l, mission).join(' · ')}{' '}
+              {(l.kind === 'crism' ? crismProvenanceParts(l.dataKind ?? 'Mineral map', crism) : provenanceParts(l, mission)).join(' · ')}{' '}
               <a href={l.sourceUrl} target="_blank" rel="noopener noreferrer">
                 Source
               </a>
             </p>
+            {l.kind === 'crism' && crism?.source === 'mock' && (
+              <p className="provenance__warn" role="status">
+                Mock data: the real CRISM overlay has not been delivered yet; the colored blobs are made up.
+              </p>
+            )}
             {!mission && (
               <p className="provenance__warn" role="alert">
                 Warning: mission “{l.missionId}” is not listed in missions.json.
               </p>
             )}
-            <Legend def={l} />
+            <Legend def={l} legend={l.kind === 'crism' ? crism?.meta.legend : undefined} />
           </div>
         );
       })}
