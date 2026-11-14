@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { useMap } from './MapContext';
 import { useAppStore } from '../state/store';
@@ -17,6 +17,8 @@ const ACCENT = '#ffb454';
 const MASK_FILL = 'rgba(5, 7, 12, 0.55)';
 /** Margin (degrees) added around `maxBounds` so the mask always covers the view. */
 const MARGIN_DEG = 2;
+/** Room around the planning area in the opening view, for the label and map controls. */
+const FIT_PADDING_PX: L.PointTuple = [48, 48];
 
 function getPane(map: L.Map, name: string, zIndex: number): HTMLElement {
   const pane = map.getPane(name) ?? map.createPane(name);
@@ -37,6 +39,21 @@ const km = (m: number) => (m / 1000).toFixed(1);
 export default function PlanningAreaFocus({ meta }: { meta: Meta | null }) {
   const map = useMap();
   const focus = useAppStore((s) => s.focusPlanningArea);
+  const fittedRef = useRef<L.Map | null>(null);
+
+  // Opening view: zoom so the planning area fills the screen, once per map instance.
+  useEffect(() => {
+    if (!map || !meta || fittedRef.current === map) return;
+    fittedRef.current = map;
+    const [minLon, minLat, maxLon, maxLat] = meta.bbox;
+    map.fitBounds(
+      [
+        [minLat, minLon],
+        [maxLat, maxLon],
+      ],
+      { padding: FIT_PADDING_PX, animate: false },
+    );
+  }, [map, meta]);
 
   // Outline and size label (always on).
   useEffect(() => {
