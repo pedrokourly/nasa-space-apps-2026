@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { loadData, type AppData } from './lib/loadData'
 import MapView from './map/MapView'
+import TargetsLayer from './map/TargetsLayer'
+import TargetCard from './ui/TargetCard'
 
 export default function App() {
   const [data, setData] = useState<AppData | null>(null)
@@ -16,7 +18,10 @@ export default function App() {
         <h1>Martian Map · Jezero</h1>
       </header>
       <main id="map-area" className="map-area" aria-label="Área do mapa">
-        <MapView />
+        <MapView>
+          {data && <TargetsLayer targets={data.targets} />}
+          {data && <TargetCard targets={data.targets} missions={data.missions} />}
+        </MapView>
       </main>
       <footer className="app-footer">
         {erro
