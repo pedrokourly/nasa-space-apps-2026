@@ -10,7 +10,8 @@ const MAX_ZOOM = 17;
 /** Stacking order inside the tile pane: backdrop < base < overlays. */
 const Z_BACKDROP = 1;
 const Z_BASE = 2;
-const Z_OVERLAY = 3;
+const Z_DETAIL = 3;
+const Z_OVERLAY = 4;
 
 function createTileLayer(def: LayerDef, zIndex: number, opacity: number): L.TileLayer {
   return L.tileLayer(def.url, {
@@ -53,7 +54,8 @@ export default function LayerManager() {
     }
     // An overlay that is also the backdrop takes over the same tile layer (overlay z and opacity).
     for (const l of LAYERS) {
-      if (l.type === 'overlay' && activeLayers.includes(l.id)) wanted.set(l.id, { def: l, z: Z_OVERLAY });
+      if (l.type === 'base' || !activeLayers.includes(l.id)) continue;
+      wanted.set(l.id, { def: l, z: l.type === 'detail' ? Z_DETAIL : Z_OVERLAY });
     }
 
     for (const [id, layer] of current) {

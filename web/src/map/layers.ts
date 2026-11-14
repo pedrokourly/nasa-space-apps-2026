@@ -20,8 +20,12 @@ export interface LayerDef {
   name: string;
   /** Tile `{z}/{y}/{x}` template. */
   url: string;
-  /** `base`: one at a time (radio). `overlay`: toggled on/off with opacity. */
-  type: 'base' | 'overlay';
+  /**
+   * `base`: the permanent imagery under everything (always on).
+   * `detail`: sharper imagery of the area of interest, drawn over the base (on by default).
+   * `overlay`: thematic layers toggled on/off with opacity.
+   */
+  type: 'base' | 'detail' | 'overlay';
   /** Mission id in `missions.json` (provenance). */
   missionId: string;
   /** Short mission/instrument label for the interface. */
@@ -72,9 +76,9 @@ export const LAYERS: LayerDef[] = [
   },
   {
     id: 'hirise-jezero',
-    name: 'HiRISE Jezero (25 cm)',
+    name: 'HiRISE Jezero (25 cm, area of interest)',
     url: `${TREK}JEZ_hirise_soc_006_orthoMosaic_25cm_Eqc_latTs0_lon0_first_dd${TILES}png`,
-    type: 'base',
+    type: 'detail',
     missionId: 'mro-hirise',
     shortLabel: 'MRO/HiRISE',
     format: 'png',
@@ -139,8 +143,11 @@ export const LAYERS: LayerDef[] = [
   },
 ];
 
-/** Base chosen when the app opens. */
+/** The permanent base: controlled CTX mosaic of the whole crater. */
 export const DEFAULT_BASE_ID = 'ctx-jezero';
+
+/** Layers on when the app opens: the CTX base plus HiRISE over the area of interest. */
+export const DEFAULT_ACTIVE_LAYERS = [DEFAULT_BASE_ID, 'hirise-jezero'];
 
 /**
  * Global layer drawn underneath, fully opaque, when the chosen base is local (HiRISE,

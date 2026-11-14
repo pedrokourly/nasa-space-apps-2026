@@ -18,11 +18,36 @@ export default function LayerControl({
   const activeLayers = useAppStore((s) => s.activeLayers);
   const layerOpacity = useAppStore((s) => s.layerOpacity);
   const toggleLayer = useAppStore((s) => s.toggleLayer);
-  const setBaseLayer = useAppStore((s) => s.setBaseLayer);
   const setLayerOpacity = useAppStore((s) => s.setLayerOpacity);
 
   const bases = LAYERS.filter((l) => l.type === 'base');
+  const details = LAYERS.filter((l) => l.type === 'detail');
   const overlays = LAYERS.filter((l) => l.type === 'overlay');
+
+  /** Checkbox + opacity slider, shared by the detail and overlay groups. */
+  const toggleRow = (l: (typeof LAYERS)[number]) => {
+    const on = activeLayers.includes(l.id);
+    const opacity = layerOpacity[l.id] ?? l.defaultOpacity ?? 1;
+    return (
+      <div key={l.id} className="layer-control__overlay">
+        <label className="layer-control__row">
+          <input type="checkbox" checked={on} onChange={() => toggleLayer(l.id)} />
+          <span className="layer-control__name">{l.name}</span>
+          <span className="layer-control__mission">{l.shortLabel}</span>
+        </label>
+        <input
+          type="range"
+          min={0}
+          max={1}
+          step={0.05}
+          value={opacity}
+          disabled={!on}
+          aria-label={`Opacity: ${l.name}`}
+          onChange={(e) => setLayerOpacity(l.id, Number(e.target.value))}
+        />
+      </div>
+    );
+  };
 
   // Everything drawn on the map needs a provenance label, including the backdrop
   // that LayerManager puts under a local base.
@@ -43,45 +68,22 @@ export default function LayerControl({
       {open && (
         <div className="layer-control__body">
           <fieldset className="layer-control__group">
-            <legend>Base</legend>
+            <legend>Base map · always on</legend>
             {bases.map((l) => (
-              <label key={l.id} className="layer-control__row">
-                <input
-                  type="radio"
-                  name="base-layer"
-                  checked={activeLayers.includes(l.id)}
-                  onChange={() => setBaseLayer(l.id)}
-                />
+              <div key={l.id} className="layer-control__row layer-control__row--fixed">
+                <span className="layer-control__lock" aria-hidden="true">●</span>
                 <span className="layer-control__name">{l.name}</span>
                 <span className="layer-control__mission">{l.shortLabel}</span>
-              </label>
+              </div>
             ))}
           </fieldset>
           <fieldset className="layer-control__group">
+            <legend>Area of interest detail</legend>
+            {details.map(toggleRow)}
+          </fieldset>
+          <fieldset className="layer-control__group">
             <legend>Overlays</legend>
-            {overlays.map((l) => {
-              const on = activeLayers.includes(l.id);
-              const opacity = layerOpacity[l.id] ?? l.defaultOpacity ?? 1;
-              return (
-                <div key={l.id} className="layer-control__overlay">
-                  <label className="layer-control__row">
-                    <input type="checkbox" checked={on} onChange={() => toggleLayer(l.id)} />
-                    <span className="layer-control__name">{l.name}</span>
-                    <span className="layer-control__mission">{l.shortLabel}</span>
-                  </label>
-                  <input
-                    type="range"
-                    min={0}
-                    max={1}
-                    step={0.05}
-                    value={opacity}
-                    disabled={!on}
-                    aria-label={`Opacity: ${l.name}`}
-                    onChange={(e) => setLayerOpacity(l.id, Number(e.target.value))}
-                  />
-                </div>
-              );
-            })}
+            {overlays.map(toggleRow)}
           </fieldset>
         </div>
       )}

@@ -30,11 +30,12 @@ describe('store', () => {
     expect(s().activeLayers).toEqual([...base, 'themis']);
   });
 
-  it('switches the base keeping overlays and clamps the opacity', () => {
+  it('opens with the CTX base and HiRISE detail, and clamps the opacity', () => {
     const s = () => useAppStore.getState();
+    expect(s().activeLayers).toEqual(expect.arrayContaining(['ctx-jezero', 'hirise-jezero']));
     s().toggleLayer('themis-dia');
-    s().setBaseLayer('hirise-jezero');
-    expect(s().activeLayers).toEqual(['hirise-jezero', 'themis-dia']);
+    s().setBaseLayer('ctx-jezero');
+    expect(s().activeLayers).toEqual(expect.arrayContaining(['ctx-jezero', 'themis-dia']));
     s().setLayerOpacity('themis-dia', 3);
     expect(s().layerOpacity['themis-dia']).toBe(1);
   });
