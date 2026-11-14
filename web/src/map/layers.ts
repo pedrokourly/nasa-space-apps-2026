@@ -52,20 +52,23 @@ const wmts = (product: string) => `${TREK}${product}/1.0.0/WMTSCapabilities.xml`
 export const LAYERS: LayerDef[] = [
   {
     id: 'ctx-jezero',
-    name: 'CTX Jezero (preliminary mosaic)',
-    url: `${TREK}Jezero_CTX_BlockAdj_dd${TILES}png`,
+    // Controlled 6 m mosaic: measured 0 px offset against HiRISE at z11. The wider
+    // preliminary mosaic (Jezero_CTX_BlockAdj_dd) sits ~80 m south of both, so it was dropped.
+    name: 'CTX Jezero (6 m, controlled)',
+    url: `${TREK}JEZ_ctx_B_soc_008_orthoMosaic_6m_Eqc_latTs0_lon0${TILES}png`,
     type: 'base',
     missionId: 'mro-ctx',
     shortLabel: 'MRO/CTX',
     format: 'png',
-    maxNativeZoom: 12,
+    maxNativeZoom: 13,
     bounds: [
-      [15.9058484, 75.1537692],
-      [19.4453003, 78.8717121],
+      [18.2110274, 77.1604655],
+      [18.7211945, 77.6991776],
     ],
     attribution: 'NASA Mars Trek · MRO/CTX',
-    product: 'Jezero_CTX_BlockAdj_dd',
-    sourceUrl: wmts('Jezero_CTX_BlockAdj_dd'),
+    product: 'JEZ_ctx_B_soc_008_orthoMosaic_6m_Eqc_latTs0_lon0',
+    resolution: '6 m/px',
+    sourceUrl: wmts('JEZ_ctx_B_soc_008_orthoMosaic_6m_Eqc_latTs0_lon0'),
   },
   {
     id: 'hirise-jezero',
@@ -86,10 +89,13 @@ export const LAYERS: LayerDef[] = [
     sourceUrl: wmts('JEZ_hirise_soc_006_orthoMosaic_25cm_Eqc_latTs0_lon0_first_dd'),
   },
   {
+    // Overlay, not a base: at 463 m/px it is a blur at walking scale (5–20 m/px), but a
+    // translucent color tint over CTX/HiRISE still reads as "higher / lower" terrain.
     id: 'mola',
-    name: 'MOLA shaded relief (color)',
+    name: 'MOLA elevation (color tint)',
     url: `${TREK}Mars_MGS_MOLA_ClrShade_merge_global_463m${TILES}jpg`,
-    type: 'base',
+    type: 'overlay',
+    defaultOpacity: 0.4,
     missionId: 'mgs-mola',
     shortLabel: 'MGS/MOLA',
     format: 'jpg',
@@ -110,25 +116,6 @@ export const LAYERS: LayerDef[] = [
       maxLabel: 'higher',
       note: 'Approximate colors; numeric scale not verified',
     },
-  },
-  {
-    id: 'viking-mdim',
-    name: 'Viking MDIM 2.1 (color)',
-    url: `${TREK}Mars_Viking_MDIM21_ClrMosaic_global_232m${TILES}jpg`,
-    type: 'base',
-    missionId: 'viking-mdim',
-    shortLabel: 'Viking/MDIM',
-    format: 'jpg',
-    maxNativeZoom: 7,
-    bounds: [
-      [-90, -180],
-      [90, 180],
-    ],
-    attribution: 'NASA Mars Trek · Viking/MDIM 2.1',
-    product: 'Mars_Viking_MDIM21_ClrMosaic_global_232m',
-    versionOrDate: 'MDIM 2.1',
-    resolution: '232 m/px',
-    sourceUrl: wmts('Mars_Viking_MDIM21_ClrMosaic_global_232m'),
   },
   {
     id: 'themis-dia',
@@ -156,10 +143,11 @@ export const LAYERS: LayerDef[] = [
 export const DEFAULT_BASE_ID = 'ctx-jezero';
 
 /**
- * Global base used as a backdrop when the chosen base is local (HiRISE, CTX
- * Jezero): those PNGs are RGBA and transparent outside their coverage.
+ * Global layer drawn underneath, fully opaque, when the chosen base is local (HiRISE,
+ * CTX Jezero): those PNGs are transparent outside their coverage. THEMIS (100 m/px,
+ * grayscale) blends with CTX far better than the 463 m/px color MOLA.
  */
-export const BACKDROP_ID = 'mola';
+export const BACKDROP_ID = 'themis-dia';
 
 export function getLayer(id: string): LayerDef | undefined {
   return LAYERS.find((l) => l.id === id);

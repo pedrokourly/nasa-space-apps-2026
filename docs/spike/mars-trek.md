@@ -1,5 +1,16 @@
 # Spike #2: tiles do Mars Trek no Leaflet (EPSG:4326)
 
+> **Update (Nov 14, 2026): visual alignment check and layer decisions used by the app.**
+>
+> - Method: same `{z}/{y}/{x}` tiles of each layer around the landing site at z11 (~20 m/px), compared by normalized cross-correlation against the controlled 6 m CTX mosaic.
+> - `JEZ_hirise_soc_006_…_first_dd` (HiRISE 25 cm): **0 m** offset.
+> - `Jezero_CTX_BlockAdj_dd` (preliminary CTX): **~80 m south**, so it was dropped. The app base is now `JEZ_ctx_B_soc_008_orthoMosaic_6m_Eqc_latTs0_lon0` (6 m/px, native z13).
+> - THEMIS day IR: ~60 m (low confidence, IR vs visible). Used as the opaque grayscale backdrop around the CTX coverage.
+> - MOLA color shade (463 m/px): ~500 m, about one MOLA pixel (low confidence). At walking scale it is a blur, so it is now a translucent overlay (default off, 40%), not a base.
+> - Viking MDIM 2.1: offset could not be measured. Dropped (it was only a fallback).
+> - Jezero DTMs (`JEZ_ctx_B_soc_008_DTM_…_20m`, HiRISE 1 m) are in the catalog but are **not** served as WMTS tiles (404). The sharpest global relief tile set is `Mars_MOLA_blend200ppx_HRSC_ClrShade_clon0dd_200mpp_lzw` (200 m/px, native z8).
+> - Scale bar checked at z9/11/13/15: it matches the Mars-radius haversine (e.g. the "1 km" bar measures 1002 m). Plate carrée stretches east–west by ~5% at 18°N; that is expected.
+
 Data do levantamento: 14/11/2026. Fonte: `WMTSCapabilities.xml` de cada produto em `https://trek.nasa.gov/tiles/Mars/EQ/<ID>/1.0.0/WMTSCapabilities.xml` e a API de catálogo do Trek (`https://trek.nasa.gov/mars/TrekServices/ws/index/eq/searchItems`). Página de prova: [`mars-trek-leaflet.html`](./mars-trek-leaflet.html) (abre direto por `file://`).
 
 ## Resultado

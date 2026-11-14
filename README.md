@@ -53,7 +53,7 @@ web/                 # app Vite + React + TypeScript
 
 ## Deploy e regra da `main`
 
-O deploy é feito na Vercel a partir do `vercel.json` da raiz (build em `web/`, saída em `web/dist`).
+Deploy runs on Cloudflare Pages, connected to `main` (preview per branch): root directory `web`, build command `npm run build`, output directory `dist`, environment variable `NODE_VERSION=22`.
 
 **A `main` está sempre deployável:** nunca quebre a `main`; trabalhe em branch e abra PR pequeno. Veja as regras completas em [`AGENTS.md`](AGENTS.md).
 

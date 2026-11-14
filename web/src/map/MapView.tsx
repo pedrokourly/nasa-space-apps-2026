@@ -6,20 +6,23 @@ import { MapContext } from './MapContext';
 import { formatLatLon } from './format';
 import './MapView.css';
 
-/** Initial center: Jezero crater [lat, lon]. */
-const JEZERO_CENTER: L.LatLngTuple = [18.44, 77.45];
+/** Initial center: the area of interest near the Perseverance landing site [lat, lon]. */
+const JEZERO_CENTER: L.LatLngTuple = [18.45, 77.43];
 
-/** Shows the whole crater (~45 km) on desktop screens. */
-const INITIAL_ZOOM = 9;
-/** Below z8 the area limited by maxBounds becomes smaller than the screen. */
-const MIN_ZOOM = 8;
+/** Shows the whole 6 m CTX mosaic (~30 km) on desktop screens. */
+const INITIAL_ZOOM = 10;
+/** Below z9 the area limited by maxBounds becomes smaller than the screen. */
+const MIN_ZOOM = 9;
 /** HiRISE Jezero goes up to native z17. */
 const MAX_ZOOM = 17;
 
-/** Coverage of the preliminary CTX Jezero (spike #2): [[south, west], [north, east]]. */
+/**
+ * Jezero crater (~45 km) plus a margin: [[south, west], [north, east]].
+ * The controlled 6 m CTX mosaic covers the center; MOLA fills the rest as backdrop.
+ */
 const JEZERO_BOUNDS: L.LatLngBoundsLiteral = [
-  [15.9058, 75.1538],
-  [19.4453, 78.8717],
+  [17.95, 77.05],
+  [18.9, 78.05],
 ];
 
 interface MapViewProps {

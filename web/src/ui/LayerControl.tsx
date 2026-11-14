@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAppStore } from '../state/store';
-import { LAYERS } from '../map/layers';
+import { BACKDROP_ID, LAYERS, isGlobal } from '../map/layers';
 import type { Mission } from '../types/contract';
 import ProvenanceBadge from './ProvenanceBadge';
 import './LayerControl.css';
@@ -16,6 +16,12 @@ export default function LayerControl({ missions }: { missions: Mission[] }) {
 
   const bases = LAYERS.filter((l) => l.type === 'base');
   const overlays = LAYERS.filter((l) => l.type === 'overlay');
+
+  // Everything drawn on the map needs a provenance label, including the backdrop
+  // that LayerManager puts under a local base.
+  const base = bases.find((l) => activeLayers.includes(l.id));
+  const shown =
+    base && !isGlobal(base) && !activeLayers.includes(BACKDROP_ID) ? [...activeLayers, BACKDROP_ID] : activeLayers;
 
   return (
     <section className="layer-control" aria-label="Map layers">
@@ -72,7 +78,7 @@ export default function LayerControl({ missions }: { missions: Mission[] }) {
           </fieldset>
         </div>
       )}
-      <ProvenanceBadge activeLayers={activeLayers} missions={missions} />
+      <ProvenanceBadge activeLayers={shown} missions={missions} />
     </section>
   );
 }

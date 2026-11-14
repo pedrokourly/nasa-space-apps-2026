@@ -29,7 +29,7 @@ function createTileLayer(def: LayerDef, zIndex: number, opacity: number): L.Tile
 /**
  * Syncs `activeLayers` and `layerOpacity` from the store with the map's tile layers.
  * One base at a time, plus the enabled overlays. If the chosen base is local
- * (RGBA PNG, transparent outside its coverage), the global MOLA stays underneath.
+ * (RGBA PNG, transparent outside its coverage), the global backdrop stays underneath.
  */
 export default function LayerManager() {
   const map = useMap();
@@ -42,14 +42,16 @@ export default function LayerManager() {
     const current = live.current;
 
     const base = LAYERS.find((l) => l.type === 'base' && activeLayers.includes(l.id));
-    const wanted = new Map<string, { def: LayerDef; z: number }>();
+    // `opacity` set only for the backdrop, which is always drawn fully opaque.
+    const wanted = new Map<string, { def: LayerDef; z: number; opacity?: number }>();
     if (base) {
       if (!isGlobal(base)) {
         const backdrop = getLayer(BACKDROP_ID);
-        if (backdrop) wanted.set(backdrop.id, { def: backdrop, z: Z_BACKDROP });
+        if (backdrop) wanted.set(backdrop.id, { def: backdrop, z: Z_BACKDROP, opacity: 1 });
       }
       wanted.set(base.id, { def: base, z: Z_BASE });
     }
+    // An overlay that is also the backdrop takes over the same tile layer (overlay z and opacity).
     for (const l of LAYERS) {
       if (l.type === 'overlay' && activeLayers.includes(l.id)) wanted.set(l.id, { def: l, z: Z_OVERLAY });
     }
@@ -60,8 +62,8 @@ export default function LayerManager() {
         current.delete(id);
       }
     }
-    for (const [id, { def, z }] of wanted) {
-      const opacity = layerOpacity[id] ?? def.defaultOpacity ?? 1;
+    for (const [id, { def, z, opacity: forced }] of wanted) {
+      const opacity = forced ?? layerOpacity[id] ?? def.defaultOpacity ?? 1;
       const existing = current.get(id);
       if (existing) {
         existing.setOpacity(opacity);
