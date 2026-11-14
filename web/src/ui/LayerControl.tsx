@@ -1,39 +1,36 @@
-import { useState } from 'react';
-import { useAppStore } from '../state/store';
-import { BACKDROP_ID, LAYERS, isGlobal } from '../map/layers';
-import type { Mission } from '../types/contract';
-import ProvenanceBadge from './ProvenanceBadge';
-import './LayerControl.css';
+import { useState } from 'react'
+import { useAppStore } from '../state/store'
+import { BACKDROP_ID, LAYERS, isGlobal } from '../map/layers'
+import type { Mission } from '../types/contract'
+import ProvenanceBadge from './ProvenanceBadge'
+import './LayerControl.css'
 
-/** Layer control: radio for the base, checkbox + opacity for overlays. */
-export default function LayerControl({
-  missions,
-  terrainSource,
-}: {
-  missions: Mission[];
-  /** `meta.json` `source`: provenance of the elevation grid used for routing. */
-  terrainSource?: string;
-}) {
-  const [open, setOpen] = useState(true);
-  const activeLayers = useAppStore((s) => s.activeLayers);
-  const layerOpacity = useAppStore((s) => s.layerOpacity);
-  const toggleLayer = useAppStore((s) => s.toggleLayer);
-  const setLayerOpacity = useAppStore((s) => s.setLayerOpacity);
+interface Props {
+  missions: Mission[]
+  terrainSource?: string
+  visible?: boolean
+}
 
-  const bases = LAYERS.filter((l) => l.type === 'base');
-  const details = LAYERS.filter((l) => l.type === 'detail');
-  const overlays = LAYERS.filter((l) => l.type === 'overlay');
+/** Layer picker with terrain provenance and the active layer legend. */
+export default function LayerControl({ missions, terrainSource, visible = true }: Props) {
+  const [open, setOpen] = useState(true)
+  const activeLayers = useAppStore((state) => state.activeLayers)
+  const layerOpacity = useAppStore((state) => state.layerOpacity)
+  const toggleLayer = useAppStore((state) => state.toggleLayer)
+  const setLayerOpacity = useAppStore((state) => state.setLayerOpacity)
+  const bases = LAYERS.filter((layer) => layer.type === 'base')
+  const details = LAYERS.filter((layer) => layer.type === 'detail')
+  const overlays = LAYERS.filter((layer) => layer.type === 'overlay')
 
-  /** Checkbox + opacity slider, shared by the detail and overlay groups. */
-  const toggleRow = (l: (typeof LAYERS)[number]) => {
-    const on = activeLayers.includes(l.id);
-    const opacity = layerOpacity[l.id] ?? l.defaultOpacity ?? 1;
+  const toggleRow = (layer: (typeof LAYERS)[number]) => {
+    const enabled = activeLayers.includes(layer.id)
+    const opacity = layerOpacity[layer.id] ?? layer.defaultOpacity ?? 1
     return (
-      <div key={l.id} className="layer-control__overlay">
+      <div key={layer.id} className="layer-control__overlay">
         <label className="layer-control__row">
-          <input type="checkbox" checked={on} onChange={() => toggleLayer(l.id)} />
-          <span className="layer-control__name">{l.name}</span>
-          <span className="layer-control__mission">{l.shortLabel}</span>
+          <input type="checkbox" checked={enabled} onChange={() => toggleLayer(layer.id)} />
+          <span className="layer-control__name">{layer.name}</span>
+          <span className="layer-control__mission">{layer.shortLabel}</span>
         </label>
         <input
           type="range"
@@ -41,19 +38,20 @@ export default function LayerControl({
           max={1}
           step={0.05}
           value={opacity}
-          disabled={!on}
-          aria-label={`Opacity: ${l.name}`}
-          onChange={(e) => setLayerOpacity(l.id, Number(e.target.value))}
+          disabled={!enabled}
+          aria-label={`Opacity: ${layer.name}`}
+          onChange={(event) => setLayerOpacity(layer.id, Number(event.target.value))}
         />
       </div>
-    );
-  };
+    )
+  }
 
-  // Everything drawn on the map needs a provenance label, including the backdrop
-  // that LayerManager puts under a local base.
-  const base = bases.find((l) => activeLayers.includes(l.id));
+  const base = bases.find((layer) => activeLayers.includes(layer.id))
   const shown =
-    base && !isGlobal(base) && !activeLayers.includes(BACKDROP_ID) ? [...activeLayers, BACKDROP_ID] : activeLayers;
+    base && !isGlobal(base) && !activeLayers.includes(BACKDROP_ID)
+      ? [...activeLayers, BACKDROP_ID]
+      : activeLayers
+  if (!visible) return null
 
   return (
     <section className="layer-control" aria-label="Map layers">
@@ -61,19 +59,22 @@ export default function LayerControl({
         type="button"
         className="layer-control__toggle"
         aria-expanded={open}
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => setOpen((current) => !current)}
       >
-        Layers {open ? '▾' : '▸'}
+        <span>Map layers</span>
+        <span aria-hidden="true">{open ? '⌄' : '›'}</span>
       </button>
       {open && (
         <div className="layer-control__body">
           <fieldset className="layer-control__group">
-            <legend>Base map · always on</legend>
-            {bases.map((l) => (
-              <div key={l.id} className="layer-control__row layer-control__row--fixed">
-                <span className="layer-control__lock" aria-hidden="true">●</span>
-                <span className="layer-control__name">{l.name}</span>
-                <span className="layer-control__mission">{l.shortLabel}</span>
+            <legend>Base map</legend>
+            {bases.map((layer) => (
+              <div key={layer.id} className="layer-control__row layer-control__row--fixed">
+                <span className="layer-control__lock" aria-hidden="true">
+                  ●
+                </span>
+                <span className="layer-control__name">{layer.name}</span>
+                <span className="layer-control__mission">{layer.shortLabel}</span>
               </div>
             ))}
           </fieldset>
@@ -89,5 +90,5 @@ export default function LayerControl({
       )}
       <ProvenanceBadge activeLayers={shown} missions={missions} terrainSource={terrainSource} />
     </section>
-  );
+  )
 }

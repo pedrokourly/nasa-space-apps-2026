@@ -1,65 +1,536 @@
 :root {
-  color-scheme: dark;
   font-family:
+    Inter,
+    ui-sans-serif,
     system-ui,
     -apple-system,
+    BlinkMacSystemFont,
     'Segoe UI',
-    Roboto,
     sans-serif;
-  background: #0b0d12;
-  color: #e8e6e3;
+  color: #f4f5f7;
+  background: #090b0e;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  color-scheme: dark;
 }
 
 * {
   box-sizing: border-box;
 }
-
 html,
 body,
 #root {
+  width: 100%;
   height: 100%;
   margin: 0;
+}
+body {
+  min-width: 320px;
+  overflow: hidden;
+}
+button {
+  font: inherit;
 }
 
 .app {
-  display: flex;
-  flex-direction: column;
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #090b0e;
+}
+.map-area {
+  position: absolute;
+  inset: 0;
+  min-height: 0;
+  background: #090b0e;
+}
+.map-view,
+.map-view__canvas {
+  width: 100%;
   height: 100%;
 }
-
-.three-d-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: #aab0bd;
+.map-view__canvas,
+.map-view__canvas.leaflet-container {
+  background: #11151a;
 }
 
 .app-header {
+  position: absolute;
+  z-index: 1200;
+  inset: 12px 14px auto;
+  min-height: 62px;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #2a2f3a;
-  background: #11141b;
+  gap: 16px;
+  padding: 8px 14px;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 18px;
+  background: rgb(10 12 15 / 88%);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 32%);
+  backdrop-filter: blur(16px);
+}
+.app-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: inherit;
+  text-decoration: none;
+  min-width: 0;
+}
+.app-brand > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.app-brand strong {
+  font-size: 16px;
+  letter-spacing: 0.01em;
+}
+.app-brand small {
+  color: #9299a2;
+  font-size: 11px;
+}
+.app-brand__mark {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #ff7a1a;
+  border-radius: 50%;
+  color: #ff8a2b;
+  font-weight: 800;
+  font-size: 20px;
+}
+.app-tabs {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px;
+  border-radius: 14px;
+  background: #111419;
+}
+.app-tab {
+  padding: 9px 18px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #a1a7af;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.app-tab--active {
+  color: white;
+  background: linear-gradient(135deg, #e9680c, #ff922a);
+  box-shadow: 0 3px 14px rgb(255 122 26 / 28%);
+  font-weight: 650;
+}
+.app-status {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 9px;
+  color: #abb1b9;
+  font-size: 10px;
+  letter-spacing: 0.09em;
+}
+.app-status__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #44d49a;
+  box-shadow: 0 0 10px rgb(68 212 154 / 60%);
+}
+.app-mock {
+  padding: 4px 7px;
+  border-radius: 6px;
+  background: rgb(255 122 26 / 14%);
+  color: #ff9b4b;
+  font-size: 9px;
+  font-weight: 800;
+}
+.view-toggle {
+  margin-left: 5px;
+  padding: 7px 11px;
+  border: 1px solid #3a414b;
+  border-radius: 9px;
+  background: #1b2027;
+  color: #eee;
+  font-size: 11px;
+  cursor: pointer;
+}
+.view-toggle:hover {
+  border-color: #ff8a2b;
+  background: #292117;
+}
+.view-toggle:focus-visible,
+.map-toolbar button:focus-visible {
+  outline: 2px solid #ff8a2b;
+  outline-offset: 2px;
 }
 
+.location-chip {
+  position: absolute;
+  z-index: 1100;
+  top: 88px;
+  left: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid rgb(255 255 255 / 11%);
+  border-radius: 14px;
+  background: rgb(12 15 19 / 86%);
+  backdrop-filter: blur(12px);
+}
+.location-chip__pin {
+  color: #ff8a2b;
+  font-size: 24px;
+}
+.location-chip > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.location-chip strong {
+  font-size: 13px;
+}
+.location-chip small {
+  color: #a0a6ae;
+  font-size: 11px;
+}
+.map-toolbar {
+  position: absolute;
+  z-index: 1100;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 15px;
+  background: rgb(10 12 15 / 88%);
+  backdrop-filter: blur(12px);
+}
+.map-toolbar button {
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #d5d8dc;
+  font-size: 22px;
+  cursor: pointer;
+}
+.map-toolbar button:hover,
+.map-toolbar button.is-active {
+  background: #302113;
+  color: #ff902e;
+}
+.map-toolbar button.is-active {
+  box-shadow: inset 0 0 0 1px rgb(255 138 43 / 50%);
+}
 .app-footer {
-  padding: 0.4rem 1rem;
-  border-top: 1px solid #2a2f3a;
-  background: #11141b;
-  font-size: 0.8rem;
+  position: absolute;
+  z-index: 1100;
+  left: 18px;
+  right: 18px;
+  bottom: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border: 1px solid rgb(255 255 255 / 11%);
+  border-radius: 16px;
+  background: rgb(10 12 15 / 91%);
+  color: #e1e4e8;
+  font-size: 12px;
+  backdrop-filter: blur(14px);
+}
+.app-footer__source {
+  color: #9299a2;
+}
+.mars-data-panel,
+.profile-panel {
+  position: absolute;
+  z-index: 1150;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 16px;
+  background: rgb(12 15 19 / 94%);
+  box-shadow: 0 12px 34px rgb(0 0 0 / 38%);
+  backdrop-filter: blur(14px);
+}
+.mars-data-panel {
+  top: 92px;
+  right: 18px;
+  width: min(370px, calc(100vw - 36px));
+  padding: 20px;
+}
+.mars-data-panel__eyebrow {
+  color: #ff963e;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+.mars-data-panel h2 {
+  margin: 8px 0;
+  font-size: 19px;
+}
+.mars-data-panel p,
+.profile-panel p {
+  color: #a5abb3;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.mars-data-panel__list {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0;
+}
+.mars-data-panel__list div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 9px 10px;
+  border-radius: 9px;
+  background: rgb(255 255 255 / 4%);
+}
+.mars-data-panel__list strong {
+  color: #f2f3f5;
+  font-size: 12px;
+}
+.mars-data-panel__list span,
+.mars-data-panel small {
+  color: #969da6;
+  font-size: 10px;
+}
+.profile-panel {
+  left: 76px;
+  bottom: 82px;
+  width: min(340px, calc(100vw - 100px));
+  padding: 16px;
+}
+.profile-panel button {
+  float: right;
+  border: 0;
+  background: transparent;
+  color: #a5abb3;
+  font-size: 20px;
+  cursor: pointer;
+}
+.profile-panel strong {
+  font-size: 13px;
+}
+.three-d-loading {
+  display: grid;
+  place-items: center;
+  height: 100%;
   color: #aab0bd;
 }
 
-.app-header h1 {
-  margin: 0;
-  font-size: 1.1rem;
-  font-weight: 600;
+/* Keep map controls and panels above tiles while leaving open map areas interactive. */
+.leaflet-control-container {
+  z-index: 2;
+}
+.leaflet-top {
+  top: 82px;
+}
+.leaflet-left {
+  left: 76px;
+}
+.map-view__coords {
+  top: 88px;
+  right: 18px;
+  padding: 7px 10px;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 9px;
+  background: rgb(10 12 15 / 82%);
+  color: #c8cdd3;
+  font-size: 11px;
+}
+.layer-control {
+  right: 18px;
+  bottom: 82px;
+  max-width: min(21rem, calc(100vw - 36px));
+  border: 1px solid rgb(255 255 255 / 13%);
+  border-radius: 14px;
+  background: rgb(12 15 19 / 92%);
+  backdrop-filter: blur(14px);
+}
+.layer-control__toggle {
+  padding: 10px 13px;
+}
+.layer-control__body {
+  padding: 0 13px 11px;
+}
+.target-card {
+  top: 160px;
+  left: 76px;
+  border-color: rgb(255 138 43 / 65%);
+  border-radius: 14px;
+  background: rgb(14 17 21 / 95%);
+  box-shadow: 0 12px 34px rgb(0 0 0 / 38%);
+}
+.target-card__add {
+  border-radius: 9px;
+  background: linear-gradient(135deg, #e9680c, #ff922a);
+}
+.route-summary {
+  top: 91px;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 10px;
+  background: rgb(10 12 15 / 88%);
+  color: #57dce8;
+  padding: 8px 12px;
+}
+.tile-health {
+  bottom: 78px;
+  border-radius: 10px;
+  background: rgb(10 12 15 / 92%);
+}
+.data-status {
+  border-radius: 12px;
 }
 
-.map-area {
-  flex: 1;
-  min-height: 0;
-  background: #0b0d12;
+@media (max-width: 800px) {
+  .app-header {
+    inset: 8px 8px auto;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+  .app-tabs {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: center;
+  }
+  .app-tab {
+    padding: 7px 14px;
+  }
+  .app-status {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 0;
+    gap: 6px;
+  }
+  .app-mock {
+    font-size: 9px;
+  }
+  .view-toggle {
+    font-size: 10px;
+  }
+  .location-chip {
+    top: 118px;
+    left: 9px;
+    padding: 8px 10px;
+  }
+  .map-toolbar {
+    top: auto;
+    bottom: 118px;
+    left: 9px;
+    transform: none;
+    flex-direction: row;
+    gap: 2px;
+  }
+  .map-toolbar button {
+    width: 38px;
+    height: 38px;
+  }
+  .leaflet-top {
+    top: 178px;
+  }
+  .leaflet-left {
+    left: 8px;
+  }
+  .map-view__coords {
+    top: 118px;
+    right: 9px;
+    max-width: 42vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .route-summary {
+    top: 174px;
+    max-width: calc(100vw - 20px);
+    white-space: normal;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .target-card {
+    top: 178px;
+    left: 9px;
+    max-height: calc(100% - 300px);
+  }
+  .layer-control {
+    right: 9px;
+    bottom: 166px;
+    max-height: 42vh;
+    overflow-y: auto;
+  }
+  .tile-health {
+    bottom: 76px;
+  }
+  .app-footer {
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    padding: 10px 12px;
+    font-size: 10px;
+  }
+  .app-footer__source {
+    max-width: 45%;
+    text-align: right;
+  }
+  .mars-data-panel {
+    top: 100px;
+    right: 9px;
+  }
+  .profile-panel {
+    left: 9px;
+    bottom: 162px;
+    width: min(340px, calc(100vw - 18px));
+  }
+}
+
+@media (max-width: 420px) {
+  .app-brand__mark {
+    width: 32px;
+    height: 32px;
+  }
+  .app-brand strong {
+    font-size: 13px;
+  }
+  .app-brand small {
+    font-size: 9px;
+  }
+  .app-header {
+    min-height: 54px;
+  }
+  .app-status__dot {
+    display: none;
+  }
+  .app-tabs {
+    margin-top: 0;
+  }
+  .app-tab {
+    font-size: 11px;
+  }
+  .location-chip {
+    top: 112px;
+  }
+  .route-summary {
+    top: 164px;
+    font-size: 11px;
+  }
+  .app-footer__source {
+    display: none;
+  }
+  .layer-control {
+    bottom: 161px;
+  }
 }
