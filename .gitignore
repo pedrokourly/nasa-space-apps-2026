@@ -154,3 +154,11 @@ vite.config.ts.timestamp-*
 
 # Wrangler local state
 .wrangler/
+
+# Pipeline de Dados/GIS: dado bruto e ambiente Python (nao versionar)
+data/raw/
+*.tif
+*.tiff
+*.cub
+.venv/
+__pycache__/
