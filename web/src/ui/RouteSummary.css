@@ -58,3 +58,35 @@
   width: 1.4rem;
   border-top: 3px dashed #ffb300;
 }
+
+/* Two verdicts (route not starting at the habitat): totals on top, one line per verdict. */
+.route-summary--dual {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+}
+
+.route-summary__line {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+/* Fixed width so the two verdict badges line up. */
+.route-summary__who {
+  min-width: 3.6rem;
+  color: #cfd8e3;
+}
+
+.route-summary__note {
+  color: #cfd8e3;
+}
+
+/* Start return: violet dotted swatch, matching the dotted line on the map (`START_RETURN_COLOR`). */
+.route-summary__return--start {
+  color: #c084fc;
+}
+
+.route-summary__return--start .route-summary__return-swatch {
+  border-top: 3px dotted #c084fc;
+}

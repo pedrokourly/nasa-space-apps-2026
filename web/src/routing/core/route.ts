@@ -61,6 +61,73 @@ function habitatCell(grid: Grid, habitat: LonLat | undefined, fallback: Cell, co
   return cell;
 }
 
+/** Verdict, point of no return and way home measured against one home cell. */
+interface ReturnVerdict {
+  verdict: 'GO' | 'NO-GO';
+  pnr?: number;
+  returnPath?: ReturnPath;
+}
+
+/**
+ * GO / NO-GO of the route `path` (cumulative O₂ `fwd` per vertex) against `homeCell`, by the optimal
+ * return over its return field `home(i)`:
+ * - GO iff `fwd[last] + home(last) <= available`;
+ * - NO-GO: point of no return = first vertex with `fwd[i] + home(i) > available`;
+ * - way home from the last vertex (GO) or from the last safe vertex `pnr − 1` (NO-GO); none when
+ *   `pnr` is 0 or that vertex is already `homeCell`.
+ */
+function returnVerdict(
+  grid: Grid,
+  path: Cell[],
+  fwd: number[],
+  available: number,
+  homeCell: Cell,
+  costProfile: CostProfile,
+  walk: WalkProfile,
+): ReturnVerdict {
+  const { meta } = grid;
+  const last = path.length - 1;
+  // Least O₂ to get from vertex i to the home cell. It can only shrink by what the next step costs
+  // (going home through the next vertex is one of the options, whatever fixed cell home is), so
+  // O₂ spent + O₂ home never decreases along the route: once it exceeds what is available it stays
+  // above it.
+  const field = cachedReturnField(grid, homeCell, costProfile, walk);
+  const home = (i: number): number => field[cellIndex(meta, path[i]!.col, path[i]!.row)]!;
+  const verdict = fwd[last]! + home(last) <= available ? 'GO' : 'NO-GO';
+
+  let pnr: number | undefined;
+  if (verdict === 'NO-GO') {
+    pnr = last;
+    for (let i = 0; i <= last; i++) {
+      if (fwd[i]! + home(i) > available) {
+        pnr = i;
+        break;
+      }
+    }
+  }
+
+  // Estimated way home drawn on the map, from where the astronaut turns home: the last vertex on a
+  // GO route, the last safe vertex on a NO-GO one. None when even the start cannot get home
+  // (pnr = 0) or that vertex is already the home cell. It follows the same field as the verdict, so
+  // its O₂ equals `home(from)`.
+  const from = pnr === undefined ? last : pnr - 1;
+  const fromCell = from >= 0 ? path[from]! : undefined;
+  let returnPath: ReturnPath | undefined;
+  if (fromCell && (fromCell.col !== homeCell.col || fromCell.row !== homeCell.row)) {
+    const trace = traceReturnPath(grid, field, fromCell, costProfile, walk);
+    if (trace && trace.cells.length >= 2) {
+      returnPath = {
+        from_vertex: from,
+        coordinates: trace.cells.map((c) => cellToLonLat(meta, c.col, c.row)),
+        dist_m: trace.dist_m,
+        time_s: trace.time_s,
+        o2_kg: trace.o2_kg,
+      };
+    }
+  }
+  return { verdict, ...(pnr !== undefined ? { pnr } : {}), ...(returnPath ? { returnPath } : {}) };
+}
+
 /**
  * Route through all `points`, in order, leaving the first point with the full O₂ supply. The way home
  * leads to `options.habitat` (default: the first point).
@@ -80,6 +147,11 @@ function habitatCell(grid: Grid, habitat: LonLat | undefined, fallback: Cell, co
  * `return_path`: the optimal way home, from vertex `from_vertex` to the habitat. GO: from the last
  * vertex (absent when the route ends at the habitat). NO-GO: from the last safe vertex
  * (`point_of_no_return − 1`), so the route up to there plus this return fits in the O₂ available.
+ *
+ * `return_to_start`: when the start cell is not the habitat cell, a second, independent verdict with
+ * the same rules against the route's first point: its own GO / NO-GO, point of no return (always ≥ 1,
+ * since the start is 0 O₂ from itself) and way back to the start cell. Absent when the route starts
+ * at the habitat cell.
  */
 export function route(grid: Grid, points: LonLat[], options: RouteOptions = {}): Route {
   if (points.length < 2) throw new Error('route needs at least 2 points');
@@ -141,46 +213,16 @@ export function route(grid: Grid, points: LonLat[], options: RouteOptions = {}):
     });
   }
 
-  // Least O₂ to get from vertex i to the habitat. It can only shrink by what the next step costs
-  // (going home through the next vertex is one of the options, whatever fixed cell home is), so
-  // O₂ spent + O₂ home never decreases along the route: once it exceeds what is available it stays
-  // above it.
+  // Habitat verdict. The habitat falls back to the first point, so the start verdict below exists only
+  // when the start cell is not the habitat cell.
   const habitat = habitatCell(grid, options.habitat, stops[0]!, costProfile);
-  const field = cachedReturnField(grid, habitat, costProfile, walk);
-  const home = (i: number): number => field[cellIndex(meta, path[i]!.col, path[i]!.row)]!;
-  const verdict = fwd[last]! + home(last) <= available ? 'GO' : 'NO-GO';
-
-  let pnr: number | undefined;
-  if (verdict === 'NO-GO') {
-    pnr = last;
-    for (let i = 0; i <= last; i++) {
-      if (fwd[i]! + home(i) > available) {
-        pnr = i;
-        break;
-      }
-    }
-  }
-  const startUnreachable = pnr === 0;
-
-  // Estimated way home drawn on the map, from where the astronaut turns home: the last vertex on a
-  // GO route, the last safe vertex on a NO-GO one. None when even the start cannot get home
-  // (pnr = 0) or that vertex is already the habitat. It follows the same field as the verdict, so its
-  // O₂ equals `home(from)`.
-  const from = pnr === undefined ? last : pnr - 1;
-  const fromCell = from >= 0 ? path[from]! : undefined;
-  let returnPath: ReturnPath | undefined;
-  if (fromCell && (fromCell.col !== habitat.col || fromCell.row !== habitat.row)) {
-    const trace = traceReturnPath(grid, field, fromCell, costProfile, walk);
-    if (trace && trace.cells.length >= 2) {
-      returnPath = {
-        from_vertex: from,
-        coordinates: trace.cells.map((c) => cellToLonLat(meta, c.col, c.row)),
-        dist_m: trace.dist_m,
-        time_s: trace.time_s,
-        o2_kg: trace.o2_kg,
-      };
-    }
-  }
+  const toHabitat = returnVerdict(grid, path, fwd, available, habitat, costProfile, walk);
+  const startUnreachable = toHabitat.pnr === 0;
+  const start = stops[0]!;
+  const toStart =
+    start.col !== habitat.col || start.row !== habitat.row
+      ? returnVerdict(grid, path, fwd, available, start, costProfile, walk)
+      : undefined;
 
   return {
     type: 'Feature',
@@ -191,10 +233,19 @@ export function route(grid: Grid, points: LonLat[], options: RouteOptions = {}):
       o2_kg: fwd[last]!,
       profile,
       legs,
-      verdict,
-      ...(pnr !== undefined ? { point_of_no_return: pnr } : {}),
+      verdict: toHabitat.verdict,
+      ...(toHabitat.pnr !== undefined ? { point_of_no_return: toHabitat.pnr } : {}),
       ...(startUnreachable ? { start_unreachable: true as const } : {}),
-      ...(returnPath ? { return_path: returnPath } : {}),
+      ...(toHabitat.returnPath ? { return_path: toHabitat.returnPath } : {}),
+      ...(toStart
+        ? {
+            return_to_start: {
+              verdict: toStart.verdict,
+              ...(toStart.pnr !== undefined ? { point_of_no_return: toStart.pnr } : {}),
+              ...(toStart.returnPath ? { return_path: toStart.returnPath } : {}),
+            },
+          }
+        : {}),
     },
   };
 }
