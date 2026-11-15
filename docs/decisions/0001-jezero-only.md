@@ -21,7 +21,7 @@ Routing, the O₂ budget and the science targets only work inside the Jezero ter
 | Optical, crater context | CTX Jezero controlled mosaic | MRO / CTX | ~30 × 30 km | 6 m/px | in the app (default base) |
 | Topography | MOLA color shaded relief | MGS / MOLA | whole view | 463 m/px | in the app (translucent tint) |
 | Thermal | THEMIS daytime IR | Mars Odyssey / THEMIS | whole view | 100 m/px | in the app (overlay + backdrop) |
-| Spectral (mineralogy) | CRISM mineral map of Jezero | MRO / CRISM | Jezero | ~18 m/px | **to do, Data/GIS** |
+| Spectral (mineralogy) | CRISM mineral map of Jezero | MRO / CRISM | Jezero | ~18 m/px | **dropped (2026-11-15)** |
 
    CTX stays because HiRISE covers only ~20 km and the crater is ~45 km wide; it also matches HiRISE to the pixel (measured, see [`docs/spike/mars-trek.md`](../spike/mars-trek.md)).
 
@@ -45,3 +45,7 @@ What exists, checked in the Mars Trek catalog on 2026-11-14:
 ## Out of scope (do not propose)
 
 Whole-planet or multi-site map views, other craters, global rasters as main imagery, and radiation maps.
+
+## Update (2026-11-15): CRISM dropped
+
+The CRISM overlay was built (issue #64) from the MTRDR browse product `FRT00005C5E_07_BRCARJ_MTR3` and then removed: on the map it did not read well over CTX/HiRISE. The 2D map keeps CTX, HiRISE, MOLA, THEMIS and the slope hazard layer (three missions: MRO, MGS and Mars Odyssey, which still meets "4+ layers from 3+ missions"). No spectral layer is planned before the submission; the TES fallback above is not adopted either. The `mro-crism` entry in `missions.json` stays, because target texts cite CRISM as the instrument that found Jezero's carbonates and olivine.
