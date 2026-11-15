@@ -13,6 +13,7 @@ import {
   LabelStyle,
   Math as CesiumMath,
   Matrix4,
+  PolylineDashMaterialProperty,
   PolylineGlowMaterialProperty,
   Transforms,
   VerticalOrigin,
@@ -43,6 +44,10 @@ export interface SceneInput {
 export interface DrawnScene {
   /** Removes everything this call added to the viewer. Safe to call twice. */
   dispose: () => void
+  /** Vertical exaggeration applied to the tileset; every overlay must be placed through it. */
+  matrix: Matrix4
+  /** Raw surface height (m) at a sampled point; falls back to the height at the center of the area. */
+  heightOf: (lonlat: LonLat) => number
 }
 
 /** Meters the route floats above the surface (before exaggeration), so it does not z-fight with the mesh. */
@@ -57,6 +62,10 @@ const COLOR_START = '#00e5ff'
 const COLOR_STOP = '#ffffff'
 const COLOR_PNR = '#ff3b3b'
 const COLOR_TARGET = '#ffb454'
+/** Same colors as the 2D map (`map/RouteLayer.tsx`): amber way home to the habitat, green way back to the start. */
+export const COLOR_RETURN_HABITAT = '#ffb300'
+export const COLOR_RETURN_START = '#4ade80'
+const RETURN_WIDTH_PX = 5
 
 interface Pt {
   lonlat: LonLat
@@ -78,9 +87,13 @@ function exaggerationMatrix(origin: Cartesian3): Matrix4 {
 }
 
 /** World position of a surface point lifted by `lift` meters, then exaggerated by `matrix`. */
-function place(p: Pt, matrix: Matrix4, lift: number): Cartesian3 {
-  const raw = Cartesian3.fromDegrees(p.lonlat[0], p.lonlat[1], p.height + lift, Ellipsoid.MARS)
+export function placeAt(lonlat: LonLat, height: number, matrix: Matrix4, lift: number): Cartesian3 {
+  const raw = Cartesian3.fromDegrees(lonlat[0], lonlat[1], height + lift, Ellipsoid.MARS)
   return Matrix4.multiplyByPoint(matrix, raw, new Cartesian3())
+}
+
+function place(p: Pt, matrix: Matrix4, lift: number): Cartesian3 {
+  return placeAt(p.lonlat, p.height, matrix, lift)
 }
 
 function labelStyle(text: string, color: string, fontPx: number) {
@@ -120,7 +133,7 @@ function addMarker(
   })
 }
 
-const heightKey = ([lon, lat]: LonLat): string => `${lon},${lat}`
+export const heightKey =([lon, lat]: LonLat): string => `${lon},${lat}`
 
 /** Resolves after `n` rendered frames (or after 1.5 s if the page is not rendering, e.g. a hidden tab). */
 function frames(scene: MarsScene, n: number): Promise<void> {
@@ -184,13 +197,19 @@ export async function drawRouteScene(
   const coords = (input.route?.geometry.coordinates ?? []).map((c): LonLat => [c[0], c[1]])
   const wp = input.waypoints
   const targets = input.targets?.features ?? []
+  const toLonLats = (c: readonly (readonly number[])[] | undefined): LonLat[] =>
+    (c ?? []).map((p): LonLat => [p[0]!, p[1]!])
+  const homeCoords = toLonLats(input.route?.properties.return_path?.coordinates)
+  const startCoords = toLonLats(input.route?.properties.return_to_start?.return_path?.coordinates)
 
-  // One batch: [AOI center, route vertices, waypoints, targets].
+  // One batch: [AOI center, route vertices, waypoints, targets, way home, way back to the start].
   const lonlats: LonLat[] = [
     AOI_CENTER,
     ...coords,
     ...wp,
     ...targets.map((f) => f.geometry.coordinates as LonLat),
+    ...homeCoords,
+    ...startCoords,
   ]
   const sampled = await sampleHeights(scene, lonlats)
   if (isCancelled() || viewer.isDestroyed()) return null
@@ -202,7 +221,15 @@ export async function drawRouteScene(
   const centerPt = pts[0]!
   const routePts = pts.slice(1, 1 + coords.length)
   const wpPts = pts.slice(1 + coords.length, 1 + coords.length + wp.length)
-  const targetPts = pts.slice(1 + coords.length + wp.length)
+  const targetEnd = 1 + coords.length + wp.length + targets.length
+  const targetPts = pts.slice(1 + coords.length + wp.length, targetEnd)
+  const homePts = pts.slice(targetEnd, targetEnd + homeCoords.length)
+  const startPts = pts.slice(targetEnd + homeCoords.length)
+  // Gaps were filled above; cache the filled heights too so the simulation overlay reuses them.
+  for (const p of pts) {
+    const key = heightKey(p.lonlat)
+    if (!scene.heightCache.has(key)) scene.heightCache.set(key, p.height)
+  }
 
   // Exaggerate around the terrain height at the center of the area, so the scene does not sink or rise.
   const matrix = exaggerationMatrix(
@@ -237,6 +264,23 @@ export async function drawRouteScene(
     }
   }
 
+  // Estimated ways back: dashed amber to the habitat, short-dashed green to the start (as in 2D).
+  const addReturn = (line: Pt[], color: string, dashLength: number) => {
+    if (line.length < 2) return
+    const c = Color.fromCssColorString(color)
+    ds.entities.add({
+      polyline: {
+        positions: line.map((p) => place(p, matrix, ROUTE_LIFT_M)),
+        width: RETURN_WIDTH_PX,
+        arcType: ArcType.NONE,
+        material: new PolylineDashMaterialProperty({ color: c, gapColor: Color.TRANSPARENT, dashLength }),
+        depthFailMaterial: new ColorMaterialProperty(c.withAlpha(0.3)),
+      },
+    })
+  }
+  addReturn(homePts, COLOR_RETURN_HABITAT, 18)
+  addReturn(startPts, COLOR_RETURN_START, 8)
+
   // Targets (small pins), then route markers on top.
   targets.forEach((f, i) => {
     addMarker(
@@ -264,9 +308,10 @@ export async function drawRouteScene(
   if (pnr) addMarker(ds, place(pnr, matrix, MARKER_LIFT_M), 'Point of no return', COLOR_PNR, 15, 14)
 
   // Camera: oblique view of the route, or of the area of interest when there is no route.
-  const focus = routePts.length >= 2 ? routePts : [centerPt]
+  // The ways back are framed too, with room for the legend and the EVA panel on the sides.
+  const focus = routePts.length >= 2 ? [...routePts, ...homePts, ...startPts] : [centerPt]
   const sphere = BoundingSphere.fromPoints(focus.map((p) => place(p, matrix, 0)))
-  const range = routePts.length >= 2 ? Math.max(sphere.radius * 2.6, MIN_RANGE_M) : 6000
+  const range = routePts.length >= 2 ? Math.max(sphere.radius * 3.2, MIN_RANGE_M) : 6000
   viewer.camera.flyToBoundingSphere(sphere, {
     offset: new HeadingPitchRange(0, CesiumMath.toRadians(CAMERA_PITCH_DEG), range),
     duration: scene.hasFlown ? 1.5 : 0,
@@ -277,5 +322,7 @@ export async function drawRouteScene(
     dispose: () => {
       if (!viewer.isDestroyed()) viewer.dataSources.remove(ds, true)
     },
+    matrix,
+    heightOf: (lonlat) => scene.heightCache.get(heightKey(lonlat)) ?? centerPt.height,
   }
 }
