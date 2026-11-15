@@ -64,8 +64,23 @@ export const DEFAULT_WALK: WalkProfile = {
   gravityRatio: G_MARS / G_EARTH,
 };
 
-/** ASSUMPTION: O₂ available at departure (kg), about 10 h of walking on flat terrain with this model. */
-export const DEFAULT_O2_AVAILABLE_KG = 1.0;
+/**
+ * O₂ available at departure (kg): the primary O₂ of NASA's lunar (Constellation) EMU PLSS design,
+ * 1.6 lbm = 0.726 kg at 3000 psia, rated for an 8-hour EVA (NASA NTRS 20160002044, "Historical PLSS
+ * Comparison"). Rounded to 0.73 kg. The secondary (emergency) O₂ is not counted. About 7 h of walking
+ * on flat terrain with this model.
+ */
+export const DEFAULT_O2_AVAILABLE_KG = 0.73;
+
+/**
+ * Safety reserve: share of the O₂ available that the plan must leave untouched (10%). The verdict and
+ * the point of no return only count on the remaining 90%.
+ * Basis: NASA keeps a 30-minute O₂ reserve on EVAs (Apollo "red line", Apollo 11 and 12 Lunar Surface
+ * Operations Plans; EMU consumables budget). With the defaults (0.73 kg, ~0.10 kg/h walking on flat
+ * ground) 30 minutes is about 0.05 kg, i.e. 7%. Team choice: 10% (0.073 kg, about 45 minutes of flat
+ * walking), as a fixed share of the supply for an extra margin.
+ */
+export const O2_RESERVE_FRACTION = 0.1;
 
 /** Speed (m/s) for a signed gradient `grade` = rise/run (positive = uphill). Tobler, normalized. */
 export function walkingSpeed(grade: number, walk: WalkProfile = DEFAULT_WALK): number {

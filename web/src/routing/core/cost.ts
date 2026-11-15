@@ -29,6 +29,23 @@ export const DEFAULT_PROFILE: CostProfile = {
   slopeWeight: 2,
 };
 
+/** Route modes the planner can pick (#65). Each is only another cost profile; the data files do not change. */
+export type RouteMode = 'balanced' | 'shortest' | 'safest';
+
+/**
+ * Cost profile of each route mode. ASSUMPTIONS (ours, no scientific reference):
+ * - `balanced`: the default profile above.
+ * - `shortest`: distance only (no slope penalty), still never over 25°.
+ * - `safest`: stricter limit (20°) and a strong slope penalty (weight 8), so it pays extra distance to
+ *   stay on flatter ground. 20° keeps every real demo target reachable (the steepest, the delta front, sits on 13.8°).
+ * All keep factors >= 1, so A* stays optimal.
+ */
+export const ROUTE_MODES: Record<RouteMode, CostProfile> = {
+  balanced: DEFAULT_PROFILE,
+  shortest: { maxSlopeDeg: 25, sandMultiplier: 2, slopeWeight: 0 },
+  safest: { maxSlopeDeg: 20, sandMultiplier: 2, slopeWeight: 8 },
+};
+
 /** Cost of a "blocked" cell (impassable or no data). */
 export const BLOCKED = Infinity;
 
@@ -62,5 +79,21 @@ export function buildCostGrid(grid: Grid, profile: CostProfile = DEFAULT_PROFILE
   const n = grid.meta.width * grid.meta.height;
   const costs = new Float32Array(n);
   for (let i = 0; i < n; i++) costs[i] = cellFactor(grid, i, profile);
+  return costs;
+}
+
+/** Cost grids already built, per grid and profile. A grid's arrays never change once loaded. */
+const costGridCache = new WeakMap<Grid, Map<string, Float32Array>>();
+
+/**
+ * Same as `buildCostGrid`, but built once per grid and profile and then reused (building one walks all
+ * 262,144 cells, which used to happen on every A* leg). The returned array is shared: never write to it.
+ */
+export function costGridFor(grid: Grid, profile: CostProfile = DEFAULT_PROFILE): Float32Array {
+  let byProfile = costGridCache.get(grid);
+  if (!byProfile) costGridCache.set(grid, (byProfile = new Map()));
+  const key = `${profile.maxSlopeDeg}|${profile.sandMultiplier}|${profile.slopeWeight}`;
+  let costs = byProfile.get(key);
+  if (!costs) byProfile.set(key, (costs = buildCostGrid(grid, profile)));
   return costs;
 }

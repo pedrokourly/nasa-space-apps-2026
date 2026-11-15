@@ -3,7 +3,10 @@ import { NoPathError, OutOfGridError } from './errors';
 import { cellToLonLat } from './grid';
 import { buildMockGrid, flatGrid, wallWithGapGrid, mockMeta } from './mockGrid';
 import { createRouter, route } from './route';
-import { DEFAULT_WALK, metabolicPowerW, o2KgForEnergy, segmentCost, walkingSpeed } from './walk';
+import { DEFAULT_WALK, metabolicPowerW, o2KgForEnergy, O2_RESERVE_FRACTION, segmentCost, walkingSpeed } from './walk';
+
+/** Share of the O₂ the plan may use: the supply minus the safety reserve. */
+const USABLE = 1 - O2_RESERVE_FRACTION;
 
 const cellPt = (g: ReturnType<typeof flatGrid>, col: number, row: number) => cellToLonLat(g.meta, col, row);
 
@@ -106,20 +109,20 @@ describe('route(): verdict and point of no return', () => {
   const step = total / 20;
 
   it('one-way route: needs the round trip; 1.5× the outbound O₂ is NO-GO', () => {
-    expect(route(g, [A, B], { o2_available_kg: total * 1.5 }).properties.verdict).toBe('NO-GO');
-    expect(route(g, [A, B], { o2_available_kg: total * 2.01 }).properties.verdict).toBe('GO');
+    expect(route(g, [A, B], { o2_available_kg: (total * 1.5) / USABLE }).properties.verdict).toBe('NO-GO');
+    expect(route(g, [A, B], { o2_available_kg: (total * 2.01) / USABLE }).properties.verdict).toBe('GO');
   });
 
   it('loop back to the start: the O₂ of the whole trip is enough', () => {
     const loop = route(g, [A, B, A]).properties;
     expect(loop.o2_kg).toBeCloseTo(2 * total, 8);
-    expect(route(g, [A, B, A], { o2_available_kg: loop.o2_kg * 1.01 }).properties.verdict).toBe('GO');
-    expect(route(g, [A, B, A], { o2_available_kg: loop.o2_kg * 0.99 }).properties.verdict).toBe('NO-GO');
+    expect(route(g, [A, B, A], { o2_available_kg: (loop.o2_kg * 1.01) / USABLE }).properties.verdict).toBe('GO');
+    expect(route(g, [A, B, A], { o2_available_kg: (loop.o2_kg * 0.99) / USABLE }).properties.verdict).toBe('NO-GO');
   });
 
   it('point of no return: first vertex where outbound + return exceeds what is available', () => {
     // On flat terrain, outbound + return at vertex i = 2·i·step; with 4.5·step available it exceeds at i = 3.
-    const r = route(g, [A, B], { o2_available_kg: 4.5 * step });
+    const r = route(g, [A, B], { o2_available_kg: (4.5 * step) / USABLE });
     expect(r.properties.verdict).toBe('NO-GO');
     expect(r.properties.point_of_no_return).toBe(3);
   });
@@ -137,7 +140,7 @@ describe('route(): verdict and point of no return', () => {
     const H = cellPt(tri, 2, 37);
     const pts = [H, cellPt(tri, 37, 37), cellPt(tri, 20, 2), H];
     const total = route(tri, pts).properties.o2_kg;
-    const r = route(tri, pts, { o2_available_kg: total * 1.01 });
+    const r = route(tri, pts, { o2_available_kg: (total * 1.01) / USABLE });
     expect(r.properties.verdict).toBe('GO');
     expect(r.properties.point_of_no_return).toBeUndefined();
   });
@@ -200,7 +203,7 @@ describe('route(): legs and optimal return (S5)', () => {
     const homeFromC = route(tri, [C, H]).properties.o2_kg;
     const enough = (out + homeFromC) * 1.01;
     expect(enough).toBeLessThan(2 * out); // retracing would not fit
-    const r = route(tri, [H, B, C], { o2_available_kg: enough });
+    const r = route(tri, [H, B, C], { o2_available_kg: enough / USABLE });
     expect(r.properties.verdict).toBe('GO');
     expect(r.properties.point_of_no_return).toBeUndefined();
   });
@@ -211,7 +214,7 @@ describe('route(): legs and optimal return (S5)', () => {
     // = 2·i·step. With 9.5·step available it first exceeds at i = 5.
     const p = route(tri, [H, cellPt(tri, 3, 37)]).properties;
     const step = p.o2_kg; // one straight step
-    const r = route(tri, [H, B, C, H], { o2_available_kg: 9.5 * step });
+    const r = route(tri, [H, B, C, H], { o2_available_kg: (9.5 * step) / USABLE });
     expect(r.properties.verdict).toBe('NO-GO');
     expect(r.properties.point_of_no_return).toBe(5);
   });
@@ -224,6 +227,35 @@ describe('route(): legs and optimal return (S5)', () => {
         expect(p.point_of_no_return !== undefined).toBe(p.verdict === 'NO-GO');
       }
     }
+  });
+});
+
+describe('route(): 10% O₂ safety reserve', () => {
+  const g = flatGrid(40, 5, 20);
+  const A = cellPt(g, 0, 2);
+  const B = cellPt(g, 30, 2);
+  const need = route(g, [A, B, A]).properties.o2_kg; // loop: the trip is all the O₂ it needs
+
+  it('the reserve is 10% of the supply by default', () => {
+    expect(O2_RESERVE_FRACTION).toBe(0.1);
+  });
+
+  it('a supply 8% above the need is NO-GO with the reserve and GO without it', () => {
+    expect(route(g, [A, B, A], { o2_available_kg: need * 1.08 }).properties.verdict).toBe('NO-GO');
+    expect(route(g, [A, B, A], { o2_available_kg: need * 1.08, o2_reserve_fraction: 0 }).properties.verdict).toBe('GO');
+  });
+
+  it('GO needs the trip to fit in 90% of the supply', () => {
+    expect(route(g, [A, B, A], { o2_available_kg: (need / 0.9) * 1.001 }).properties.verdict).toBe('GO');
+    expect(route(g, [A, B, A], { o2_available_kg: (need / 0.9) * 0.999 }).properties.verdict).toBe('NO-GO');
+  });
+
+  it('the point of no return comes earlier (or at the same vertex) with the reserve', () => {
+    const supply = need * 0.7;
+    const withReserve = route(g, [A, B, A], { o2_available_kg: supply }).properties.point_of_no_return!;
+    const without = route(g, [A, B, A], { o2_available_kg: supply, o2_reserve_fraction: 0 }).properties.point_of_no_return!;
+    expect(withReserve).toBeLessThanOrEqual(without);
+    expect(withReserve).toBeLessThan(without + 1);
   });
 });
 

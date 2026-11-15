@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { ESTIMATE_LABEL } from '../routing/estimateText';
 import L from 'leaflet';
 import { useAppStore } from '../state/store';
 import { useSimulationStore } from '../state/simulationStore';
@@ -9,6 +10,7 @@ import {
   useSimulationSnapshot,
 } from '../routing/useSimulation';
 import { SIM_PLAN_LABELS, type SimPlan } from '../routing/simulation';
+import BestOrderControl from './BestOrderControl';
 import { formatDistance, formatElapsed } from './simulationFormat';
 import './SimulationControl.css';
 import type { SimulationStatus } from '../state/simulationStore';
@@ -22,7 +24,8 @@ const STATUS_LABELS: Record<SimulationStatus, string> = {
 
 /**
  * EVA simulation control (issues #62 and #71): a plan selector (planned route, or the route with
- * its return to the habitat or to the start), Start EVA / Pause / Resume / Reset and a readout of
+ * its return to the habitat or to the start), Start EVA / Pause / Resume / Reset, the "Best order"
+ * button (#65, reorders the stops) and a readout of
  * elapsed time, distance and O₂ left. Final styling belongs to the UI workstream.
  * Time and O₂ are estimates derived from the routing walk model (assumption).
  */
@@ -92,6 +95,7 @@ export default function SimulationControl() {
         <button type="button" onClick={reset} disabled={status === 'idle'}>
           Reset
         </button>
+        {hasRoute && <BestOrderControl />}
       </div>
       {!hasRoute && <p className="sim-control__hint">Compute a route to simulate the EVA.</p>}
       {endO2Left !== null && (
@@ -134,6 +138,7 @@ export default function SimulationControl() {
             </p>
           )}
           {snap.returning && status !== 'finished' && <p className="sim-control__returning">{returnLabel}</p>}
+          <p className="sim-control__estimate">O₂ and time: {ESTIMATE_LABEL}.</p>
           {status === 'finished' && <p className="sim-control__done">EVA finished.</p>}
         </>
       )}

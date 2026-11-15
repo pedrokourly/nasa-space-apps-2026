@@ -57,10 +57,11 @@ cd web && npm test
 | Masses, terrain | astronaut 75 kg, suit + backpack 90 kg, η = 1.1 | **Assumptions** |
 | Energy → O₂ | 20.1 kJ per liter of O₂, 1.429 g per liter | Indirect calorimetry (Weir 1949) |
 | Flat walking | ≈ 396 W, ≈ 0.10 kg O₂/h | Above the Apollo EVA range (230 to 350 W, NASA TN D-7883): conservative |
-| O₂ available at departure | 1.0 kg (`o2_available_kg` option) | **Assumption** |
+| O₂ available at departure | 0.73 kg (`o2_available_kg` option) | **Reference**: primary O₂ of NASA's lunar EMU PLSS design, 1.6 lbm (NASA NTRS 20160002044) |
 
 - Vertices are cell centers; distance uses `haversine` (R = 3389.5 km).
 - **Habitat** (`habitat` option, `RouteRequest.habitat`, #69): where the way home leads; the app passes the `habitat` feature of `targets.geojson`. Default, or when it is outside the grid or impassable: the route's first point. The O₂ is still counted from the route's first point with the full supply (**assumption**).
+- **Safety reserve:** 10% of the O₂ available is kept as a reserve (`O2_RESERVE_FRACTION`, option `o2_reserve_fraction`); verdicts and points of no return use the other 90%.
 - **Verdict:** GO if the O₂ of the trip plus the optimal return from its last point to the habitat (`core/returnField.ts`, least O₂ home from every cell) fits in what is available. For a loop (habitat → targets → habitat) the O₂ of the trip is enough.
 - **Point of no return** (`point_of_no_return`, vertex index): first vertex from which the astronaut can no longer get back to the habitat with the O₂ left, by the least-O₂ way home. The last safe vertex is the one before. Present exactly when the verdict is NO-GO. When it is 0 the start cannot reach the habitat: `start_unreachable: true` and no `return_path`.
 - **Return path** (`return_path`): the least-O₂ way home, from vertex `from_vertex` to the habitat: the last vertex on a GO route, the last stop reached before the point of no return on a NO-GO one (an O₂ margin over turning back at the last safe vertex).
@@ -77,9 +78,9 @@ The planner can tune three inputs, held in the store as `evaParams` (`setEvaPara
 |---|---|---|---|
 | `speedFlatMS` (m/s) | 1.0 | 0.2 to 2 | **Assumption** |
 | `loadMassKg` (kg): suit, backpack and gear; drives the O₂ rate through the metabolic model | 90 | 40 to 150 | **Assumption** |
-| `o2_available_kg` (kg) | 1.0 | 0.1 to 5 | **Assumption** |
+| `o2_available_kg` (kg) | 0.73 | 0.1 to 5 | Default: **reference** (NASA lunar EMU PLSS, NTRS 20160002044); range: **assumption** |
 
-Presets (`evaPresets.ts`: Nominal, Conservative, Heavy load) are invented for the demo. **None of these values, ranges or presets has a scientific reference yet**; replace them and cite the source when one is found.
+Presets (`evaPresets.ts`: Nominal, Conservative, Heavy load) are invented for the demo; all three carry the default O₂. **Apart from the default O₂, none of these values, ranges or presets has a scientific reference yet**; replace them and cite the source when one is found.
 
 ### Sample routes
 
@@ -106,3 +107,10 @@ Presets (`evaPresets.ts`: Nominal, Conservative, Heavy load) are invented for th
 | `error` | Anything else, e.g. the grid failed to load | `response-error.json` | "Route error: Failed to load …" |
 
 `point_index` is the index in the requested points: 0 is the start, N is "Stop N", as on the map. The example files are generated from the real code and kept in sync by `respond.test.ts` (regenerate with `WRITE_MOCKS=1 npm test -- respond`).
+
+## Route modes and best order (#65)
+
+- The app always routes with the balanced profile. `ROUTE_MODES` (balanced, shortest, safest) stays in the core and its tests, and `RouteRequest.run.mode` still accepts it, but the interface does not offer it.
+- Without `run.optimizeOrder` (the default) the route follows the order the planner clicked. With it ("Best order" button in the EVA block, `src/ui/BestOrderControl.tsx` inside `SimulationControl`, store `requestBestOrder`), the stops after the start are reordered to minimize trip O₂ plus the way home from the last stop to the habitat, no return point is added, and the route carries `stop_order` (indexes into the requested points). `useRouting` then reorders the waypoints, which triggers a normal request for the same route. It works with 2 to 8 stops.
+- Cost grids are built once per grid and profile (`costGridFor`) and reused by A*, the return field and the stop order.
+- Weights and measurements: `docs/routing-assumptions.md`.

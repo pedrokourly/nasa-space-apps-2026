@@ -30,11 +30,11 @@
   display: none;
 }
 
-/* Start point of no return (`return_to_start`): violet ring, matching the dotted start return line. */
+/* Start point of no return (`return_to_start`): green ring, matching the dotted start return line. */
 .pnr-icon--start {
-  box-shadow: 0 0 0 3px #c084fc;
+  box-shadow: 0 0 0 3px #4ade80;
 }
 
 .leaflet-tooltip.pnr-tooltip--start {
-  border-color: #c084fc;
+  border-color: #4ade80;
 }

@@ -180,3 +180,10 @@
   margin: 0.4rem 0 0;
   color: #34d399;
 }
+
+/* Decision 0002: simulated O₂ and time are estimates. */
+.sim-control__estimate {
+  margin: 0.4rem 0 0;
+  font-size: 0.7rem;
+  color: #c8d1dc;
+}

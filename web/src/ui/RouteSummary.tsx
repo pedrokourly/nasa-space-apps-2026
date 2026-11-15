@@ -1,6 +1,7 @@
 import { useAppStore } from '../state/store';
 import { profilePointAt } from '../routing/profilePoint';
 import type { ReturnPath, Route } from '../types/contract';
+import { ASSUMPTIONS_URL, COMPUTED_LABEL, ESTIMATE_LABEL, PNR_EXPLANATION, assumptionsLine } from '../routing/estimateText';
 import './RouteSummary.css';
 
 /** Map label of the stop at route vertex `vertex`: 'A' for the start, then 1, 2… as the waypoint markers. */
@@ -24,7 +25,7 @@ interface VerdictLineProps {
   /** Even the start cannot reach this destination with the O₂ available. */
   unreachable: boolean;
   ret: ReturnPath | undefined;
-  /** Picks the swatch color: amber (habitat) or violet (start), as on the map. */
+  /** Picks the swatch color: amber (habitat) or green (start), as on the map. */
   kind: 'habitat' | 'start';
 }
 
@@ -55,6 +56,7 @@ export default function RouteSummary() {
   const status = useAppStore((s) => s.routeStatus);
   const route = useAppStore((s) => s.route);
   const error = useAppStore((s) => s.routeError);
+  const o2Available = useAppStore((s) => s.evaParams.o2_available_kg);
 
   if (status === 'computing') {
     return (
@@ -83,6 +85,20 @@ export default function RouteSummary() {
   const startUnreachable = nogo && (p.start_unreachable === true || p.point_of_no_return === 0);
   const pnr = nogo && !startUnreachable ? profilePointAt(route, p.point_of_no_return) : null;
   const toStart = p.return_to_start;
+  const anyNogo = nogo || toStart?.verdict === 'NO-GO';
+
+  // Decision 0002: distance is computed from terrain data; time, O₂ and the verdicts are estimates.
+  const labels = (
+    <>
+      <p className="route-summary__labels">
+        Distance: {COMPUTED_LABEL}. Time, O₂ and verdict: {ESTIMATE_LABEL} ({assumptionsLine(o2Available)}).{' '}
+        <a href={ASSUMPTIONS_URL} target="_blank" rel="noopener noreferrer">
+          Assumptions
+        </a>
+      </p>
+      {anyNogo && <p className="route-summary__labels route-summary__labels--pnr">Point of no return: {PNR_EXPLANATION}</p>}
+    </>
+  );
 
   // Route not starting at the habitat: totals on top, then one compact line per verdict.
   if (toStart && p.verdict) {
@@ -111,12 +127,14 @@ export default function RouteSummary() {
           ret={toStart.return_path}
           kind="start"
         />
+        {labels}
       </div>
     );
   }
 
   return (
-    <div className="route-summary route-summary--info" role="status" aria-live="polite">
+    <div className="route-summary route-summary--info route-summary--stacked" role="status" aria-live="polite">
+      <div className="route-summary__line">
       {p.verdict && (
         <span className={`route-summary__verdict route-summary__verdict--${p.verdict === 'GO' ? 'go' : 'nogo'}`}>
           {p.verdict}
@@ -136,6 +154,8 @@ export default function RouteSummary() {
           {Math.round(ret.time_s / 60)} min · {ret.o2_kg.toFixed(2)} kg O₂
         </span>
       )}
+      </div>
+      {labels}
     </div>
   );
 }

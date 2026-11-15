@@ -62,9 +62,9 @@ const COLOR_START = '#00e5ff'
 const COLOR_STOP = '#ffffff'
 const COLOR_PNR = '#ff3b3b'
 const COLOR_TARGET = '#ffb454'
-/** Same colors as the 2D map (`map/RouteLayer.tsx`): amber way home to the habitat, violet way back to the start. */
+/** Same colors as the 2D map (`map/RouteLayer.tsx`): amber way home to the habitat, green way back to the start. */
 export const COLOR_RETURN_HABITAT = '#ffb300'
-export const COLOR_RETURN_START = '#c084fc'
+export const COLOR_RETURN_START = '#4ade80'
 const RETURN_WIDTH_PX = 5
 
 interface Pt {
@@ -264,7 +264,7 @@ export async function drawRouteScene(
     }
   }
 
-  // Estimated ways back: dashed amber to the habitat, short-dashed violet to the start (as in 2D).
+  // Estimated ways back: dashed amber to the habitat, short-dashed green to the start (as in 2D).
   const addReturn = (line: Pt[], color: string, dashLength: number) => {
     if (line.length < 2) return
     const c = Color.fromCssColorString(color)
