@@ -1,11 +1,11 @@
 import { useAppStore } from '../state/store';
 import { MAX_ORDER_STOPS } from '../routing/core/stopOrder';
-import './BestOrderControl.css';
 
 /**
  * "Best order" button (#65): reorders the stops after the start to use the least O₂, counting the way
  * back to the habitat, without adding a return point. Without it, the route follows the click order.
- * The route always uses the balanced cost profile. Final styling belongs to the UI workstream.
+ * The route always uses the balanced cost profile. Rendered inside the EVA block (`SimulationControl`),
+ * which gives it its button style.
  */
 export default function BestOrderControl() {
   const requestBestOrder = useAppStore((s) => s.requestBestOrder);
@@ -24,10 +24,8 @@ export default function BestOrderControl() {
       : 'Reorder the stops to use the least O₂, counting the way back to the habitat';
 
   return (
-    <div className="best-order">
-      <button type="button" className="best-order__btn" disabled={!canReorder} title={hint} onClick={requestBestOrder}>
-        Best order
-      </button>
-    </div>
+    <button type="button" disabled={!canReorder} title={hint} onClick={requestBestOrder}>
+      Best order
+    </button>
   );
 }

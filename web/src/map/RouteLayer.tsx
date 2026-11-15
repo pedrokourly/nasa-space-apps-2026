@@ -7,14 +7,17 @@ import { toLatLng, type LonLat } from '../lib/mars-geo';
 const ROUTE_PANE = 'routePane';
 /** Amber, distinct from the cyan planned route; also used by the legend swatch in `RouteSummary.css`. */
 const RETURN_COLOR = '#ffb300';
-/** Violet for the way back to the route's start (`return_to_start`); also used by `RouteSummary.css`. */
-const START_RETURN_COLOR = '#c084fc';
+/**
+ * Light green for the way back to the route's start (`return_to_start`), matching the green start
+ * waypoint; also used by `RouteSummary.css` and `RouteMarkers.css`.
+ */
+const START_RETURN_COLOR = '#4ade80';
 /** Grey for the part of a NO-GO route past the turn-back point; also used by `RouteSummary.css`. */
 const MUTED_COLOR = '#8a94a3';
 
 /**
  * Draws the store's `route` as a polyline (dark outline + cyan line), the estimated way home to the
- * habitat as a dashed amber line, the way back to the start (`return_to_start`) as a dotted violet
+ * habitat as a dashed amber line, the way back to the start (`return_to_start`) as a dotted green
  * line and, on a NO-GO route, the part where no way back works in muted grey.
  * Child of `<MapView>`.
  */
@@ -69,7 +72,7 @@ export default function RouteLayer() {
         L.polyline(muted, { ...common, color: MUTED_COLOR, weight: 3, opacity: 0.75 }),
       );
     }
-    // Start return: violet, a different dash rhythm than the habitat one so the two read apart even
+    // Start return: green, a different dash rhythm than the habitat one so the two read apart even
     // where they overlap.
     if (startLatLngs.length >= 2) {
       layers.push(

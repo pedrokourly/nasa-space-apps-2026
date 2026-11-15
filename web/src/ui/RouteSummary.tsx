@@ -25,7 +25,7 @@ interface VerdictLineProps {
   /** Even the start cannot reach this destination with the O₂ available. */
   unreachable: boolean;
   ret: ReturnPath | undefined;
-  /** Picks the swatch color: amber (habitat) or violet (start), as on the map. */
+  /** Picks the swatch color: amber (habitat) or green (start), as on the map. */
   kind: 'habitat' | 'start';
 }
 
