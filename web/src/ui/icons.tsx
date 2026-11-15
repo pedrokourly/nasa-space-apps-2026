@@ -33,6 +33,20 @@ export function RouteIcon() {
   return <svg {...base}><circle cx="6" cy="19" r="2.5" /><circle cx="18" cy="5" r="2.5" /><path d="M8.5 19H16a3.5 3.5 0 0 0 0-7H8a3.5 3.5 0 0 1 0-7h7.5" /></svg>;
 }
 
+export function CloseIcon() {
+  return <svg {...base}><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>;
+}
+
+/** 3D view: a cube (shown in the 2D map, as the target of the toggle). */
+export function CubeIcon() {
+  return <svg {...base}><path d="m12 2.5 8.5 4.75v9.5L12 21.5l-8.5-4.75v-9.5L12 2.5Z" /><path d="m3.5 7.25 8.5 4.75 8.5-4.75" /><path d="M12 12v9.5" /></svg>;
+}
+
+/** 2D map: a folded flat map (shown in the 3D view, as the target of the toggle). */
+export function MapIcon() {
+  return <svg {...base}><path d="m3 6.5 6-3 6 3 6-3v14l-6 3-6-3-6 3v-14Z" /><path d="M9 3.5v14" /><path d="M15 6.5v14" /></svg>;
+}
+
 export function ListIcon() {
   return <svg {...base}><path d="M9 6h11" /><path d="M9 12h11" /><path d="M9 18h11" /><path d="M4 6h.01" /><path d="M4 12h.01" /><path d="M4 18h.01" /></svg>;
 }

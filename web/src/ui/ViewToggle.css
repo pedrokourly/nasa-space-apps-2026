@@ -1,19 +1,4 @@
+/* The toggle is a kit Button (secondary, icon); see kit.css. */
 .view-toggle {
-  padding: 0.3rem 0.9rem;
-  border: 1px solid #3a4150;
-  border-radius: 999px;
-  background: #1a1f2a;
-  color: #e8e6e3;
-  font: inherit;
-  font-size: 0.85rem;
-  cursor: pointer;
-}
-
-.view-toggle:hover {
-  background: #242b39;
-}
-
-.view-toggle:focus-visible {
-  outline: 2px solid #00e5ff;
-  outline-offset: 2px;
+  flex: none;
 }

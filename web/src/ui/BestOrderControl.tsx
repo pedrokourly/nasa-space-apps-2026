@@ -31,7 +31,7 @@ export default function BestOrderControl() {
 
   return (
     <>
-      <Button variant="outline" size="sm" disabled={!canReorder} title={hint} onClick={requestBestOrder}>
+      <Button size="sm" disabled={!canReorder} title={hint} onClick={requestBestOrder}>
         <SortIcon />
         Best order
       </Button>

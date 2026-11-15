@@ -30,7 +30,7 @@ import { LAYERS } from './map/layers'
 import type { LayerId, Conditions } from './types/contract'
 import MarsDataScreen from './ui/MarsDataScreen'
 import { Button } from './ui/kit'
-import { InfoIcon, LayersIcon, MaximizeIcon, NavigationIcon, RouteIcon, SlopeIcon, ThermometerIcon } from './ui/icons'
+import { CloseIcon, InfoIcon, LayersIcon, MaximizeIcon, NavigationIcon, RouteIcon, SlopeIcon, ThermometerIcon } from './ui/icons'
 import './ui/PlannerShell.css'
 import './ui/kit.css'
 
@@ -55,6 +55,8 @@ export default function App() {
   const [tab, setTab] = useState<AppTab>('planning')
   const [activeTool, setActiveTool] = useState<ToolId | null>(null)
   const [selectedSourceLayer, setSelectedSourceLayer] = useState<LayerId | null>(null)
+  /** Top (px, inside the map area) of the layer button whose source panel is open: the panel opens beside it. */
+  const [sourcePanelTop, setSourcePanelTop] = useState<number | null>(null)
   const [mapInstance, setMapInstance] = useState<L.Map | null>(null)
   const [recenterIndicator, setRecenterIndicator] = useState({ centered: false, rotation: 0 })
   const route = useAppStore((state) => state.route)
@@ -195,7 +197,7 @@ export default function App() {
       {tab === 'planning' && view === '2d' && <>
         <nav className="map-toolbar" aria-label="Map tools">
           <Button variant="ghost" size="icon" aria-label="Region information" title="Region information" aria-pressed={activeTool === 'info'} onClick={chooseTool}><InfoIcon /></Button>
-          <div className="map-toolbar__sources" role="group" aria-label="Map data sources">{SOURCE_LAYERS.map((layer) => <Button key={layer.id} variant="ghost" size="icon" aria-label={`Toggle ${layer.label} layer`} title={layer.label} aria-pressed={activeLayers.includes(layer.id)} className={selectedSourceLayer === layer.id ? 'is-selected' : undefined} onClick={() => { toggleLayer(layer.id); selectTarget(null); setSelectedSourceLayer((current) => current === layer.id ? null : layer.id); setActiveTool(null) }}>{layer.icon === 'temperature' ? <ThermometerIcon /> : layer.icon === 'slope' ? <SlopeIcon /> : <LayersIcon />}</Button>)}</div>
+          <div className="map-toolbar__sources" role="group" aria-label="Map data sources">{SOURCE_LAYERS.map((layer) => <Button key={layer.id} variant="ghost" size="icon" aria-label={`Toggle ${layer.label} layer`} title={layer.label} aria-pressed={activeLayers.includes(layer.id)} className={selectedSourceLayer === layer.id ? 'is-selected' : undefined} onClick={(event) => { const host = document.getElementById('map-area')?.getBoundingClientRect().top ?? 0; setSourcePanelTop(event.currentTarget.getBoundingClientRect().top - host); toggleLayer(layer.id); selectTarget(null); setSelectedSourceLayer((current) => current === layer.id ? null : layer.id); setActiveTool(null) }}>{layer.icon === 'temperature' ? <ThermometerIcon /> : layer.icon === 'slope' ? <SlopeIcon /> : <LayersIcon />}</Button>)}</div>
           <Button variant="ghost" size="icon" aria-label="Full screen" title="Full screen" onClick={() => { if (document.fullscreenElement) void document.exitFullscreen(); else void document.documentElement.requestFullscreen().catch(() => undefined) }}><MaximizeIcon /></Button>
         </nav>
       </>}
@@ -216,7 +218,7 @@ export default function App() {
             <TileLoading />
             <DataStatus loading={!data && !error} error={error} />
             <FixedLayersBadge />
-            {data && selectedSourceLayer && activeLayers.includes(selectedSourceLayer) && <div className="map-layer-legends"><div className="map-layer-legends__heading"><strong>{SOURCE_LAYERS.find((layer) => layer.id === selectedSourceLayer)?.label} source</strong><button type="button" aria-label="Close source panel" onClick={() => setSelectedSourceLayer(null)}>×</button></div><ProvenanceBadge activeLayers={[selectedSourceLayer]} missions={data.missions} /></div>}
+            {data && selectedSourceLayer && activeLayers.includes(selectedSourceLayer) && <div className="map-layer-legends ui-card" style={sourcePanelTop !== null ? { ['--source-top' as string]: `${sourcePanelTop}px` } : undefined}><div className="map-layer-legends__heading"><strong>{SOURCE_LAYERS.find((layer) => layer.id === selectedSourceLayer)?.label} source</strong><Button variant="ghost" size="icon" className="map-layer-legends__close" aria-label="Close source panel" onClick={() => setSelectedSourceLayer(null)}><CloseIcon /></Button></div><ProvenanceBadge activeLayers={[selectedSourceLayer]} missions={data.missions} /></div>}
             <ActiveLayerLegends activeLayers={activeLayers} recenterElevated={simulationStatus !== 'idle'} />
             <PlanningAreaFocus meta={data?.meta ?? null} />
             <WaypointsLayer meta={data?.meta ?? null} />
