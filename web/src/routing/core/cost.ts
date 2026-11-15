@@ -20,8 +20,8 @@ export interface CostProfile {
 
 /**
  * Default profile. Project ASSUMPTION (team's initial plan): >= 25° impassable and sand costs 2×.
- * `slopeWeight` is our own hypothesis with no scientific reference; calibrate it with the real
- * route and record it in the README.
+ * `slopeWeight` is our own hypothesis with no scientific reference; it was checked on the real grid
+ * (see "Calibration on the real grid" in `docs/routing-assumptions.md`).
  */
 export const DEFAULT_PROFILE: CostProfile = {
   maxSlopeDeg: 25,

@@ -66,9 +66,9 @@ export const DEFAULT_WALK: WalkProfile = {
 
 /**
  * O₂ available at departure (kg): the primary O₂ of NASA's lunar (Constellation) EMU PLSS design,
- * 1.6 lbm = 0.726 kg at 3000 psia, rated for an 8-hour EVA (NASA NTRS 20160002044, "Historical PLSS
- * Comparison"). Rounded to 0.73 kg. The secondary (emergency) O₂ is not counted. About 7 h of walking
- * on flat terrain with this model.
+ * 1.6 lbm = 0.726 kg at 3000 psia (NASA NTRS 20160002044, "Historical PLSS Comparison"). Rounded to
+ * 0.73 kg. The secondary (emergency) O₂ is not counted. About 7 h of walking on flat terrain with
+ * this model.
  */
 export const DEFAULT_O2_AVAILABLE_KG = 0.73;
 

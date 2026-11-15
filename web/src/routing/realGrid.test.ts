@@ -78,7 +78,7 @@ describe('real Jezero grid (public/data)', () => {
     }
     expect(wrongNoData).toBe(0);
     expect(outOfRange).toBe(0);
-    // Measured 0.46% at >= 25° (max 43.7°): a mostly smooth crater floor, as Data/GIS documented.
+    // Measured 0.34% at >= 25° (max 42.7°): a mostly smooth crater floor, as Data/GIS documented.
     expect(steep / (w * h)).toBeLessThan(0.02);
   });
 
@@ -99,6 +99,25 @@ describe('real Jezero grid (public/data)', () => {
     expect(r.properties.dist_m).toBeGreaterThan(5_000);
     expect(r.properties.dist_m).toBeLessThan(20_000); // the margin target makes the loop ~16.6 km
     expect(ms).toBeLessThan(1000);
+  });
+
+  it('demo loop totals and legs match the numbers quoted in docs/routing-assumptions.md', () => {
+    // "Final demo scenario": 16.61 km, 4.9 h, 0.54 kg. Recomputed outside the project on 2026-11-15
+    // (independent haversine, Tobler, Pandolf and O₂ conversion): 16,607.7 m, 17,455.4 s, 0.53845 kg.
+    // If this fails, the grid or the model changed: update the doc table and the pitch numbers.
+    const p = route(grid, DEMO).properties;
+    const within1pct = (value: number, expected: number) =>
+      expect(Math.abs(value - expected) / expected).toBeLessThan(0.01);
+    within1pct(p.dist_m, 16_607.7);
+    within1pct(p.time_s, 17_455.4);
+    within1pct(p.o2_kg, 0.53845);
+    const legsKm = [1.04, 0.23, 2.66, 1.43, 3.54, 7.71];
+    const legsO2 = [0.031, 0.008, 0.09, 0.061, 0.121, 0.227];
+    expect(p.legs).toHaveLength(legsKm.length);
+    p.legs!.forEach((leg, k) => {
+      expect(leg.dist_m / 1000).toBeCloseTo(legsKm[k]!, 1);
+      expect(leg.o2_kg).toBeCloseTo(legsO2[k]!, 2);
+    });
   });
 
   it('demo loop legs: one per pair of stops, adding up to the totals', () => {

@@ -124,3 +124,16 @@ class TestCommittedSlope:
         nd = np.float32(self.meta["nodata"])
         inner = slope[1:-1, 1:-1]
         assert (inner != nd).all()
+
+    def test_matches_the_horn_slope_of_the_committed_elevation(self):
+        # Guards against regenerating elevation.bin (or changing meta.json) without rerunning
+        # export_slope.py: the committed slope must be the Horn slope of the committed elevation.
+        meta = json.loads((REPO / "web/public/data/meta.json").read_text(encoding="utf-8"))
+        shape = (meta["height"], meta["width"])
+        slope = np.fromfile(SLOPE, dtype="<f4").reshape(shape)
+        elev = np.fromfile(ELEVATION, dtype="<f4").reshape(shape)
+        expected = es.horn_slope(elev, meta["m_per_cell_x"], meta["m_per_cell_y"], meta["nodata"])
+        nd = np.float32(meta["nodata"])
+        assert np.array_equal(slope == nd, expected == nd)
+        valid = slope != nd
+        assert np.abs(slope[valid] - expected[valid]).max() < 1e-3
