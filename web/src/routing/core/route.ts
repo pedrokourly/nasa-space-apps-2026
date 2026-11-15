@@ -9,12 +9,12 @@
  *   path from that cell to the habitat (`returnCostField`), not necessarily the way the astronaut came.
  */
 import { haversine, type LonLat } from '../../lib/mars-geo';
-import type { Route, RouteLeg } from '../../types/contract';
+import type { ReturnPath, Route, RouteLeg } from '../../types/contract';
 import { findPath } from './astar';
 import { BLOCKED, cellFactor, DEFAULT_PROFILE, type CostProfile } from './cost';
 import { BlockedPointError, NoPathError, OutOfGridError } from './errors';
 import { cellIndex, cellToLonLat, lonLatToCell, type Cell, type Grid } from './grid';
-import { returnCostField } from './returnField';
+import { returnCostField, traceReturnPath } from './returnField';
 import { DEFAULT_O2_AVAILABLE_KG, DEFAULT_WALK, segmentCost, type EvaParams, type WalkProfile } from './walk';
 
 export interface RouteOptions {
@@ -134,6 +134,23 @@ export function route(grid: Grid, points: LonLat[], options: RouteOptions = {}):
     }
   }
 
+  // Estimated way home from the last vertex, drawn on the map. Only when the route does not end at the
+  // habitat and a way home exists. It follows the same field as the verdict, so its O₂ equals `home(last)`.
+  let returnPath: ReturnPath | undefined;
+  const habitat = stops[0]!;
+  const end = path[last]!;
+  if (end.col !== habitat.col || end.row !== habitat.row) {
+    const trace = traceReturnPath(grid, field, end, costProfile, walk);
+    if (trace) {
+      returnPath = {
+        coordinates: trace.cells.map((c) => cellToLonLat(meta, c.col, c.row)),
+        dist_m: trace.dist_m,
+        time_s: trace.time_s,
+        o2_kg: trace.o2_kg,
+      };
+    }
+  }
+
   return {
     type: 'Feature',
     geometry: { type: 'LineString', coordinates: coords },
@@ -145,6 +162,7 @@ export function route(grid: Grid, points: LonLat[], options: RouteOptions = {}):
       legs,
       verdict,
       ...(pnr !== undefined ? { point_of_no_return: pnr } : {}),
+      ...(returnPath ? { return_path: returnPath } : {}),
     },
   };
 }

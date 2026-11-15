@@ -155,6 +155,19 @@ export interface RouteLeg {
   o2_kg: number;
 }
 
+/**
+ * Estimated least-O₂ way home from the route's last vertex to the habitat (the route's first point).
+ * It is the return the GO / NO-GO verdict counts on, traced over the return cost field.
+ */
+export interface ReturnPath {
+  /** `[lon, lat]` positions (−180 to 180), from the route's last vertex to the habitat cell. */
+  coordinates: [lon: number, lat: number][];
+  dist_m: number;
+  time_s: number;
+  /** Equals the return O₂ the verdict adds to the route's own `o2_kg`. */
+  o2_kg: number;
+}
+
 export interface RouteProps {
   dist_m: number;
   time_s: number;
@@ -171,6 +184,11 @@ export interface RouteProps {
    * Present only when `verdict` is `'NO-GO'`.
    */
   point_of_no_return?: number;
+  /**
+   * Estimated way home from the last vertex. Present only when the route does not end at the habitat
+   * and a way home exists.
+   */
+  return_path?: ReturnPath;
   mock?: boolean;
 }
 

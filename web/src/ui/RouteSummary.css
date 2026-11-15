@@ -44,3 +44,17 @@
 .route-summary__pnr {
   color: #ff8a80;
 }
+
+.route-summary__return {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #ffb300;
+}
+
+/* Dashed swatch: legend for the dashed return line on the map. */
+.route-summary__return-swatch {
+  display: inline-block;
+  width: 1.4rem;
+  border-top: 3px dashed #ffb300;
+}

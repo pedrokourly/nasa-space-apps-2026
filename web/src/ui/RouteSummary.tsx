@@ -29,6 +29,7 @@ export default function RouteSummary() {
   const km = (p.dist_m / 1000).toFixed(1);
   const min = Math.round(p.time_s / 60);
   const o2 = p.o2_kg.toFixed(2);
+  const ret = p.return_path;
   const pnr = p.verdict === 'NO-GO' ? profilePointAt(route, p.point_of_no_return) : null;
 
   return (
@@ -42,6 +43,13 @@ export default function RouteSummary() {
         {km} km · {min} min · {o2} kg O₂{p.mock ? ' (mock)' : ''}
       </span>
       {pnr && <span className="route-summary__pnr">Turn back by {(pnr.dist_m / 1000).toFixed(2)} km</span>}
+      {ret && (
+        <span className="route-summary__return">
+          <span className="route-summary__return-swatch" aria-hidden="true" />
+          Return (estimate): {(ret.dist_m / 1000).toFixed(1)} km · {Math.round(ret.time_s / 60)} min ·{' '}
+          {ret.o2_kg.toFixed(2)} kg O₂
+        </span>
+      )}
     </div>
   );
 }
