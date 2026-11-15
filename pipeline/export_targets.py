@@ -28,15 +28,16 @@ MISSIONS_PATHS = (Path("web/public/data/missions.json"), Path("web/public/data/m
 WAYPOINTS_URL = "https://mars.nasa.gov/mmgis-maps/M20/Layers/json/M20_waypoints.json"
 
 # Waypoint = the last rover waypoint at or before the sample sol. `lon`, `lat`: MMGIS waypoint,
-# rounded to 5 decimals (~1 m). The texts in `why` are provisional until Product rewrites them.
+# rounded to 5 decimals (~1 m). Every claim in `why` is tied to a source in docs/targets.md
+# ("Sources of the `why` texts"); Product may still polish the wording but not the facts.
 TARGETS = [
     {
         "id": "habitat",
         "name": "Habitat (landing site)",
         "why": (
-            "EVA start and return point (point A), at the Octavia E. Butler landing site where "
-            "Perseverance touched down. The HiRISE terrain model used for routing was the basemap "
-            "of the landing hazard map."
+            "Start and finish of every walk: the Octavia E. Butler landing site, where Perseverance "
+            "touched down on the floor of Jezero. Routes here must return to this point, and the 1 m "
+            "terrain behind them comes from MRO's HiRISE camera."
         ),
         "mission": "mro-hirise",
         "lon": 77.45089, "lat": 18.44463, "waypoint_sol": 13,
@@ -45,8 +46,9 @@ TARGETS = [
         "id": "artuby-ridge",
         "name": "Artuby Ridge (Rochette)",
         "why": (
-            "Igneous bedrock of the Máaz formation on the crater floor, close to the habitat. "
-            "Perseverance cored Montdenier and Montagnac at Rochette (sols 194 and 196)."
+            "A 2 to 3 m cliff of Máaz formation rock on the crater floor, less than 1 km from the "
+            "habitat. These igneous rocks were likely lava flows, and Perseverance cored two samples "
+            "here, Montdenier and Montagnac."
         ),
         "mission": "mro-hirise",
         "lon": 77.44437, "lat": 18.43074, "waypoint_sol": 180,
@@ -55,9 +57,10 @@ TARGETS = [
         "id": "seitah",
         "name": "Séítah olivine cumulate (Brac)",
         "why": (
-            "Olivine-rich igneous rock of the Séítah formation, part of the olivine and carbonate "
-            "terrain that orbital spectroscopy (MRO/CRISM) found at Jezero. Perseverance cored "
-            "Salette and Coulettes at Brac (sols 262 and 271)."
+            "Séítah, possibly the oldest rock on the crater floor: coarse, layered, olivine-rich rock "
+            "that likely cooled from a thick lava flow, laccolith or lava lake. MRO's CRISM had mapped "
+            "olivine in this region from orbit; here Perseverance sampled it up close (Salette and "
+            "Coulettes)."
         ),
         "mission": "mro-crism",
         "lon": 77.44302, "lat": 18.43396, "waypoint_sol": 248,
@@ -66,9 +69,9 @@ TARGETS = [
         "id": "delta-front",
         "name": "Delta front (Skinner Ridge)",
         "why": (
-            "Sedimentary rocks of the ancient river delta, where water-laid sediment can preserve "
-            "signs of past life. Perseverance cored Swift Run and Skyland at Skinner Ridge (sols 490 "
-            "and 495) and Hazeltop and Bearwallow at nearby Wildcat Ridge (sols 509 and 516)."
+            "Where an ancient river met a lake. Jezero held a delta-lake system with high potential "
+            "to preserve signs of past life, and here the rover cored layered sedimentary rock at "
+            "Skinner Ridge and Wildcat Ridge (Swift Run, Skyland, Hazeltop and Bearwallow)."
         ),
         "mission": "mro-hirise",
         "lon": 77.40617, "lat": 18.45890, "waypoint_sol": 477,
@@ -77,11 +80,23 @@ TARGETS = [
         "id": "upper-fan",
         "name": "Upper delta fan (Berea)",
         "why": (
-            "Sedimentary rocks on top of the delta, about 120 m above the crater floor, so the route "
-            "includes a long climb. Perseverance cored Melyn at Berea (sol 749)."
+            "The top of the delta holds the last chapter of water in Jezero and some of the coarsest "
+            "sediments seen so far. Reaching it means climbing about 120 m above the habitat. At "
+            "Berea the rover cored Melyn, from alternating layers of sandstone and coarser rock."
         ),
         "mission": "mro-hirise",
         "lon": 77.38407, "lat": 18.47020, "waypoint_sol": 736,
+    },
+    {
+        "id": "margin-carbonates",
+        "name": "Margin unit carbonates (Comet Geyser)",
+        "why": (
+            "The margin unit, beside the western crater rim, is where orbital spectrometers saw the "
+            "strongest carbonate signal in Jezero, and it has been proposed as an ancient lake "
+            "shoreline. Here the rover cored Comet Geyser, a silica-cemented carbonate."
+        ),
+        "mission": "mro-crism",
+        "lon": 77.32720, "lat": 18.49183, "waypoint_sol": 1088,
     },
 ]
 
@@ -105,7 +120,7 @@ def validate(targets: list[dict], mission_ids: set[str], elevation: np.ndarray) 
     min_lon, min_lat, max_lon, max_lat = BBOX
     ids = [t["id"] for t in targets]
     assert len(ids) == len(set(ids)), "duplicate target ids"
-    assert 3 <= len(targets) <= 5, "expected 3 to 5 targets"
+    assert 3 <= len(targets) <= 6, "expected 3 to 6 targets"
     for t in targets:
         assert all(t.get(k) for k in ("id", "name", "why", "mission")), f"{t['id']}: empty field"
         assert -180 <= t["lon"] <= 180, f"{t['id']}: longitude outside -180..180"

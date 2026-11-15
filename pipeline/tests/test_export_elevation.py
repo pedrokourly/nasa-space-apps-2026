@@ -102,7 +102,7 @@ class TestCommittedElevation:
         valid = z != np.float32(g.NODATA)
         assert not (z == 0).any()
         assert np.isfinite(z).all()
-        assert -2700 < z[valid].min() and z[valid].max() < -2300  # Jezero floor in the bbox region
+        assert -2700 < z[valid].min() and z[valid].max() < -2200  # crater floor up to the rim side of the bbox
 
     def test_landing_site_cell_matches_the_rover_altitude(self):
         z = np.fromfile(ELEVATION, dtype="<f4").reshape(g.HEIGHT, g.WIDTH)

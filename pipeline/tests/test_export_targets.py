@@ -23,9 +23,9 @@ mission_ids = {m["id"] for m in json.loads(MISSIONS.read_text(encoding="utf-8"))
 grid_shape = (g.HEIGHT, g.WIDTH)
 
 
-def test_is_a_feature_collection_of_3_to_5_points():
+def test_is_a_feature_collection_of_3_to_6_points():
     assert collection["type"] == "FeatureCollection"
-    assert 3 <= len(features) <= 5
+    assert 3 <= len(features) <= 6
     assert all(f["geometry"]["type"] == "Point" for f in features)
 
 

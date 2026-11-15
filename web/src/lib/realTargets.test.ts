@@ -12,9 +12,9 @@ const targets = parseTargets(read('targets.geojson'));
 const missions = parseMissions(read('mock/missions.json'));
 
 describe('real targets.geojson', () => {
-  it('is accepted by the app parser, with 3 to 5 targets', () => {
+  it('is accepted by the app parser, with 3 to 6 targets', () => {
     expect(targets.features.length).toBeGreaterThanOrEqual(3);
-    expect(targets.features.length).toBeLessThanOrEqual(5);
+    expect(targets.features.length).toBeLessThanOrEqual(6);
   });
 
   it('keeps every target inside the real meta.json bbox', () => {
