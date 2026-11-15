@@ -147,6 +147,13 @@ export const LAYERS: LayerDef[] = [
     resolution: '100 m/px',
     sourceUrl: wmts('THEMIS_DayIR_ControlledMosaics_100m_v2_oct2018'),
     defaultOpacity: 0.6,
+    legend: {
+      title: 'Daytime infrared tone',
+      gradient: ['#17191c', '#777b7e', '#e4e2dc'],
+      minLabel: 'darker',
+      maxLabel: 'brighter',
+      note: 'Visual tone only; not calibrated temperature values',
+    },
   },
   {
     // Derived from the real terrain grid (slope.bin) and drawn in the browser by SlopeLayer.

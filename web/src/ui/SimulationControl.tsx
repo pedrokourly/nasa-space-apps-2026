@@ -45,6 +45,8 @@ export default function SimulationControl() {
   const endO2Left = path ? Math.max(0, o2Available - (path.o2_kg.at(-1) ?? 0)) : null;
   const returnLabel = plan === 'start' ? 'Returning to start' : 'Returning to habitat';
 
+  if (!hasRoute && status === 'idle') return null;
+
   return (
     <div ref={rootRef} className="sim-control" role="group" aria-label="EVA simulation">
       <div className="sim-control__buttons">
