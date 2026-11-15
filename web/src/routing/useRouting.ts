@@ -8,13 +8,13 @@ import { routeErrorText } from './respond';
 
 const DEBOUNCE_MS = 150;
 
-/** Watches `waypoints` and keeps the store's `route`, `routeStatus` and `routeError` updated via the Worker. */
+/** Watches `waypoints`, `evaParams` and `habitat` and keeps the store's `route`, `routeStatus` and `routeError` updated via the Worker. */
 export function useRouting(): void {
   useEffect(() => {
     const client = createRouteClient();
     let timer: number | undefined;
 
-    const apply = (points: LonLat[], params: EvaParams) => {
+    const apply = (points: LonLat[], params: EvaParams, habitat: LonLat | null) => {
       window.clearTimeout(timer);
       if (points.length < 2) {
         client.cancel();
@@ -28,7 +28,7 @@ export function useRouting(): void {
         const st = useAppStore.getState();
         st.setRouteError(null);
         st.setRouteStatus('computing');
-        client.route(points, params).then(
+        client.route(points, params, habitat ?? undefined).then(
           (route) => {
             const cur = useAppStore.getState();
             cur.setRoute(route);
@@ -46,9 +46,11 @@ export function useRouting(): void {
     };
 
     const init = useAppStore.getState();
-    apply(init.waypoints, init.evaParams);
+    apply(init.waypoints, init.evaParams, init.habitat);
     const unsub = useAppStore.subscribe((s, prev) => {
-      if (s.waypoints !== prev.waypoints || s.evaParams !== prev.evaParams) apply(s.waypoints, s.evaParams);
+      if (s.waypoints !== prev.waypoints || s.evaParams !== prev.evaParams || s.habitat !== prev.habitat) {
+        apply(s.waypoints, s.evaParams, s.habitat);
+      }
     });
 
     return () => {

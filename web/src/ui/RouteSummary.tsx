@@ -30,7 +30,10 @@ export default function RouteSummary() {
   const min = Math.round(p.time_s / 60);
   const o2 = p.o2_kg.toFixed(2);
   const ret = p.return_path;
-  const pnr = p.verdict === 'NO-GO' ? profilePointAt(route, p.point_of_no_return) : null;
+  const nogo = p.verdict === 'NO-GO';
+  // Point of no return 0: even the start cannot reach the habitat, so there is nothing to turn back by.
+  const startUnreachable = nogo && (p.start_unreachable === true || p.point_of_no_return === 0);
+  const pnr = nogo && !startUnreachable ? profilePointAt(route, p.point_of_no_return) : null;
 
   return (
     <div className="route-summary route-summary--info" role="status" aria-live="polite">
@@ -42,12 +45,15 @@ export default function RouteSummary() {
       <span>
         {km} km · {min} min · {o2} kg O₂{p.mock ? ' (mock)' : ''}
       </span>
+      {startUnreachable && (
+        <span className="route-summary__pnr">Start is too far from the habitat for the available O₂ (estimate)</span>
+      )}
       {pnr && <span className="route-summary__pnr">Turn back by {(pnr.dist_m / 1000).toFixed(2)} km</span>}
-      {ret && (
+      {ret && !startUnreachable && (
         <span className="route-summary__return">
           <span className="route-summary__return-swatch" aria-hidden="true" />
-          Return (estimate): {(ret.dist_m / 1000).toFixed(1)} km · {Math.round(ret.time_s / 60)} min ·{' '}
-          {ret.o2_kg.toFixed(2)} kg O₂
+          {nogo ? 'Return from turn-back point (estimate)' : 'Return (estimate)'}: {(ret.dist_m / 1000).toFixed(1)} km ·{' '}
+          {Math.round(ret.time_s / 60)} min · {ret.o2_kg.toFixed(2)} kg O₂
         </span>
       )}
     </div>

@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
-import { loadData, type AppData, type DataSource, type DataSources } from './lib/loadData'
+import { findHabitat, loadData, type AppData, type DataSource, type DataSources } from './lib/loadData'
+import { useAppStore } from './state/store'
 import MapView from './map/MapView'
 import TargetsLayer from './map/TargetsLayer'
 import TargetCard from './ui/TargetCard'
@@ -36,7 +37,14 @@ export default function App() {
   useRouteHashSync()
 
   useEffect(() => {
-    loadData(DATA_SOURCES).then(setData, (e: unknown) => setError(e instanceof Error ? e.message : String(e)))
+    loadData(DATA_SOURCES).then(
+      (d) => {
+        setData(d)
+        // The way home and the GO / NO-GO verdict are measured against the real habitat (#69).
+        useAppStore.getState().setHabitat(findHabitat(d.targets))
+      },
+      (e: unknown) => setError(e instanceof Error ? e.message : String(e)),
+    )
   }, [])
 
   return (

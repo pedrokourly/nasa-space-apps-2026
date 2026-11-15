@@ -73,6 +73,7 @@
       ],
       "verdict": "GO",
       "return_path": {
+        "from_vertex": 5,
         "coordinates": [
           [
             77.45228515625,

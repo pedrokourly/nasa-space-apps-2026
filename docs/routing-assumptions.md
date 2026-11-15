@@ -46,10 +46,13 @@ On a 10% climb the model slows to 0.70 m/s and spends 514 W, i.e. about 1.8× mo
 
 Code: `web/src/routing/core/route.ts`, `returnField.ts`.
 
-- The habitat is the route's first point.
+- **The habitat** is the `habitat` feature of `targets.geojson` (#69): the app passes it to the route Worker. When it is missing, outside the grid or on an impassable cell, the route's first point is the habitat instead.
+- **O₂ budget, assumption:** the O₂ is counted from the route's first point, with the full supply at departure, even when that point is not the habitat. In other words, the astronaut is taken to start the route fully supplied wherever it starts.
 - **Optimal return:** one backward Dijkstra from the habitat gives, for every cell, the least O₂ needed to walk back home over passable cells, with the same walking model and step lengths as the route. Walking is direction-dependent: coming home uphill costs more than going out downhill. It is cached per habitat (~200 ms the first time on the 512 × 512 grid).
-- **GO** when the O₂ of the trip plus the optimal return from its last point (zero when it ends at the habitat) fits in the O₂ available.
-- **`point_of_no_return`**: index of the first vertex where the O₂ already spent plus the optimal return exceeds what is available. The last safe vertex is the one before. It is present exactly when the verdict is NO-GO: going home through the next vertex is always an option, so spent + home never decreases along the route.
+- **GO** when the O₂ of the trip plus the optimal return from its last point to the habitat (zero when it ends at the habitat) fits in the O₂ available.
+- **`point_of_no_return`**: index of the first vertex where the O₂ already spent plus the optimal return to the habitat exceeds what is available. The last safe vertex is the one before. It is present exactly when the verdict is NO-GO: going home through the next vertex is always an option (for any fixed habitat cell), so spent + home never decreases along the route.
+- **`start_unreachable`**: when `point_of_no_return` is 0, even the start cannot reach the habitat with the O₂ available (or has no way home at all). The route carries `start_unreachable: true`, no return is drawn and the route summary says "Start is too far from the habitat for the available O₂".
+- **`return_path`** (the dashed amber line): the optimal return traced over the same field, from vertex `from_vertex` to the habitat. On a GO route it starts at the last vertex (none when the route ends at the habitat). On a NO-GO route it starts at the last safe vertex (`point_of_no_return − 1`), so the O₂ of the route up to there plus the O₂ of the return fits in what is available (checked by `core/habitatReturn.test.ts`). The map draws the route after that vertex in muted grey.
 - **`legs`**: one entry per pair of consecutive requested points, with distance, time and O₂; they add up to the totals.
 
 ## Calibration on the real grid (#39)

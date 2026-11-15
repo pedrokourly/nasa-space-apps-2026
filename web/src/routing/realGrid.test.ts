@@ -118,6 +118,23 @@ describe('real Jezero grid (public/data)', () => {
     expect(r.properties.point_of_no_return).toBeGreaterThan(0);
   });
 
+  it('a start far from the habitat: the return leads to the habitat, from the last safe vertex when NO-GO (#69)', () => {
+    // Start in the north-west, near the upper fan, then visit the delta front: far from the habitat.
+    const pts: LonLat[] = [[77.39, 18.475], DEMO[4]!, DEMO[3]!];
+    const go = route(grid, pts, { habitat: HABITAT, o2_available_kg: 10 }).properties;
+    const habitatCell = lonLatToCell(grid.meta, HABITAT)!;
+    const endCell = lonLatToCell(grid.meta, go.return_path!.coordinates.at(-1)!)!;
+    expect(endCell).toEqual(habitatCell);
+    const need = go.o2_kg + go.return_path!.o2_kg;
+    const r = route(grid, pts, { habitat: HABITAT, o2_available_kg: need * 0.9 });
+    const p = r.properties;
+    expect(p.verdict).toBe('NO-GO');
+    expect(p.point_of_no_return).toBeGreaterThan(0);
+    expect(p.return_path!.from_vertex).toBe(p.point_of_no_return! - 1);
+    expect(p.return_path!.coordinates[0]).toEqual(r.geometry.coordinates[p.point_of_no_return! - 1]);
+    expect(lonLatToCell(grid.meta, p.return_path!.coordinates.at(-1)!)).toEqual(habitatCell);
+  });
+
   it('a stop on the no-data border cell is refused with a clear message', () => {
     const [minLon, minLat, maxLon, maxLat] = grid.meta.bbox;
     const border: LonLat = [minLon + (maxLon - minLon) / grid.meta.width / 2, (minLat + maxLat) / 2];

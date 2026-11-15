@@ -156,15 +156,24 @@ export interface RouteLeg {
 }
 
 /**
- * Estimated least-O₂ way home from the route's last vertex to the habitat (the route's first point).
- * It is the return the GO / NO-GO verdict counts on, traced over the return cost field.
+ * Estimated least-O₂ way home from a route vertex to the habitat (the `habitat` feature of
+ * `targets.geojson`; the route's first point when there is none). Traced over the same return cost
+ * field as the GO / NO-GO verdict.
+ * - GO route: it starts at the last vertex.
+ * - NO-GO route: it starts at the last safe vertex (`point_of_no_return − 1`), where the astronaut
+ *   must turn back.
  */
 export interface ReturnPath {
-  /** `[lon, lat]` positions (−180 to 180), from the route's last vertex to the habitat cell. */
+  /** Vertex index (in the route's LineString) where the return starts. */
+  from_vertex: number;
+  /** `[lon, lat]` positions (−180 to 180), from the route vertex `from_vertex` to the habitat cell. */
   coordinates: [lon: number, lat: number][];
   dist_m: number;
   time_s: number;
-  /** Equals the return O₂ the verdict adds to the route's own `o2_kg`. */
+  /**
+   * Least O₂ to walk home from `from_vertex`. GO: the return O₂ the verdict adds to the route's own
+   * `o2_kg`. NO-GO: the O₂ of the route up to `from_vertex` plus this fits in the O₂ available.
+   */
   o2_kg: number;
 }
 
@@ -179,14 +188,21 @@ export interface RouteProps {
   verdict?: 'GO' | 'NO-GO';
   /**
    * Index (in the LineString) of the FIRST vertex from which the astronaut can no longer get back
-   * to the habitat (the route's first point) with the O₂ left, by the least-O₂ way home.
-   * The last safe vertex is this index − 1.
-   * Present only when `verdict` is `'NO-GO'`.
+   * to the habitat (see `ReturnPath`) with the O₂ left, by the least-O₂ way home. The O₂ is counted
+   * from the route's first point with the full supply (assumption). The last safe vertex is this
+   * index − 1. Present only when `verdict` is `'NO-GO'`. `0` means even the start cannot reach the
+   * habitat (`start_unreachable`).
    */
   point_of_no_return?: number;
   /**
-   * Estimated way home from the last vertex. Present only when the route does not end at the habitat
-   * and a way home exists.
+   * `true` when even the route's first point cannot reach the habitat with the O₂ available (or has
+   * no way home): NO-GO with `point_of_no_return` 0 and no `return_path`. Absent otherwise.
+   */
+  start_unreachable?: true;
+  /**
+   * Estimated way home to the habitat (see `ReturnPath` for where it starts). Absent when the route
+   * ends at the habitat (GO), when the start cannot reach it (`start_unreachable`) or when the
+   * starting vertex is already the habitat.
    */
   return_path?: ReturnPath;
   mock?: boolean;

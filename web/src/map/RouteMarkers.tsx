@@ -32,7 +32,8 @@ export default function RouteMarkers() {
 
   // Point of no return: recreated only when the route changes.
   useEffect(() => {
-    if (!map) return;
+    // No marker when even the start cannot reach the habitat: the route summary says so instead.
+    if (!map || route?.properties.start_unreachable) return;
     const p = profilePointAt(route, route?.properties.point_of_no_return);
     if (!p) return;
     const marker = L.marker(toLatLng(p.lonlat), {
