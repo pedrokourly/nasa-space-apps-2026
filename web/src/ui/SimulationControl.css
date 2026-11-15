@@ -1,9 +1,10 @@
-/* Bottom left, above the Leaflet scale; the layer control stays bottom right. */
+/* Keep the EVA controls above the route metrics without covering them. */
 .sim-control {
   position: absolute;
-  left: 0.5rem;
-  bottom: 3rem;
-  z-index: 1000;
+  right: 18px;
+  bottom: 124px;
+  left: auto;
+  z-index: 1120;
   max-width: 16rem;
   padding: 0.5rem 0.6rem;
   border-radius: 6px;
@@ -11,6 +12,10 @@
   color: #e8e6e3;
   font-size: 0.8rem;
   box-shadow: 0 1px 6px rgb(0 0 0 / 50%);
+}
+
+@media (max-width: 600px) {
+  .sim-control { right: 8px; bottom: 144px; max-width: min(16rem, calc(100vw - 16px)); }
 }
 
 .sim-control__buttons {
@@ -37,6 +42,48 @@
 .sim-control button:focus-visible {
   outline: 2px solid #00e5ff;
   outline-offset: 2px;
+}
+
+.sim-control__buttons {
+  flex-wrap: wrap;
+}
+
+.sim-control__plan {
+  flex: 1 0 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.sim-control__plan-label {
+  color: #9aa0a6;
+}
+
+.sim-control select {
+  flex: 1;
+  min-width: 0;
+  padding: 0.2rem 0.3rem;
+  border: 1px solid #2a2f3a;
+  border-radius: 4px;
+  background: #1a1f2b;
+  color: inherit;
+  font: inherit;
+}
+
+.sim-control select:focus-visible {
+  outline: 2px solid #00e5ff;
+  outline-offset: 2px;
+}
+
+.sim-control__end {
+  margin: 0.4rem 0 0;
+  color: #9aa0a6;
+}
+
+.sim-control__returning {
+  margin: 0.4rem 0 0;
+  color: #ffb300;
+  font-weight: 600;
 }
 
 .sim-control__hint {

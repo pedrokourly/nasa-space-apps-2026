@@ -3,23 +3,34 @@ import { ESTIMATE_LABEL } from '../routing/estimateText';
 import L from 'leaflet';
 import { useAppStore } from '../state/store';
 import { useSimulationStore } from '../state/simulationStore';
-import { useSimulationClock, useSimulationSnapshot } from '../routing/useSimulation';
+import {
+  useActivePlan,
+  useSimulationClock,
+  useSimulationPath,
+  useSimulationSnapshot,
+} from '../routing/useSimulation';
+import { SIM_PLAN_LABELS, type SimPlan } from '../routing/simulation';
 import { formatDistance, formatElapsed } from './simulationFormat';
 import './SimulationControl.css';
 
 /**
- * Minimal EVA simulation control (issue #62): Start EVA / Pause / Resume / Reset and a readout of
+ * EVA simulation control (issues #62 and #71): a plan selector (planned route, or the route with
+ * its return to the habitat or to the start), Start EVA / Pause / Resume / Reset and a readout of
  * elapsed time, distance and O₂ left. Final styling belongs to the UI workstream.
- * O₂ timing is an approximation derived from the routing walk model (assumption).
+ * Time and O₂ are estimates derived from the routing walk model (assumption).
  */
 export default function SimulationControl() {
   useSimulationClock();
   const hasRoute = useAppStore((s) => s.route !== null && s.route.geometry.coordinates.length >= 2);
+  const o2Available = useAppStore((s) => s.evaParams.o2_available_kg);
   const status = useSimulationStore((s) => s.status);
   const start = useSimulationStore((s) => s.start);
   const pause = useSimulationStore((s) => s.pause);
   const resume = useSimulationStore((s) => s.resume);
   const reset = useSimulationStore((s) => s.reset);
+  const setPlan = useSimulationStore((s) => s.setPlan);
+  const { plan, plans } = useActivePlan();
+  const path = useSimulationPath();
   const snap = useSimulationSnapshot();
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -32,10 +43,26 @@ export default function SimulationControl() {
   }, []);
 
   const showReadout = status !== 'idle' && snap !== null;
+  const endO2Left = path ? Math.max(0, o2Available - (path.o2_kg.at(-1) ?? 0)) : null;
+  const returnLabel = plan === 'start' ? 'Returning to start' : 'Returning to habitat';
+
+  if (!hasRoute && status === 'idle') return null;
 
   return (
     <div ref={rootRef} className="sim-control" role="group" aria-label="EVA simulation">
       <div className="sim-control__buttons">
+        {hasRoute && plans.length > 1 && (
+          <label className="sim-control__plan">
+            <span className="sim-control__plan-label">Plan</span>
+            <select value={plan} onChange={(e) => setPlan(e.target.value as SimPlan)}>
+              {plans.map((p) => (
+                <option key={p} value={p}>
+                  {SIM_PLAN_LABELS[p]}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         {(status === 'idle' || status === 'finished') && (
           <button type="button" onClick={start} disabled={!hasRoute}>
             {status === 'finished' ? 'Restart EVA' : 'Start EVA'}
@@ -56,6 +83,9 @@ export default function SimulationControl() {
         </button>
       </div>
       {!hasRoute && <p className="sim-control__hint">Compute a route to simulate the EVA.</p>}
+      {endO2Left !== null && (
+        <p className="sim-control__end">O₂ left at the end (estimate): {endO2Left.toFixed(2)} kg</p>
+      )}
       {showReadout && (
         <>
           <dl className="sim-control__readout" aria-live="off">
@@ -79,6 +109,7 @@ export default function SimulationControl() {
               NO-GO: point of no return passed. The remaining O₂ no longer covers the way back.
             </p>
           )}
+          {snap.returning && status !== 'finished' && <p className="sim-control__returning">{returnLabel}</p>}
           <p className="sim-control__estimate">O₂ and time: {ESTIMATE_LABEL}.</p>
           {status === 'finished' && <p className="sim-control__done">EVA finished.</p>}
         </>

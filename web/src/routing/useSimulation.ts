@@ -1,7 +1,37 @@
 import { useEffect, useMemo } from 'react';
 import { useAppStore } from '../state/store';
 import { useSimulationStore } from '../state/simulationStore';
-import { buildTimeline, simulationStateAt, type SimulationState } from './simulation';
+import {
+  availablePlans,
+  buildSimPath,
+  defaultPlan,
+  simulationStateAt,
+  type SimPath,
+  type SimPlan,
+  type SimulationState,
+} from './simulation';
+
+/**
+ * The plan the simulation actually walks: the selected one, or the default when the route no
+ * longer offers it (the store catches up on the next route change).
+ */
+export function useActivePlan(): { plan: SimPlan; plans: SimPlan[] } {
+  const route = useAppStore((s) => s.route);
+  const selected = useSimulationStore((s) => s.plan);
+  const plans = useMemo(() => availablePlans(route), [route]);
+  const plan = plans.includes(selected) ? selected : defaultPlan(route);
+  return { plan, plans };
+}
+
+/** Simulated path of the selected plan, or `null` when there is no usable route. */
+export function useSimulationPath(): SimPath | null {
+  const route = useAppStore((s) => s.route);
+  const { plan } = useActivePlan();
+  return useMemo(
+    () => (route && route.geometry.coordinates.length >= 2 ? buildSimPath(route, plan) : null),
+    [route, plan],
+  );
+}
 
 /**
  * Drives the EVA clock with `requestAnimationFrame` while the simulation is running.
@@ -10,8 +40,8 @@ import { buildTimeline, simulationStateAt, type SimulationState } from './simula
  */
 export function useSimulationClock(): void {
   const status = useSimulationStore((s) => s.status);
-  const route = useAppStore((s) => s.route);
-  const totalS = route?.properties.time_s ?? 0;
+  const path = useSimulationPath();
+  const totalS = path?.time_s.at(-1) ?? 0;
 
   useEffect(() => {
     if (status !== 'running') return;
@@ -31,16 +61,9 @@ export function useSimulationClock(): void {
 
 /** Current simulated EVA state, or `null` when there is no usable route. */
 export function useSimulationSnapshot(): SimulationState | null {
-  const route = useAppStore((s) => s.route);
+  const path = useSimulationPath();
   const t_s = useSimulationStore((s) => s.t_s);
   // Same O₂ supply the route was computed with (issue #61), so the readout matches the verdict.
   const o2Available = useAppStore((s) => s.evaParams.o2_available_kg);
-  const timeline = useMemo(
-    () => (route && route.geometry.coordinates.length >= 2 ? buildTimeline(route) : null),
-    [route],
-  );
-  return useMemo(
-    () => (route && timeline ? simulationStateAt(timeline, route, t_s, o2Available) : null),
-    [route, timeline, t_s, o2Available],
-  );
+  return useMemo(() => (path ? simulationStateAt(path, t_s, o2Available) : null), [path, t_s, o2Available]);
 }
