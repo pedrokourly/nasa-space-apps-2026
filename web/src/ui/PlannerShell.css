@@ -756,3 +756,6 @@
   .map-view__telemetry { top: 118px; right: 10px; max-width: 52vw; }
   .fixed-layers-badge { top: 118px; left: 8px; gap: 6px; padding: 5px 7px; }
 }
+@media (min-width: 601px) {
+  .target-card { top: 50%; right: auto; left: 98px; width: min(320px, calc(100vw - 118px)); max-height: calc(100% - 190px); transform: translateY(-50%); }
+}

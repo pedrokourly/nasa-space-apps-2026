@@ -73,6 +73,10 @@ export default function App() {
   }, [])
 
   useEffect(() => {
+    if (selectedTargetId) setSelectedSourceLayer(null)
+  }, [selectedTargetId])
+
+  useEffect(() => {
     if (!mapInstance) return
     const updateIndicator = () => {
       const target = mapInstance.latLngToContainerPoint(planningAreaCenter)
@@ -169,7 +173,7 @@ export default function App() {
       {tab === 'planning' && view === '2d' && <>
         <nav className="map-toolbar" aria-label="Map tools">
           <button type="button" aria-label="Region information" aria-pressed={activeTool === 'info'} className={activeTool === 'info' ? 'is-active' : ''} onClick={chooseTool}><span aria-hidden="true">ⓘ</span></button>
-          <div className="map-toolbar__sources" role="group" aria-label="Map data sources">{SOURCE_LAYERS.map((layer) => <button key={layer.id} type="button" aria-label={`Toggle ${layer.label} layer`} aria-pressed={activeLayers.includes(layer.id)} className={`${activeLayers.includes(layer.id) ? 'is-active' : ''}${selectedSourceLayer === layer.id ? ' is-selected' : ''}`} onClick={() => { toggleLayer(layer.id); setSelectedSourceLayer((current) => current === layer.id ? null : layer.id); setActiveTool(null) }}><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">{layer.icon === 'temperature' ? <><path d="M14 14.8V5a3 3 0 0 0-6 0v9.8a5 5 0 1 0 6 0Z"/><path d="M11 8v9"/><circle cx="11" cy="19" r="1.7"/></> : layer.icon === 'slope' ? <><path d="M3 20 10 7l4 7 3-5 4 11H3Z"/><path d="m7 17 4-3 3 2 4-5"/></> : <><path d="M3 19c3-1 4-6 8-6s5 4 10 2"/><path d="M4 14c3-1 4-5 8-5 3 0 4 2 7 1"/><path d="M6 8c2-.7 3-3 6-3 2 0 3 1 5 1"/></>}</svg></button>)}</div>
+          <div className="map-toolbar__sources" role="group" aria-label="Map data sources">{SOURCE_LAYERS.map((layer) => <button key={layer.id} type="button" aria-label={`Toggle ${layer.label} layer`} aria-pressed={activeLayers.includes(layer.id)} className={`${activeLayers.includes(layer.id) ? 'is-active' : ''}${selectedSourceLayer === layer.id ? ' is-selected' : ''}`} onClick={() => { toggleLayer(layer.id); selectTarget(null); setSelectedSourceLayer((current) => current === layer.id ? null : layer.id); setActiveTool(null) }}><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">{layer.icon === 'temperature' ? <><path d="M14 14.8V5a3 3 0 0 0-6 0v9.8a5 5 0 1 0 6 0Z"/><path d="M11 8v9"/><circle cx="11" cy="19" r="1.7"/></> : layer.icon === 'slope' ? <><path d="M3 20 10 7l4 7 3-5 4 11H3Z"/><path d="m7 17 4-3 3 2 4-5"/></> : <><path d="M3 19c3-1 4-6 8-6s5 4 10 2"/><path d="M4 14c3-1 4-5 8-5 3 0 4 2 7 1"/><path d="M6 8c2-.7 3-3 6-3 2 0 3 1 5 1"/></>}</svg></button>)}</div>
           <button type="button" aria-label="Full screen" title="Full screen" onClick={() => { if (document.fullscreenElement) void document.exitFullscreen(); else void document.documentElement.requestFullscreen().catch(() => undefined) }}><span aria-hidden="true">⛶</span></button>
         </nav>
       </>}
@@ -196,7 +200,7 @@ export default function App() {
             <PlanningAreaFocus meta={data?.meta ?? null} />
             <WaypointsLayer meta={data?.meta ?? null} />
             {data && <TargetsLayer targets={data.targets} />}
-            {data && <TargetCard targets={data.targets} missions={data.missions} />}
+            {data && activeTool !== 'info' && <TargetCard targets={data.targets} missions={data.missions} />}
           </MapView>
         )}
         {tab === 'planning' && view === '2d' && <>
