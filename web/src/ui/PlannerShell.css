@@ -395,6 +395,33 @@
   font-size: 10px;
   line-height: 1.45;
 }
+.mars-data-card--wide { grid-column: 1 / -1; }
+.mars-data-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+  gap: 12px;
+}
+.mars-data-metric { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.mars-data-metric > span, .mars-data-metric > small { color: #959da7; font-size: 10px; }
+.mars-data-metric > strong { color: #f0f2f4; font-size: 17px; }
+.mars-data-metric > small { font-size: 9px; }
+.mars-data-note { margin: 12px 0 0; color: #aab1ba; font-size: 10px; line-height: 1.5; }
+.mars-data-card a { color: #9bc9ff; text-decoration: underline; text-underline-offset: 2px; }
+.mars-data-table-wrap { overflow-x: auto; }
+.mars-data-table { width: 100%; border-collapse: collapse; min-width: 560px; text-align: left; }
+.mars-data-table th, .mars-data-table td { padding: 9px 10px; border-bottom: 1px solid rgb(255 255 255 / 7%); color: #d9dde2; font-size: 11px; }
+.mars-data-table th { color: #959da7; font-size: 9px; font-weight: 600; }
+.mars-data-table td:first-child small { display: block; margin-top: 3px; color: #858e98; font-size: 9px; }
+.mars-data-count { margin-left: auto; color: #aab1ba; font-size: 10px; }
+.mars-data-targets, .mars-data-missions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.mars-data-target, .mars-data-missions > a { padding: 10px; border: 1px solid rgb(255 255 255 / 7%); border-radius: 9px; background: rgb(255 255 255 / 2%); }
+.mars-data-target { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.mars-data-target strong, .mars-data-missions strong { color: #e8eaed; font-size: 11px; }
+.mars-data-target p, .mars-data-missions p { margin: 5px 0 0; color: #aab1ba; font-size: 10px; line-height: 1.45; }
+.mars-data-target > a { flex: 0 0 auto; font-size: 9px; }
+.mars-data-missions > a { color: inherit; text-decoration: none; }
+.mars-data-missions > a > span { display: block; margin-top: 3px; color: #aab1ba; font-size: 9px; }
+.mars-data-missions > a:hover { border-color: rgb(255 129 32 / 45%); }
 .mars-data-provenance {
   max-width: 1150px;
   margin: 14px auto 0;
@@ -879,4 +906,96 @@
 @media (prefers-reduced-motion: reduce) {
   .route-metrics--live { animation: none; }
   .eva-controls__progress span { transition: none; }
+}
+
+/* Compact, right-aligned legend stack that grows upward above Recenter. */
+.map-active-legends {
+  position: absolute;
+  z-index: 1110;
+  right: 20px;
+  bottom: 212px;
+  left: auto;
+  display: grid;
+  grid-template-rows: 0fr;
+  width: min(260px, calc(100vw - 40px));
+  box-sizing: border-box;
+  max-height: 0;
+  padding: 0 10px;
+  overflow: hidden;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: rgb(10 12 15 / 92%);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 30%);
+  opacity: 0;
+  pointer-events: none;
+  transition: grid-template-rows 280ms cubic-bezier(.2, .75, .25, 1), max-height 280ms ease,
+    padding 220ms ease, opacity 180ms ease, border-color 180ms ease;
+}
+.map-active-legends.is-open {
+  grid-template-rows: 1fr;
+  max-height: 400px;
+  padding: 9px 10px;
+  border-color: rgb(255 255 255 / 12%);
+  opacity: 1;
+}
+.map-active-legends__content { display: flex; min-height: 0; flex-direction: column; gap: 9px; overflow: hidden; }
+.map-active-legends__item {
+  width: 100%;
+  min-width: 0;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  animation: legend-item-enter 220ms cubic-bezier(.2, .75, .25, 1) both;
+}
+.map-active-legends .provenance__legend { width: 100%; box-sizing: border-box; }
+.map-active-legends .provenance__legend-title { display: block; white-space: nowrap; }
+.map-active-legends .provenance__legend-bar { width: 100%; }
+.map-active-legends .provenance__legend-labels,
+.map-active-legends .provenance__legend-note { width: 100%; box-sizing: border-box; }
+.map-active-legends .provenance__legend-note { color: #929ba6; }
+@keyframes legend-item-enter { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Quiet, immediate press feedback shared by the main controls and filters. */
+.app-tab,
+.map-toolbar button,
+.map-recenter,
+.eva-controls__buttons button,
+.route-steps__trigger,
+.route-steps__popover button {
+  transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease,
+    box-shadow 220ms ease, transform 160ms cubic-bezier(.2, .75, .25, 1), opacity 180ms ease;
+}
+.app-tab svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.map-toolbar button:hover { transform: scale(1.045); }
+.map-toolbar button:active,
+.app-tab:active,
+.map-recenter:active,
+.eva-controls__buttons button:active:not(:disabled),
+.route-steps__trigger:active,
+.route-steps__popover button:active:not(:disabled) { transform: scale(.97); }
+
+@media (max-width: 900px) {
+  .map-active-legends { right: 16px; bottom: 216px; }
+  .map-active-legends--eva { bottom: 317px; }
+}
+@media (max-width: 600px) {
+  .map-active-legends { right: 10px; bottom: 212px; left: auto; width: min(230px, calc(100vw - 20px)); }
+  .map-active-legends--eva { bottom: 347px; }
+  .map-active-legends__item { padding: 0; }
+  .map-active-legends .provenance__legend-title { font-size: 9px; }
+  .map-active-legends .provenance__legend-labels { font-size: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .map-active-legends,
+  .map-active-legends__item,
+  .app-tab,
+  .map-toolbar button,
+  .map-recenter,
+  .eva-controls__buttons button,
+  .route-steps__trigger,
+  .route-steps__popover button { animation: none !important; transition: none !important; }
 }

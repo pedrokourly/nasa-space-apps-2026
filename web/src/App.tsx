@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import L from 'leaflet'
-import { findHabitat, loadData, type AppData, type DataSource, type DataSources } from './lib/loadData'
+import { findHabitat, loadData, type AppData, type DataSources } from './lib/loadData'
 import MapView from './map/MapView'
 import TargetsLayer from './map/TargetsLayer'
 import TargetCard from './ui/TargetCard'
@@ -27,11 +27,11 @@ import { availablePlans, buildSimPath } from './routing/simulation'
 import ProvenanceBadge, { Legend } from './ui/ProvenanceBadge'
 import { LAYERS } from './map/layers'
 import type { LayerId, Conditions } from './types/contract'
+import MarsDataScreen from './ui/MarsDataScreen'
 import './ui/PlannerShell.css'
 
 const ThreeDView = lazy(() => import('./three-d/ThreeDView'))
 const DATA_SOURCES: DataSources = { meta: 'real', targets: 'real', missions: 'real' }
-const label = (source: DataSource) => (source === 'real' ? 'REAL DATA' : 'MOCK')
 const JEZERO_OVERVIEW: L.LatLngTuple = [18.45, 77.43]
 
 type AppTab = 'planning' | 'mars-data'
@@ -46,6 +46,7 @@ export default function App() {
   const [data, setData] = useState<AppData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [latestSol, setLatestSol] = useState<number | null>(null)
+  const [conditions, setConditions] = useState<Conditions | null>(null)
   const [view, setView] = useState<ViewMode>('2d')
   const [tab, setTab] = useState<AppTab>('planning')
   const [activeTool, setActiveTool] = useState<ToolId | null>(null)
@@ -79,7 +80,10 @@ export default function App() {
     fetch(`${import.meta.env.BASE_URL}data/conditions.json`).then((response) => {
       if (!response.ok) throw new Error('Conditions unavailable')
       return response.json() as Promise<Conditions>
-    }).then((conditions) => setLatestSol(conditions.latest_sol)).catch(() => setLatestSol(null))
+    }).then((loadedConditions) => {
+      setConditions(loadedConditions)
+      setLatestSol(loadedConditions.latest_sol)
+    }).catch(() => { setConditions(null); setLatestSol(null) })
   }, [])
 
   useEffect(() => {
@@ -175,7 +179,7 @@ export default function App() {
         </a>
         <nav className="app-tabs" aria-label="Application views">
           <button className={`app-tab ${tab === 'planning' ? 'app-tab--active' : ''}`} type="button" aria-pressed={tab === 'planning'} onClick={() => setTab('planning')}>◎ <span>Planning</span></button>
-          <button className={`app-tab ${tab === 'mars-data' ? 'app-tab--active' : ''}`} type="button" aria-pressed={tab === 'mars-data'} onClick={() => { setTab('mars-data'); setActiveTool(null) }}>▱ <span>Mars data</span></button>
+          <button className={`app-tab ${tab === 'mars-data' ? 'app-tab--active' : ''}`} type="button" aria-pressed={tab === 'mars-data'} onClick={() => { setTab('mars-data'); setActiveTool(null) }}><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14 14.8V5a3 3 0 0 0-6 0v9.8a5 5 0 1 0 6 0Z"/><path d="M11 8v9"/><circle cx="11" cy="19" r="1.7"/></svg><span>Conditions</span></button>
         </nav>
         <div className="app-status"><span className="app-readout"><small>Latest MEDA sol</small><strong>{latestSol !== null ? `SOL ${latestSol}` : 'SOL —'}</strong></span><ViewToggle view={view} onChange={setView} /></div>
       </header>
@@ -205,7 +209,7 @@ export default function App() {
             <DataStatus loading={!data && !error} error={error} />
             <FixedLayersBadge />
             {data && selectedSourceLayer && activeLayers.includes(selectedSourceLayer) && <div className="map-layer-legends"><div className="map-layer-legends__heading"><strong>{SOURCE_LAYERS.find((layer) => layer.id === selectedSourceLayer)?.label} source</strong><button type="button" aria-label="Close source panel" onClick={() => setSelectedSourceLayer(null)}>×</button></div><ProvenanceBadge activeLayers={[selectedSourceLayer]} missions={data.missions} /></div>}
-            <ActiveLayerLegends activeLayers={activeLayers} />
+            <ActiveLayerLegends activeLayers={activeLayers} recenterElevated={simulationStatus !== 'idle'} />
             <PlanningAreaFocus meta={data?.meta ?? null} />
             <WaypointsLayer meta={data?.meta ?? null} />
             {data && <TargetsLayer targets={data.targets} />}
@@ -234,7 +238,7 @@ export default function App() {
         <ToolPanel data={data} selectedTarget={selectedTarget ?? null} onSelectTarget={selectTarget} onClose={() => { setActiveTool(null); selectTarget(null) }} />
       )}
 
-      {tab === 'mars-data' && <MarsDataScreen data={data} error={error} />}
+      {tab === 'mars-data' && <MarsDataScreen data={data} error={error} conditions={conditions} />}
       {tab === 'planning' && view === '2d' && <RouteMetricsBar values={routeValues} waypointCount={waypoints.length} />}
     </div>
   )
@@ -288,30 +292,16 @@ function FixedLayersBadge() {
   return <div className="fixed-layers-badge" role="status" aria-label="Fixed map layers: CTX Jezero and HiRISE Jezero"><span className="fixed-layers-badge__label">BASE LAYERS</span><span><i aria-hidden="true" />CTX</span><span><i aria-hidden="true" />HiRISE</span></div>
 }
 
-function ActiveLayerLegends({ activeLayers }: { activeLayers: LayerId[] }) {
+function ActiveLayerLegends({ activeLayers, recenterElevated }: { activeLayers: LayerId[]; recenterElevated: boolean }) {
   const legends = activeLayers
     .filter((id) => SOURCE_LAYERS.some((source) => source.id === id))
-    .map((id, index) => {
+    .map((id) => {
       const layer = LAYERS.find((item) => item.id === id)
       return layer?.legend
-        ? <div className="map-active-legends__item" style={{ gridColumn: index + 1, justifySelf: index === 0 ? 'start' : index === 1 ? 'center' : 'end' }} key={id}><Legend def={layer} /></div>
+        ? <div className="map-active-legends__item" key={id}><Legend def={layer} /></div>
         : null
     })
     .filter((item) => item !== null)
 
-  if (legends.length === 0) return null
-  return <div className="map-active-legends" aria-label="Active layer legends">{legends}</div>
-}
-
-function MarsDataScreen({ data, error }: { data: AppData | null; error: string | null }) {
-  const meda = data?.missions.find((mission) => mission.instrument.includes('MEDA'))
-  const dataCards = [
-    { icon: '♨', title: 'Current climate', fields: [['Temperature', '—'], ['Wind', '—'], ['Dust', '—']], source: meda ? `${meda.instrument} · ${meda.name}` : 'MEDA · Perseverance' },
-    { icon: '◉', title: 'Atmosphere', fields: [['Pressure', '—'], ['Composition', 'Not loaded'], ['Last available sol', 'Not provided']], source: meda ? `${meda.instrument} · ${meda.agency}` : 'MEDA · NASA' },
-    { icon: '▱', title: 'Soil and composition', fields: [['Mineral products', 'Select a layer to inspect'], ['Science targets', String(data?.targets.features.length ?? '—')]], source: 'CRISM · MRO' },
-    { icon: '⌖', title: 'Local geology', fields: [['Mapped science targets', String(data?.targets.features.length ?? '—')], ['Selected region', 'Jezero crater']], source: 'Target catalog · provenance on each target' },
-    { icon: '◎', title: 'Radiation', fields: [['Radiation reading', '—'], ['Latest available sol', 'Not provided']], source: 'RAD / Curiosity · data not loaded' },
-    { icon: '♧', title: 'Mission data status', fields: [['Terrain grid', 'REAL DATA'], ['Science targets', 'REAL DATA'], ['Mission catalog', label(DATA_SOURCES.missions)]], source: 'Each layer lists its source and available date' },
-  ]
-  return <section className="mars-data-screen" aria-label="Mars data dashboard"><div className="mars-data-screen__title"><div><span className="tool-panel__eyebrow">LATEST AVAILABLE · NOT LIVE</span><h1>Mars data for Jezero</h1><p>Mission products and verified regional information. Missing readings are left blank rather than estimated.</p></div><span className="data-status-pill">{error ? 'DATA ERROR' : data ? 'STATIC DATA' : 'LOADING'}</span></div><div className="mars-data-grid">{dataCards.map((card) => <article className="mars-data-card" key={card.title}><div className="mars-data-card__header"><span aria-hidden="true">{card.icon}</span><h2>{card.title}</h2></div><div className="mars-data-card__fields">{card.fields.map(([label, value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}</div><footer>{card.source}</footer></article>)}</div><div className="mars-data-provenance"><span>DATA PROVENANCE</span><p>Terrain: {data?.meta.source ?? 'Loading source…'}</p><p>Targets: {label(DATA_SOURCES.targets)} · Mission catalog: {label(DATA_SOURCES.missions)} · {data?.missions.length ?? 0} missions</p><p>Weather, atmosphere and radiation readings are not included in the current static data.</p></div></section>
+  return <div className={`map-active-legends${legends.length ? ' is-open' : ''}${recenterElevated ? ' map-active-legends--eva' : ''}`} aria-label="Active layer legends" aria-hidden={!legends.length}><div className="map-active-legends__content">{legends}</div></div>
 }
