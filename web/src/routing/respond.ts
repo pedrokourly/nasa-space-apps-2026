@@ -5,9 +5,12 @@ import { NoPathError, OutOfGridError } from './core/errors';
  * Runs the route function for one request and turns the result, or whatever it throws, into the
  * frozen `RouteResponse`. Never throws. Pure (no Worker APIs), so tests can call it.
  */
-export async function answerRoute({ id, points, params }: RouteRequest, routeImpl: RouteFn): Promise<RouteResponse> {
+export async function answerRoute(
+  { id, points, params, habitat }: RouteRequest,
+  routeImpl: RouteFn,
+): Promise<RouteResponse> {
   try {
-    return { id, ok: true, route: await routeImpl(points, params) };
+    return { id, ok: true, route: await routeImpl(points, params, habitat) };
   } catch (e) {
     if (e instanceof NoPathError || e instanceof OutOfGridError) {
       return {

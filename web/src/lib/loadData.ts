@@ -1,4 +1,5 @@
 import type { Meta, Mission, Route, TargetsCollection } from '../types/contract';
+import type { LonLat } from './mars-geo';
 
 export interface AppData {
   meta: Meta;
@@ -74,6 +75,15 @@ export function parseTargets(raw: unknown): TargetsCollection {
     }
   }
   return raw as unknown as TargetsCollection;
+}
+
+/** Id of the habitat feature in `targets.geojson`: the EVA start and return point. */
+export const HABITAT_TARGET_ID = 'habitat';
+
+/** Position `[lon, lat]` of the habitat feature in `targets`, or `null` when there is none. */
+export function findHabitat(targets: TargetsCollection): LonLat | null {
+  const f = targets.features.find((t) => t.properties.id === HABITAT_TARGET_ID);
+  return f ? [f.geometry.coordinates[0], f.geometry.coordinates[1]] : null;
 }
 
 /** Validates a route (LineString Feature). */

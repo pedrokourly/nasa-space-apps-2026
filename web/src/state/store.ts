@@ -6,6 +6,12 @@ import { DEFAULT_ACTIVE_LAYERS, LAYERS } from '../map/layers';
 
 export interface AppState {
   waypoints: LonLat[];
+  /**
+   * Habitat position (the `habitat` feature of `targets.geojson`): where the way home leads.
+   * `null` until the targets load, or when there is none; the router then uses the route's first point.
+   */
+  habitat: LonLat | null;
+  setHabitat: (p: LonLat | null) => void;
   route: Route | null;
   routeStatus: RouteStatus;
   /** Message of the last route error (when `routeStatus === 'error'`). */
@@ -42,6 +48,8 @@ export interface AppState {
 
 export const useAppStore = create<AppState>()((set) => ({
   waypoints: [],
+  habitat: null,
+  setHabitat: (habitat) => set({ habitat }),
   route: null,
   routeStatus: 'idle',
   routeError: null,

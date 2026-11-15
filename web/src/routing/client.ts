@@ -7,7 +7,7 @@ import { RequestTracker } from './requestTracker';
 
 export interface RouteClient {
   /** Requests the route; rejects with `StaleRouteError` if a newer request was made, `NoPathError`, `OutOfGridError` or `Error`. */
-  route(points: LonLat[], params?: EvaParams): Promise<Route>;
+  route(points: LonLat[], params?: EvaParams, habitat?: LonLat): Promise<Route>;
   /** Invalidates the request in flight (its response, if it arrives, is discarded). */
   cancel(): void;
   /** Terminates the Worker and rejects pending requests. */
@@ -42,13 +42,13 @@ export function createRouteClient(): RouteClient {
   worker.onerror = (e) => rejectAll(() => new Error(e.message || 'Route Worker error'));
 
   return {
-    route(points, params) {
+    route(points, params, habitat) {
       const id = tracker.next();
       // Earlier requests still without a response become stale now.
       rejectAll(() => new StaleRouteError());
       return new Promise<Route>((resolve, reject) => {
         pending.set(id, { resolve, reject });
-        const req: RouteRequest = { id, points, params };
+        const req: RouteRequest = { id, points, params, ...(habitat ? { habitat } : {}) };
         worker.postMessage(req);
       });
     },
