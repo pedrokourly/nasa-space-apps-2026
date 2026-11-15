@@ -117,7 +117,12 @@ export default function App() {
 
   const chooseTool = () => {
     setSelectedSourceLayer(null)
-    setActiveTool((current) => (current === 'info' ? null : 'info'))
+    selectTarget(null)
+    if (activeTool === 'info') {
+      setActiveTool(null)
+    } else {
+      setActiveTool('info')
+    }
   }
 
   const recenterOnPlanningArea = () => {
@@ -185,7 +190,8 @@ export default function App() {
             <TileHealth />
             <TileLoading />
             <DataStatus loading={!data && !error} error={error} />
-            {data && selectedSourceLayer && <div className="map-layer-legends"><div className="map-layer-legends__heading"><strong>{SOURCE_LAYERS.find((layer) => layer.id === selectedSourceLayer)?.label} source</strong><button type="button" aria-label="Close source panel" onClick={() => setSelectedSourceLayer(null)}>×</button></div><ProvenanceBadge activeLayers={[selectedSourceLayer]} missions={data.missions} /></div>}
+            <FixedLayersBadge />
+            {data && selectedSourceLayer && activeLayers.includes(selectedSourceLayer) && <div className="map-layer-legends"><div className="map-layer-legends__heading"><strong>{SOURCE_LAYERS.find((layer) => layer.id === selectedSourceLayer)?.label} source</strong><button type="button" aria-label="Close source panel" onClick={() => setSelectedSourceLayer(null)}>×</button></div><ProvenanceBadge activeLayers={[selectedSourceLayer]} missions={data.missions} /></div>}
             <ActiveLayerLegends activeLayers={activeLayers} />
             <PlanningAreaFocus meta={data?.meta ?? null} />
             <WaypointsLayer meta={data?.meta ?? null} />
@@ -212,7 +218,7 @@ export default function App() {
       </main>
 
       {tab === 'planning' && view === '2d' && panelTool && (
-        <ToolPanel data={data} selectedTarget={selectedTarget ?? null} onSelectTarget={selectTarget} onClose={() => setActiveTool(null)} />
+        <ToolPanel data={data} selectedTarget={selectedTarget ?? null} onSelectTarget={selectTarget} onClose={() => { setActiveTool(null); selectTarget(null) }} />
       )}
 
       {tab === 'mars-data' && <MarsDataScreen data={data} error={error} />}
@@ -247,13 +253,20 @@ function RouteMetricsBar({ values, waypointCount }: { values: { distance: string
   return <footer className="route-metrics" aria-label="Route summary metrics">{metrics.map((metric) => <div className="route-metric" key={metric.label}><span className="route-metric__icon" aria-hidden="true">{metric.icon}</span><span><small>{metric.label}</small><strong>{metric.value}</strong></span></div>)}</footer>
 }
 
+function FixedLayersBadge() {
+  return <div className="fixed-layers-badge" role="status" aria-label="Fixed map layers: CTX Jezero and HiRISE Jezero"><span className="fixed-layers-badge__label">BASE LAYERS</span><span><i aria-hidden="true" />CTX</span><span><i aria-hidden="true" />HiRISE</span></div>
+}
+
 function ActiveLayerLegends({ activeLayers }: { activeLayers: LayerId[] }) {
-  const legends = SOURCE_LAYERS.map((source, index) => {
-    const layer = LAYERS.find((item) => item.id === source.id)
-    return activeLayers.includes(source.id) && layer?.legend
-      ? <div className="map-active-legends__item" style={{ gridColumn: index + 1 }} key={source.id}><Legend def={layer} /></div>
-      : null
-  }).filter((item) => item !== null)
+  const legends = activeLayers
+    .filter((id) => SOURCE_LAYERS.some((source) => source.id === id))
+    .map((id, index) => {
+      const layer = LAYERS.find((item) => item.id === id)
+      return layer?.legend
+        ? <div className="map-active-legends__item" style={{ gridColumn: index + 1, justifySelf: index === 0 ? 'start' : index === 1 ? 'center' : 'end' }} key={id}><Legend def={layer} /></div>
+        : null
+    })
+    .filter((item) => item !== null)
 
   if (legends.length === 0) return null
   return <div className="map-active-legends" aria-label="Active layer legends">{legends}</div>

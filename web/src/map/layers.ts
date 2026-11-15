@@ -196,7 +196,7 @@ export function isTileLayer(def: LayerDef): def is TileLayerDef {
 export const DEFAULT_BASE_ID = 'ctx-jezero';
 
 /** Layers on when the app opens: the CTX base plus HiRISE over the area of interest. */
-export const DEFAULT_ACTIVE_LAYERS = [DEFAULT_BASE_ID];
+export const DEFAULT_ACTIVE_LAYERS = [DEFAULT_BASE_ID, 'hirise-jezero'];
 
 /**
  * Global layer drawn underneath, fully opaque, when the chosen base is local (HiRISE,
