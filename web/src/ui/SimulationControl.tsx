@@ -10,12 +10,14 @@ import {
   useSimulationSnapshot,
 } from '../routing/useSimulation';
 import { SIM_PLAN_LABELS, type SimPlan } from '../routing/simulation';
+import BestOrderControl from './BestOrderControl';
 import { formatDistance, formatElapsed } from './simulationFormat';
 import './SimulationControl.css';
 
 /**
  * EVA simulation control (issues #62 and #71): a plan selector (planned route, or the route with
- * its return to the habitat or to the start), Start EVA / Pause / Resume / Reset and a readout of
+ * its return to the habitat or to the start), Start EVA / Pause / Resume / Reset, the "Best order"
+ * button (#65, reorders the stops) and a readout of
  * elapsed time, distance and O₂ left. Final styling belongs to the UI workstream.
  * Time and O₂ are estimates derived from the routing walk model (assumption).
  */
@@ -81,6 +83,7 @@ export default function SimulationControl() {
         <button type="button" onClick={reset} disabled={status === 'idle'}>
           Reset
         </button>
+        {hasRoute && <BestOrderControl />}
       </div>
       {!hasRoute && <p className="sim-control__hint">Compute a route to simulate the EVA.</p>}
       {endO2Left !== null && (

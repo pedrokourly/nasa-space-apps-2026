@@ -82,13 +82,13 @@
   color: #cfd8e3;
 }
 
-/* Start return: violet dotted swatch, matching the dotted line on the map (`START_RETURN_COLOR`). */
+/* Start return: green dotted swatch, matching the dotted line on the map (`START_RETURN_COLOR`). */
 .route-summary__return--start {
-  color: #c084fc;
+  color: #4ade80;
 }
 
 .route-summary__return--start .route-summary__return-swatch {
-  border-top: 3px dotted #c084fc;
+  border-top: 3px dotted #4ade80;
 }
 
 /* Decision 0002: the summary carries the data-nature labels on smaller lines under the verdicts. */
