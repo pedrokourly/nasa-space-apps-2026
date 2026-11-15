@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { DEFAULT_EVA_PARAMS, EVA_PARAM_RANGES } from '../routing/core/walk';
 import { useAppStore } from './store';
 
 const initial = useAppStore.getState();
@@ -58,5 +59,17 @@ describe('store', () => {
     s().setFocusPlanningArea(false);
     expect(s().focusPlanningArea).toBe(false);
     s().setFocusPlanningArea(true);
+  });
+
+  it('evaParams: defaults, partial merge and clamping', () => {
+    const s = () => useAppStore.getState();
+    expect(s().evaParams).toEqual(DEFAULT_EVA_PARAMS);
+    s().setEvaParams({ loadMassKg: 120 });
+    expect(s().evaParams).toEqual({ ...DEFAULT_EVA_PARAMS, loadMassKg: 120 });
+    s().setEvaParams({ speedFlatMS: 100, o2_available_kg: -5 });
+    expect(s().evaParams.speedFlatMS).toBe(EVA_PARAM_RANGES.speedFlatMS.max);
+    expect(s().evaParams.o2_available_kg).toBe(EVA_PARAM_RANGES.o2_available_kg.min);
+    s().setEvaParams({ speedFlatMS: NaN });
+    expect(s().evaParams.speedFlatMS).toBe(EVA_PARAM_RANGES.speedFlatMS.max);
   });
 });

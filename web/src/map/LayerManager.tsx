@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { useMap } from './MapContext';
 import { useAppStore } from '../state/store';
+import { TRANSPARENT_TILE_URL } from './loadingState';
 import { BACKDROP_ID, LAYERS, getLayer, isGlobal, isTileLayer, type TileLayerDef } from './layers';
 
 /** HiRISE Jezero goes up to native z17; above that the map does not allow zooming. */
@@ -22,6 +23,8 @@ function createTileLayer(def: TileLayerDef,zIndex: number, opacity: number): L.T
     maxZoom: MAX_ZOOM,
     bounds: def.bounds,
     attribution: def.attribution,
+    // Missing tiles show the dark map background instead of the browser's broken-image grey.
+    errorTileUrl: TRANSPARENT_TILE_URL,
     zIndex,
     opacity,
   });

@@ -67,6 +67,18 @@ cd web && npm test
 - Points in the same cell give a valid zero-length route (two equal vertices).
 - The available O₂ is **not** part of the route (the contract has no such field). If the UI needs to show the margin, that is a contract change (update section 5 of `AGENTS.md` in the same PR).
 
+### EVA parameters (issue #61)
+
+The planner can tune three inputs, held in the store as `evaParams` (`setEvaParams` clamps them) and sent with every route request (`RouteRequest.params` → worker → `createRouter`). Changing them recomputes the route like moving a waypoint (stale responses are discarded). The Route contract is unchanged.
+
+| Parameter | Default | Allowed range | Source |
+|---|---|---|---|
+| `speedFlatMS` (m/s) | 1.0 | 0.2 to 2 | **Assumption** |
+| `loadMassKg` (kg): suit, backpack and gear; drives the O₂ rate through the metabolic model | 90 | 40 to 150 | **Assumption** |
+| `o2_available_kg` (kg) | 1.0 | 0.1 to 5 | **Assumption** |
+
+Presets (`evaPresets.ts`: Nominal, Conservative, Heavy load) are invented for the demo. **None of these values, ranges or presets has a scientific reference yet**; replace them and cite the source when one is found.
+
 ### Sample routes
 
 `public/data/mock/route-go.geojson` and `route-no-go.geojson`: the same trip (habitat, 3 mock targets, habitat) over an invented terrain with the mock bbox, one with the default O₂ (GO) and one with 0.2 kg (NO-GO, with `point_of_no_return`). Flagged `mock: true`. Regenerate with `WRITE_MOCKS=1 npm test -- sampleRoutes`.

@@ -82,3 +82,9 @@
   padding-bottom: 0.4rem;
   border-bottom: 1px solid rgb(255 255 255 / 12%);
 }
+
+/* Short screens (1366x768, 1280x720): stay below the cursor readout, scroll instead of overflowing. */
+.layer-control {
+  max-height: calc(100% - 4.5rem);
+  overflow-y: auto;
+}

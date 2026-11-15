@@ -27,3 +27,8 @@
   font-variant-numeric: tabular-nums;
   pointer-events: none;
 }
+
+/* Missing or not-yet-loaded tiles: never grey, always the dark background. */
+.map-view__canvas .leaflet-tile {
+  background: transparent;
+}
