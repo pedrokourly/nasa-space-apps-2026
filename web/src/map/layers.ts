@@ -160,13 +160,13 @@ export const LAYERS: LayerDef[] = [
     dataKind: 'Slope from the elevation model',
     // Placeholder: SlopeLayer positions the image with the bbox of meta.json.
     bounds: [
-      [18.4, 77.36],
+      [18.4, 77.32],
       [18.5, 77.5],
     ],
     attribution: 'USGS Astrogeology · MRO/HiRISE DTM',
     product: 'Mars 2020 TRN HiRISE DTM Mosaic',
     versionOrDate: 'published 2020-07-24',
-    resolution: '~12–15 m/cell (1 m DTM resampled)',
+    resolution: '~12–20 m/cell (1 m DTM resampled)',
     sourceUrl: 'https://doi.org/10.5066/P9REJ9JN',
     legend: {
       title: 'Slope',
