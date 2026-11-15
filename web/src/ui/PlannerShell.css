@@ -374,6 +374,15 @@
   margin: 0;
   font-size: 13px;
 }
+/* Desktop: the tool bar sits right under the BASE LAYERS badge (top-left zone), so the route card
+   at the bottom left never runs into it. Phones and tablets keep their own placement below. */
+@media (min-width: 901px) {
+  .map-toolbar { top: 126px; bottom: auto; transform: none; }
+}
+/* Tablets: under the taller header and the steps panel, clear of the route card. */
+@media (min-width: 601px) and (max-width: 900px) {
+  .map-toolbar { top: 180px; bottom: auto; transform: none; }
+}
 /* Temperature unit control (°C / K / °F); the source value in kelvin always stays visible. */
 .mars-data-units {
   display: flex;
