@@ -1,9 +1,13 @@
 import { useAppStore } from '../state/store';
-import { MAX_ORDER_STOPS } from '../routing/core/stopOrder';
+import { isExactOrder, MAX_ORDER_STOPS } from '../routing/core/stopOrder';
+
+/** Notice shown when the best order comes from the heuristic (more than `MAX_ORDER_STOPS` stops). */
+export const HEURISTIC_ORDER_NOTICE = `More than ${MAX_ORDER_STOPS} stops: Best order uses a heuristic and does not guarantee the best order.`;
 
 /**
  * "Best order" button (#65): reorders the stops after the start to use the least O₂, counting the way
  * back to the habitat, without adding a return point. Without it, the route follows the click order.
+ * Exact up to `MAX_ORDER_STOPS` stops; above that the order is a heuristic and a notice says so.
  * The route always uses the balanced cost profile. Rendered inside the EVA block (`SimulationControl`),
  * which gives it its button style.
  */
@@ -17,15 +21,18 @@ export default function BestOrderControl() {
   const first = waypoints[0];
   const endsHome = waypoints.length > 2 && !!first && !!last && first[0] === last[0] && first[1] === last[1];
   const stops = Math.max(0, waypoints.length - 1 - (endsHome ? 1 : 0));
-  const canReorder = stops >= 2 && stops <= MAX_ORDER_STOPS && status !== 'computing';
-  const hint =
-    stops > MAX_ORDER_STOPS
-      ? `Best order works with up to ${MAX_ORDER_STOPS} stops`
-      : 'Reorder the stops to use the least O₂, counting the way back to the habitat';
+  const exact = isExactOrder(stops);
+  const canReorder = stops >= 2 && status !== 'computing';
+  const hint = exact
+    ? 'Reorder the stops to use the least O₂, counting the way back to the habitat'
+    : HEURISTIC_ORDER_NOTICE;
 
   return (
-    <button type="button" disabled={!canReorder} title={hint} onClick={requestBestOrder}>
-      Best order
-    </button>
+    <>
+      <button type="button" disabled={!canReorder} title={hint} onClick={requestBestOrder}>
+        Best order
+      </button>
+      {!exact && <p className="sim-control__order-note">{HEURISTIC_ORDER_NOTICE}</p>}
+    </>
   );
 }

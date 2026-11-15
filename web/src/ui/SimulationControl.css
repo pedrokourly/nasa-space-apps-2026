@@ -75,6 +75,14 @@
   outline-offset: 2px;
 }
 
+/* Best order above 8 stops: the order is a heuristic, not guaranteed to be the best. */
+.sim-control__order-note {
+  flex: 1 0 100%;
+  margin: 0.1rem 0 0;
+  font-size: 0.7rem;
+  color: #ffb300;
+}
+
 .sim-control__end {
   margin: 0.4rem 0 0;
   color: #9aa0a6;

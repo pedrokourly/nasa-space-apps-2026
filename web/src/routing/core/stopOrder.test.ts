@@ -7,7 +7,7 @@ import { buildMockGrid, flatGrid } from './mockGrid';
 import { cachedReturnField, createRouter, route } from './route';
 import { DEFAULT_WALK, O2_RESERVE_FRACTION } from './walk';
 import { sampleGrid } from './sampleRoutes';
-import { bestLoopOrder, MAX_ORDER_STOPS, routeBestOrder } from './stopOrder';
+import { bestLoopOrder, heuristicLoopOrder, isExactOrder, MAX_ORDER_STOPS, routeBestOrder } from './stopOrder';
 
 const pt = (g: Grid, col: number, row: number): LonLat => cellToLonLat(g.meta, col, row);
 const slopesOn = (g: Grid, coords: LonLat[]) =>
@@ -98,9 +98,38 @@ describe('best order', () => {
     expect(routeBestOrder(g, [H, A, B, C], { o2_available_kg: tight }).properties.verdict).toBe('GO');
   });
 
-  it(`refuses more than ${MAX_ORDER_STOPS} stops with a clear message`, () => {
-    const many = [H, ...Array.from({ length: MAX_ORDER_STOPS + 1 }, (_, i) => pt(g, 5 + i * 3, 10))];
-    expect(() => routeBestOrder(g, many)).toThrow(/Best order works with up to 8 stops; this route has 9/);
+  it(`is exact up to ${MAX_ORDER_STOPS} stops and a heuristic above`, () => {
+    expect(isExactOrder(MAX_ORDER_STOPS)).toBe(true);
+    expect(isExactOrder(MAX_ORDER_STOPS + 1)).toBe(false);
+  });
+
+  it(`above ${MAX_ORDER_STOPS} stops: reorders with the heuristic, keeps the habitat first and never needs more O₂`, () => {
+    // 12 stops on a grid, given in a scrambled order.
+    const cells = [5, 11, 2, 8, 0, 9, 3, 6, 10, 1, 7, 4].map((k) => pt(g, 6 + (k % 4) * 9, 6 + Math.floor(k / 4) * 12));
+    const pts = [H, ...cells];
+    const best = routeBestOrder(g, pts);
+    const order = best.properties.stop_order!;
+    expect(order).toHaveLength(13);
+    expect(order[0]).toBe(0);
+    expect([...order].sort((a, b) => a - b)).toEqual(pts.map((_, i) => i));
+    const reordered = order.map((i) => pts[i]!);
+    expect(needed(g, reordered)).toBeLessThan(needed(g, pts));
+  });
+
+  it('heuristicLoopOrder matches the exact order on small matrices (random asymmetric samples)', () => {
+    let seed = 11;
+    const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const loopCost = (m: number[][], seq: number[]) => seq.slice(1).reduce((s, j, q) => s + m[seq[q]!]![j]!, 0);
+    let matches = 0;
+    for (let n = 0; n < 30; n++) {
+      const k = 7;
+      const m = Array.from({ length: k }, (_, i) => Array.from({ length: k }, (_, j) => (i === j ? 0 : 1 + rand() * 9)));
+      const exact = loopCost(m, bestLoopOrder(m));
+      const heur = loopCost(m, heuristicLoopOrder(m));
+      expect(heur).toBeGreaterThanOrEqual(exact - 1e-9); // never better than the true best
+      if (heur <= exact + 1e-9) matches++;
+    }
+    expect(matches).toBeGreaterThanOrEqual(15); // usually finds it, but not always: not guaranteed
   });
 
   it('bestLoopOrder finds the cheapest loop on an asymmetric matrix', () => {
