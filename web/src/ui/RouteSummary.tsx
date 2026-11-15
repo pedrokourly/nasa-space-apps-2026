@@ -1,4 +1,4 @@
-import { useMemo, useSyncExternalStore } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useAppStore } from '../state/store';
 import { useSimulationStore } from '../state/simulationStore';
 import { profilePointAt } from '../routing/profilePoint';
@@ -6,25 +6,14 @@ import { availablePlans, buildSimPath, SIM_PLAN_LABELS, type SimPlan } from '../
 import type { ReturnPath, Route } from '../types/contract';
 import { ASSUMPTIONS_URL, COMPUTED_LABEL, ESTIMATE_LABEL, PNR_EXPLANATION, assumptionsLine } from '../routing/estimateText';
 import { O2_LEFT_TITLE } from './reserveNote';
-import { Badge } from './kit';
+import { Badge, Button } from './kit';
+import { ChevronDownIcon } from './icons';
+import { NARROW_QUERY, PHONE_QUERY, useLayoutVar, useMediaQuery } from './layoutVars';
 import './RouteSummary.css';
 
 type Verdict = 'GO' | 'NO-GO';
 
-/** Screens up to 768 px: the estimate notes start collapsed behind "Assumptions" (UI review, decision 4). */
-const NARROW_QUERY = '(max-width: 768px)';
 
-function useNarrowScreen(): boolean {
-  return useSyncExternalStore(
-    (onChange) => {
-      const mq = window.matchMedia(NARROW_QUERY);
-      mq.addEventListener('change', onChange);
-      return () => mq.removeEventListener('change', onChange);
-    },
-    () => window.matchMedia(NARROW_QUERY).matches,
-    () => false,
-  );
-}
 
 /** Map label of the stop at route vertex `vertex`: 'A' for the start, then 1, 2… as the waypoint markers. */
 function stopLabel(route: Route, vertex: number): string {
@@ -141,7 +130,14 @@ export default function RouteSummary() {
   const error = useAppStore((s) => s.routeError);
   const o2Available = useAppStore((s) => s.evaParams.o2_available_kg);
   const simulationStatus = useSimulationStore((s) => s.status);
-  const narrow = useNarrowScreen();
+  // Screens up to 768 px: the card is collapsible (closed by default on phones) and the estimate notes
+  // start collapsed behind "Assumptions" (UI review, decision 4).
+  const narrow = useMediaQuery(NARROW_QUERY);
+  const phone = useMediaQuery(PHONE_QUERY);
+  const [open, setOpen] = useState<boolean | null>(null);
+  // Published as --route-card-*: on phones the popovers (layer source, Region information) open above it.
+  const cardRef = useRef<HTMLDivElement>(null);
+  useLayoutVar(cardRef, 'route-card', [open, route, status, narrow]);
   const liveClass = simulationStatus === 'idle' ? '' : ' route-summary--live';
 
   if (status === 'computing') {
@@ -191,8 +187,24 @@ export default function RouteSummary() {
   if (startUnreachable) warnings.push('The start is too far from the habitat for the available O₂ (estimate)');
   if (nogo && !startUnreachable && !p.return_path) warnings.push('Habitat: turn back at the start');
 
+  // Desktop: always open. Narrow screens: collapsible, closed by default on phones.
+  const expanded = !narrow || (open ?? !phone);
+  const verdicts = rows.filter((r) => r.verdict);
+
   return (
-    <div className={`route-summary route-summary--info route-summary--card${liveClass}`} role="status" aria-live="polite">
+    <div ref={cardRef} className={`route-summary route-summary--info route-summary--card${liveClass}${expanded ? '' : ' route-summary--collapsed'}`} role="status" aria-live="polite">
+      {narrow && (
+        <Button variant="ghost" className="route-summary__toggle" aria-expanded={expanded} onClick={() => setOpen(!expanded)}>
+          <span className="route-summary__toggle-title">Route plans</span>
+          {verdicts.map((r) => (
+            <span key={r.plan} className="route-summary__toggle-verdict">
+              {r.plan === 'start' ? 'Start' : 'Habitat'} <VerdictPill verdict={r.verdict} />
+            </span>
+          ))}
+          <span className="route-summary__toggle-chevron"><ChevronDownIcon /></span>
+        </Button>
+      )}
+      {expanded && <>
       <PlansTable route={route} rows={rows} o2Available={o2Available} />
       {p.mock && <p className="route-summary__warning">Mock route</p>}
       {warnings.map((w) => (
@@ -212,6 +224,7 @@ export default function RouteSummary() {
           </a>
         </p>
       </details>
+      </>}
     </div>
   );
 }

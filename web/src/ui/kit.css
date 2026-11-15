@@ -514,3 +514,145 @@
 @media (min-width: 601px) and (max-width: 900px) {
   .app .fixed-layers-badge { top: 124px; }
 }
+
+/* =====================================================================
+ * Phones and tablets: positions from the measured header and EVA bar
+ * (--header-h, --eva-bar-top; see layoutVars.ts) and collapsible parts.
+ * ===================================================================== */
+
+/* The route card takes clicks (its toggle, links), so a tap on it never adds a waypoint. */
+.app .route-summary--card { pointer-events: auto; }
+
+/* Collapsible route card (up to 768 px): header with the verdicts, the table on demand. */
+.app .route-summary__toggle {
+  width: 100%;
+  height: auto;
+  min-height: 36px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 6px 12px;
+  padding: 4px 2px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  white-space: normal;
+}
+.app .route-summary__toggle-title { color: var(--foreground); font-weight: 700; }
+.app .route-summary__toggle-verdict { display: inline-flex; align-items: center; gap: 6px; color: var(--muted-foreground); font-size: var(--text-xs); font-weight: 500; }
+.app .route-summary__toggle-chevron { display: inline-flex; margin-left: auto; color: var(--muted-foreground); transition: transform 150ms ease; }
+.app .route-summary__toggle[aria-expanded='true'] .route-summary__toggle-chevron { transform: rotate(180deg); }
+.app .route-summary--card.route-summary--collapsed { gap: 0; padding: 6px 10px; }
+
+/* Collapsible EVA metrics on phones: "All metrics" / "Fewer metrics". */
+.app .route-metrics__toggle { grid-column: 1 / -1; justify-self: center; height: 28px; padding: 0 10px; color: var(--muted-foreground); font-size: var(--text-xs); }
+.app .route-metrics__toggle[aria-expanded='true'] svg { transform: rotate(180deg); }
+
+/* While the EVA runs, Recenter (and the phone tool bar) sit right above the metrics bar. */
+.app.app--eva .map-recenter { bottom: calc(var(--eva-bar-top, 240px) + 12px); }
+
+@media (max-width: 900px) {
+  .app .fixed-layers-badge,
+  .app .map-view__telemetry { top: calc(var(--header-h, 108px) + 16px); }
+}
+@media (min-width: 601px) and (max-width: 900px) {
+  .app .waypoints-panel { top: calc(var(--header-h, 108px) + 16px); }
+  .app .map-toolbar { top: calc(var(--header-h, 108px) + 56px); }
+  .app .tool-panel.ui-card,
+  .app .map-layer-legends.ui-card { top: calc(var(--header-h, 108px) + 63px); }
+}
+@media (max-width: 600px) {
+  .app .waypoints-panel { top: calc(var(--header-h, 108px) + 50px); }
+  .app .map-active-legends { top: calc(var(--header-h, 108px) + 100px); }
+  /* Touch screens: pinch to zoom, and no hover readout (the scale stays). */
+  .app .leaflet-control-zoom { display: none; }
+  .app .map-view__coords { display: none; }
+  /* Region information: a sheet between the top actions and the tool bar. */
+  .app .tool-panel.ui-card { top: calc(var(--header-h, 108px) + 100px); right: 10px; bottom: 287px; left: 10px; width: auto; max-height: none; z-index: 1200; }
+  .app.app--eva .map-toolbar { bottom: calc(var(--eva-bar-top, 240px) + 66px); }
+}
+
+/* Small screens: the route card hides while the EVA runs (the metrics bar takes over). */
+@media (max-width: 900px) {
+  .app.app--eva .route-summary--card { display: none; }
+}
+/* Phones: the popovers open above the route card (or above the tool bar when there is no card),
+   and keep at least 140 px of height. */
+@media (max-width: 600px) {
+  .app .map-layer-legends.ui-card,
+  .app .tool-panel.ui-card {
+    bottom: min(calc(max(287px, var(--route-card-top, 0px)) + 8px), calc(100dvh - var(--header-h, 108px) - 240px));
+  }
+  .app .map-layer-legends.ui-card { top: auto; max-height: calc(100dvh - var(--header-h, 108px) - 108px - max(287px, var(--route-card-top, 0px))); }
+}
+
+/* Phones in landscape (wide but at most 500 px tall): one row of space top and bottom. */
+@media (min-width: 601px) and (max-height: 500px) {
+  .app .leaflet-control-zoom { display: none; }
+  .app .map-toolbar { top: calc(var(--header-h, 64px) + 48px); }
+  .app .waypoints-panel { top: calc(var(--header-h, 64px) + 16px); }
+  /* Route card: bottom left, between the tool bar and the dock (collapsed by default). */
+  .app .route-summary.route-summary--card:not(.route-summary--alert) {
+    top: auto;
+    right: 300px;
+    bottom: 16px;
+    left: 92px;
+    width: auto;
+    max-width: none;
+    max-height: calc(100dvh - var(--header-h, 64px) - 40px);
+    overflow-y: auto;
+  }
+  .app .map-active-legends { max-height: calc(100dvh - var(--header-h, 64px) - 256px); overflow-y: auto; }
+  .app .tool-panel.ui-card,
+  .app .map-layer-legends.ui-card { top: calc(var(--header-h, 64px) + 48px); max-height: calc(100dvh - var(--header-h, 64px) - 64px); }
+  /* During the EVA the metrics bar takes the bottom; the layer tool bar steps aside. */
+  .app.app--eva .map-toolbar { display: none; }
+}
+@media (min-width: 601px) and (max-height: 500px) {
+  /* EVA bar: metrics on the left, the EVA controls in a column on the right, so it stays short. */
+  .app .route-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(230px, 1.3fr); align-items: center; row-gap: 4px; padding: 8px 10px; }
+  .app .route-metrics__eva { grid-column: 4; grid-row: 1 / span 3; align-self: stretch; padding: 0 0 0 10px; border-top: 0; border-left: 1px solid var(--border); }
+  .app .route-metrics__toggle { grid-column: 1 / 4; }
+  .app .route-metrics .eva-controls__estimate { display: none; }
+  /* Popovers: below the steps panel, and above the collapsed route card. */
+  .app .tool-panel.ui-card,
+  .app .map-layer-legends.ui-card { top: calc(var(--header-h, 64px) + 64px); max-height: calc(100dvh - var(--header-h, 64px) - 64px - 84px); }
+}
+
+/* Leaflet zoom (+ / −): right edge, under the map readout, never under the header (UI review U1). */
+.app .leaflet-top.leaflet-left { top: 148px; right: 18px; left: auto; }
+.app .leaflet-top.leaflet-left .leaflet-control { margin: 0; }
+@media (max-width: 900px) {
+  .app .leaflet-top.leaflet-left { top: calc(var(--header-h, 108px) + 72px); right: 16px; }
+}
+
+/* Tablets: the Region information and layer panels stop above the route card. */
+@media (min-width: 601px) and (max-width: 900px) and (min-height: 501px) {
+  .app .tool-panel.ui-card,
+  .app .map-layer-legends.ui-card { max-height: calc(100dvh - var(--header-h, 108px) - 79px - var(--route-card-top, 240px)); }
+}
+
+/* Desktop too: Region information and the layer panel stop above the route card; the card hides
+   while the EVA runs (the metrics bar takes over), not only through its fade-out animation. */
+@media (min-width: 901px) {
+  .app .tool-panel.ui-card,
+  .app .map-layer-legends.ui-card { max-height: calc(100dvh - 145px - var(--route-card-top, 240px)); }
+}
+.app.app--eva .route-summary--card { display: none; }
+
+/* Conditions on phones and small tablets: one column of cards that never exceed the screen
+   (UI review U3). The recent sols table scrolls inside its own card. */
+@media (max-width: 768px) {
+  .app .mars-data-grid { grid-template-columns: minmax(0, 1fr); }
+  .app .mars-data-card { min-width: 0; }
+  .app .mars-data-targets,
+  .app .mars-data-missions { grid-template-columns: minmax(0, 1fr); }
+  .app .mars-data-card__header { flex-wrap: wrap; }
+}
+@media (max-width: 600px) {
+  .app .mars-data-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .app .mars-data-target { flex-direction: column; gap: 6px; }
+}
+/* Long product identifiers (e.g. JEZ_hirise_soc_006_orthoMosaic_…) break instead of widening the card. */
+.app .mars-data-missions p,
+.app .mars-data-missions span,
+.app .mars-data-card footer,
+.app .mars-data-target p { overflow-wrap: anywhere; }

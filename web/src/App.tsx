@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import L from 'leaflet'
 import { findHabitat, loadData, type AppData, type DataSources } from './lib/loadData'
 import MapView from './map/MapView'
@@ -30,7 +30,8 @@ import { LAYERS } from './map/layers'
 import type { LayerId, Conditions } from './types/contract'
 import MarsDataScreen from './ui/MarsDataScreen'
 import { Button } from './ui/kit'
-import { CloseIcon, InfoIcon, LayersIcon, LocateIcon, MaximizeIcon, NavigationIcon, RouteIcon, SlopeIcon, ThermometerIcon } from './ui/icons'
+import { ChevronDownIcon, CloseIcon, InfoIcon, LayersIcon, LocateIcon, MaximizeIcon, NavigationIcon, RouteIcon, SlopeIcon, ThermometerIcon } from './ui/icons'
+import { PHONE_QUERY, useLayoutVar, useMediaQuery } from './ui/layoutVars'
 import './ui/PlannerShell.css'
 import './ui/kit.css'
 
@@ -59,6 +60,8 @@ export default function App() {
   const [sourcePanelTop, setSourcePanelTop] = useState<number | null>(null)
   /** 3D view: the camera follows the astronaut during the EVA (toggled by "Follow astronaut"). */
   const [follow3d, setFollow3d] = useState(true)
+  const headerRef = useRef<HTMLElement>(null)
+  useLayoutVar(headerRef, 'header')
   const [mapInstance, setMapInstance] = useState<L.Map | null>(null)
   const [recenterIndicator, setRecenterIndicator] = useState({ centered: false, rotation: 0 })
   const route = useAppStore((state) => state.route)
@@ -183,8 +186,8 @@ export default function App() {
   const panelTool = activeTool
 
   return (
-    <div className="app">
-      <header className="app-header">
+    <div className={`app${simulationStatus !== 'idle' ? ' app--eva' : ''}`}>
+      <header className="app-header" ref={headerRef}>
         <a className="app-brand" href="#map-area" aria-label="Mars Route Planner home">
           <span className="app-brand__mark" aria-hidden="true"><svg className="mars-icon" viewBox="0 0 32 32"><defs><linearGradient id="marsSurface" x1="3" y1="5" x2="29" y2="28" gradientUnits="userSpaceOnUse"><stop stopColor="#ffb13b"/><stop offset=".52" stopColor="#ff641d"/><stop offset="1" stopColor="#c92b25"/></linearGradient><clipPath id="marsSurfaceClip"><circle cx="16" cy="16" r="14"/></clipPath></defs><circle className="mars-icon__planet" cx="16" cy="16" r="14"/><g clipPath="url(#marsSurfaceClip)" fill="#9f2028" opacity=".86"><path d="M-2 7c5-2 9-2 13 0 3 2 7 2 11 0 4-2 8-2 12 0v4c-5 2-9 2-13 0-3-2-7-2-11 0-4 2-8 2-12 0V7Z"/><path d="M-1 15c5-2 9-2 13 0 3 2 7 2 11 0 4-2 8-2 11 0v4c-5 2-9 2-13 0-3-2-7-2-11 0-4 2-8 2-12 0v-4Z"/><path d="M-1 23c5-2 9-2 13 0 3 2 7 2 11 0 4-2 8-2 11 0v4c-5 2-9 2-13 0-3-2-7-2-11 0-4 2-8 2-12 0v-4Z"/></g><circle cx="10" cy="11" r="1.25" fill="#ffd17a"/><circle cx="21" cy="21" r="1.6" fill="#ffd17a"/><circle cx="23" cy="11" r=".8" fill="#ffd17a"/></svg></span>
           <span><strong>Mars Route Planner</strong><small>Jezero crater · EVA planner</small></span>
@@ -304,7 +307,28 @@ function RouteMetricsBar({ values, waypointCount }: { values: { distance: string
     { icon: '△', label: 'Elevation gain', value: values ? `+${Math.round(values.elevation)} m` : '—', best: false },
   ]
   if (!live) return <div className="eva-dock eva-dock--idle"><SimulationControl /></div>
-  return <footer className="route-metrics route-metrics--live" aria-label="EVA simulation metrics">{metrics.map((metric) => <div className={`route-metric${metric.best ? ' route-metric--best' : ''}`} key={metric.label}><span className="route-metric__icon" aria-hidden="true">{metric.icon}</span><span><small>{metric.label}</small><strong>{metric.value}</strong>{'note' in metric && metric.note && <small className="route-metric__note">{metric.note}</small>}</span></div>)}<div className="route-metrics__eva"><SimulationControl /></div></footer>
+  return <LiveMetrics metrics={metrics} />
+}
+
+type Metric = { icon: string; label: string; value: string; note?: string; best: boolean }
+
+/**
+ * EVA metrics bar while the simulation runs. On phones it is collapsible: collapsed it keeps the
+ * O₂ remaining and the elapsed time (plus the EVA controls); "All metrics" shows the rest.
+ * Its height is published as --eva-bar-* so Recenter and the tool bar stay above it.
+ */
+function LiveMetrics({ metrics }: { metrics: Metric[] }) {
+  const ref = useRef<HTMLElement>(null)
+  const phone = useMediaQuery(PHONE_QUERY)
+  const [expanded, setExpanded] = useState(false)
+  useLayoutVar(ref, 'eva-bar', [expanded, phone])
+  const compact = phone && !expanded
+  const shown = compact ? metrics.filter((m) => m.label === 'O₂ remaining' || m.label === 'Elapsed time') : metrics
+  return <footer ref={ref} className={`route-metrics route-metrics--live${compact ? ' route-metrics--compact' : ''}`} aria-label="EVA simulation metrics">
+    {shown.map((metric) => <div className={`route-metric${metric.best ? ' route-metric--best' : ''}`} key={metric.label}><span className="route-metric__icon" aria-hidden="true">{metric.icon}</span><span><small>{metric.label}</small><strong>{metric.value}</strong>{metric.note && <small className="route-metric__note">{metric.note}</small>}</span></div>)}
+    {phone && <Button variant="ghost" size="sm" className="route-metrics__toggle" aria-expanded={expanded} onClick={() => setExpanded((value) => !value)}>{expanded ? 'Fewer metrics' : 'All metrics'}<ChevronDownIcon /></Button>}
+    <div className="route-metrics__eva"><SimulationControl /></div>
+  </footer>
 }
 
 function FixedLayersBadge() {
