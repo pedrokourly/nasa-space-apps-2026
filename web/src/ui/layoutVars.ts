@@ -16,17 +16,25 @@ export function useLayoutVar(ref: RefObject<HTMLElement | null>, name: string, d
     if (!el) return;
     const root = document.documentElement.style;
     const write = () => {
-      const r = el.getBoundingClientRect();
-      root.setProperty(`--${name}-h`, `${Math.round(r.height)}px`);
-      root.setProperty(`--${name}-top`, `${Math.round(window.innerHeight - r.top)}px`);
+      // Layout values, not getBoundingClientRect: an entry animation (translateY) must not shift
+      // the measurement. For a bottom-anchored box, top-from-bottom = its CSS bottom + its height.
+      const h = el.offsetHeight;
+      const cs = getComputedStyle(el);
+      const bottom = parseFloat(cs.bottom);
+      const anchoredBottom = (cs.position === 'absolute' || cs.position === 'fixed') && cs.bottom !== 'auto' && Number.isFinite(bottom);
+      const top = anchoredBottom ? bottom + h : window.innerHeight - el.getBoundingClientRect().top;
+      root.setProperty(`--${name}-h`, `${Math.round(h)}px`);
+      root.setProperty(`--${name}-top`, `${Math.round(top)}px`);
     };
     write();
     const ro = new ResizeObserver(write);
     ro.observe(el);
     window.addEventListener('resize', write);
+    el.addEventListener('animationend', write);
     return () => {
       ro.disconnect();
       window.removeEventListener('resize', write);
+      el.removeEventListener('animationend', write);
       root.removeProperty(`--${name}-h`);
       root.removeProperty(`--${name}-top`);
     };

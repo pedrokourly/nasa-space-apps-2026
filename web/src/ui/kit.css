@@ -656,3 +656,99 @@
 .app .mars-data-missions span,
 .app .mars-data-card footer,
 .app .mars-data-target p { overflow-wrap: anywhere; }
+
+/* =====================================================================
+ * Final polish: floating top actions, smoother EVA transitions, layer
+ * panel minimum height, target card anchored to its marker.
+ * ===================================================================== */
+
+/* Top center: only the floating buttons, no box behind them. */
+.app .waypoints-panel,
+.app .waypoints-panel__bar {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.app .waypoints-panel::before,
+.app .waypoints-panel::after { display: none; }
+.app .waypoints-panel__actions .ui-btn { box-shadow: var(--shadow); }
+.app .waypoints-panel__actions .sim-control__order-note {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+/* Layer and Region information panels never collapse to zero height. */
+.app .map-layer-legends.ui-card,
+.app .tool-panel.ui-card { min-height: 120px; }
+
+/* Smoother EVA start / stop, the same in 2D and 3D. */
+.app .route-metrics--live { animation: eva-bar-in 320ms cubic-bezier(.16, 1, .3, 1) both; }
+.app .eva-dock--idle { animation: eva-dock-in 240ms cubic-bezier(.16, 1, .3, 1) both; }
+@keyframes eva-bar-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes eva-dock-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.app .map-recenter { transition: bottom 320ms cubic-bezier(.16, 1, .3, 1), background-color 150ms ease, color 150ms ease; }
+.app .route-summary--card { transition: opacity 200ms ease, transform 200ms ease, visibility 0s linear 0s; }
+.app.app--eva .route-summary--card {
+  display: flex;
+  opacity: 0;
+  transform: translateY(8px);
+  visibility: hidden;
+  pointer-events: none;
+  animation: none;
+  transition: opacity 180ms ease, transform 180ms ease, visibility 0s linear 180ms;
+}
+@media (max-width: 900px) {
+  .app.app--eva .route-summary--card { display: flex; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app .route-metrics--live,
+  .app .eva-dock--idle { animation: none; }
+  .app .map-recenter,
+  .app .route-summary--card,
+  .app.app--eva .route-summary--card { transition: none; }
+}
+
+/* Target details: a popover anchored above its marker (position set inline from the map). */
+.app .target-card.target-card--anchored {
+  top: var(--target-y);
+  right: auto;
+  bottom: auto;
+  left: var(--target-x);
+  z-index: 1150;
+  width: min(300px, calc(100vw - 24px));
+  max-height: min(50vh, 360px);
+  overflow-y: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px);
+  color: var(--foreground);
+  font-size: var(--text-sm);
+  transform: translate(-50%, calc(-100% - 20px));
+  animation: target-card-in 180ms ease-out both;
+}
+.app .target-card.target-card--below { transform: translate(-50%, 20px); }
+@keyframes target-card-in { from { opacity: 0; } to { opacity: 1; } }
+.app .target-card__title { margin: 0 32px 6px 0; color: var(--accent-foreground); font-size: var(--text-lg); font-weight: 600; }
+.app .target-card__why { margin: 0 0 10px; color: var(--foreground); font-size: var(--text-sm); line-height: var(--leading-normal); }
+.app .target-card__prov { margin-bottom: 10px; padding: 8px 10px; border-left: 3px solid var(--accent-foreground); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; background: var(--muted); color: var(--muted-foreground); font-size: var(--text-xs); }
+.app .target-card__prov-label { font-size: var(--text-xs); }
+.app .target-card__prov strong { color: var(--foreground); font-size: var(--text-sm); }
+.app .target-card__prov a { color: #9bc9ff; }
+.app .target-card__close { top: 8px; right: 8px; width: 32px; height: 32px; color: var(--muted-foreground); font-size: inherit; }
+.app .target-card__close svg { width: var(--icon-sm); height: var(--icon-sm); stroke-width: 2; }
+.app .target-card__add { width: 100%; }
+@media (prefers-reduced-motion: reduce) { .app .target-card.target-card--anchored { animation: none; } }

@@ -55,6 +55,8 @@ export default function MapView({ children, onReady }: MapViewProps) {
       maxZoom: MAX_ZOOM,
       maxBounds: JEZERO_BOUNDS,
       maxBoundsViscosity: 1,
+      // No + / − buttons: scroll, pinch and double-click zoom remain.
+      zoomControl: false,
     });
 
     // With MarsCRS, the scale uses R = 3389.5 km.
