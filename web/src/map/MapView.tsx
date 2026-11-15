@@ -34,6 +34,7 @@ interface MapViewProps {
 
 export default function MapView({ children, onReady }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const telemetryRef = useRef<HTMLDivElement>(null);
   const onReadyRef = useRef(onReady);
   const [map, setMap] = useState<L.Map | null>(null);
   const [cursor, setCursor] = useState<L.LatLng | null>(null);
@@ -57,7 +58,9 @@ export default function MapView({ children, onReady }: MapViewProps) {
     });
 
     // With MarsCRS, the scale uses R = 3389.5 km.
-    L.control.scale({ metric: true, imperial: false }).addTo(instance);
+    const scale = L.control.scale({ metric: true, imperial: false }).addTo(instance);
+    const scaleElement = scale.getContainer();
+    if (telemetryRef.current && scaleElement) telemetryRef.current.appendChild(scaleElement);
 
     instance.on('mousemove', (e: L.LeafletMouseEvent) => setCursor(e.latlng));
     instance.on('mouseout', () => setCursor(null));
@@ -74,8 +77,10 @@ export default function MapView({ children, onReady }: MapViewProps) {
   return (
     <div className="map-view">
       <div ref={containerRef} className="map-view__canvas" />
+      <div className="map-view__telemetry" ref={telemetryRef}>
       <div className="map-view__coords" aria-live="off">
         {cursor ? formatLatLon(cursor.lat, cursor.lng) : 'Hover over the map'}
+      </div>
       </div>
       <MapContext.Provider value={map}>{children}</MapContext.Provider>
     </div>

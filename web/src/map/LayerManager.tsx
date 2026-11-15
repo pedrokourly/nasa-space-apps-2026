@@ -3,13 +3,12 @@ import L from 'leaflet';
 import { useMap } from './MapContext';
 import { useAppStore } from '../state/store';
 import { TRANSPARENT_TILE_URL } from './loadingState';
-import { BACKDROP_ID, LAYERS, getLayer, isGlobal, isTileLayer, type TileLayerDef } from './layers';
+import { LAYERS, isTileLayer, type TileLayerDef } from './layers';
 
 /** HiRISE Jezero goes up to native z17; above that the map does not allow zooming. */
 const MAX_ZOOM = 17;
 
 /** Stacking order inside the tile pane: backdrop < base < overlays. */
-const Z_BACKDROP = 1;
 const Z_BASE = 2;
 const Z_DETAIL = 3;
 const Z_OVERLAY = 4;
@@ -32,8 +31,7 @@ function createTileLayer(def: TileLayerDef,zIndex: number, opacity: number): L.T
 
 /**
  * Syncs `activeLayers` and `layerOpacity` from the store with the map's tile layers.
- * One base at a time, plus the enabled overlays. If the chosen base is local
- * (RGBA PNG, transparent outside its coverage), the global backdrop stays underneath.
+ * One base at a time, plus the enabled overlays.
  */
 export default function LayerManager() {
   const map = useMap();
@@ -46,13 +44,8 @@ export default function LayerManager() {
     const current = live.current;
 
     const base = LAYERS.find((l) => l.type === 'base' && activeLayers.includes(l.id));
-    // `opacity` set only for the backdrop, which is always drawn fully opaque.
     const wanted = new Map<string, { def: TileLayerDef; z: number; opacity?: number }>();
     if (base && isTileLayer(base)) {
-      if (!isGlobal(base)) {
-        const backdrop = getLayer(BACKDROP_ID);
-        if (backdrop && isTileLayer(backdrop)) wanted.set(backdrop.id, { def: backdrop, z: Z_BACKDROP, opacity: 1 });
-      }
       wanted.set(base.id, { def: base, z: Z_BASE });
     }
     // An overlay that is also the backdrop takes over the same tile layer (overlay z and opacity).
