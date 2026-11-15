@@ -15,7 +15,7 @@ import { BLOCKED, cellFactor, DEFAULT_PROFILE, type CostProfile } from './cost';
 import { BlockedPointError, NoPathError, OutOfGridError } from './errors';
 import { cellIndex, cellToLonLat, lonLatToCell, type Cell, type Grid } from './grid';
 import { returnCostField } from './returnField';
-import { DEFAULT_O2_AVAILABLE_KG, DEFAULT_WALK, segmentCost, type WalkProfile } from './walk';
+import { DEFAULT_O2_AVAILABLE_KG, DEFAULT_WALK, segmentCost, type EvaParams, type WalkProfile } from './walk';
 
 export interface RouteOptions {
   cost?: CostProfile;
@@ -149,7 +149,19 @@ export function route(grid: Grid, points: LonLat[], options: RouteOptions = {}):
   };
 }
 
-/** Binds the grid and options: returns the `(points) => Route` function the Worker expects (`RouteFn`). */
-export function createRouter(grid: Grid, options: RouteOptions = {}): (points: LonLat[]) => Route {
-  return (points) => route(grid, points, options);
+/**
+ * Binds the grid and options: returns the `(points, params?) => Route` function the Worker expects
+ * (`RouteFn`). Optional EVA `params` are merged onto the bound walk profile and O₂ supply.
+ */
+export function createRouter(
+  grid: Grid,
+  options: RouteOptions = {},
+): (points: LonLat[], params?: Partial<EvaParams>) => Route {
+  return (points, params) => {
+    if (!params) return route(grid, points, options);
+    const walk: WalkProfile = { ...(options.walk ?? DEFAULT_WALK) };
+    if (params.speedFlatMS !== undefined) walk.speedFlatMS = params.speedFlatMS;
+    if (params.loadMassKg !== undefined) walk.loadMassKg = params.loadMassKg;
+    return route(grid, points, { ...options, walk, o2_available_kg: params.o2_available_kg ?? options.o2_available_kg });
+  };
 }

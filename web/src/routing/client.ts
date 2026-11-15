@@ -1,12 +1,13 @@
 import type { LonLat } from '../lib/mars-geo';
 import type { Route } from '../types/contract';
+import type { EvaParams } from './core/walk';
 import { StaleRouteError, type RouteRequest, type RouteResponse } from './api';
 import { errorFromResponse } from './respond';
 import { RequestTracker } from './requestTracker';
 
 export interface RouteClient {
   /** Requests the route; rejects with `StaleRouteError` if a newer request was made, `NoPathError`, `OutOfGridError` or `Error`. */
-  route(points: LonLat[]): Promise<Route>;
+  route(points: LonLat[], params?: EvaParams): Promise<Route>;
   /** Invalidates the request in flight (its response, if it arrives, is discarded). */
   cancel(): void;
   /** Terminates the Worker and rejects pending requests. */
@@ -41,13 +42,13 @@ export function createRouteClient(): RouteClient {
   worker.onerror = (e) => rejectAll(() => new Error(e.message || 'Route Worker error'));
 
   return {
-    route(points) {
+    route(points, params) {
       const id = tracker.next();
       // Earlier requests still without a response become stale now.
       rejectAll(() => new StaleRouteError());
       return new Promise<Route>((resolve, reject) => {
         pending.set(id, { resolve, reject });
-        const req: RouteRequest = { id, points };
+        const req: RouteRequest = { id, points, params };
         worker.postMessage(req);
       });
     },

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { LonLat } from '../lib/mars-geo';
 import type { LayerId, Route, RouteStatus } from '../types/contract';
+import { clampEvaParams, DEFAULT_EVA_PARAMS, type EvaParams } from '../routing/core/walk';
 import { DEFAULT_ACTIVE_LAYERS, LAYERS } from '../map/layers';
 
 export interface AppState {
@@ -17,6 +18,11 @@ export interface AppState {
 
   /** Dims the map outside the EVA planning area (the `meta.json` bbox). */
   focusPlanningArea: boolean;
+
+  /** EVA parameters (ASSUMPTIONS, see `routing/core/walk.ts`); changing them recomputes the route. */
+  evaParams: EvaParams;
+  /** Merges `partial` into `evaParams`, clamped to `EVA_PARAM_RANGES`; non-finite values are ignored. */
+  setEvaParams: (partial: Partial<EvaParams>) => void;
 
   setWaypoints: (pts: LonLat[]) => void;
   addWaypoint: (p: LonLat) => void;
@@ -46,6 +52,9 @@ export const useAppStore = create<AppState>()((set) => ({
     LAYERS.flatMap((l) => (l.defaultOpacity === undefined ? [] : [[l.id, l.defaultOpacity] as const])),
   ),
   focusPlanningArea: true,
+
+  evaParams: { ...DEFAULT_EVA_PARAMS },
+  setEvaParams: (partial) => set((s) => ({ evaParams: { ...s.evaParams, ...clampEvaParams(partial) } })),
 
   setWaypoints: (waypoints) => set({ waypoints }),
   addWaypoint: (p) => set((s) => ({ waypoints: [...s.waypoints, p] })),

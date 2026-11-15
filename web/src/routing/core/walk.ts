@@ -101,3 +101,45 @@ export function segmentCost(
   const time_s = distM / speed;
   return { time_s, o2_kg: o2KgForEnergy(metabolicPowerW(speed, grade, walk) * time_s) };
 }
+
+/**
+ * EVA parameters the planner can tune (issue #61). O₂ consumption is not set directly: it follows
+ * from the metabolic model above, so the planner changes it through the carried load (and the pace).
+ * The defaults come from `DEFAULT_WALK` and `DEFAULT_O2_AVAILABLE_KG`; the ranges are ASSUMPTIONS.
+ */
+export interface EvaParams {
+  /** Walking speed on flat terrain (m/s). */
+  speedFlatMS: number;
+  /** Suit + backpack + carried gear (kg), Pandolf's L. A heavier load costs more O₂ per hour. */
+  loadMassKg: number;
+  /** O₂ available at departure (kg). */
+  o2_available_kg: number;
+}
+
+export const DEFAULT_EVA_PARAMS: EvaParams = {
+  speedFlatMS: DEFAULT_WALK.speedFlatMS,
+  loadMassKg: DEFAULT_WALK.loadMassKg,
+  o2_available_kg: DEFAULT_O2_AVAILABLE_KG,
+};
+
+/**
+ * ASSUMPTION: sane ranges for the planner inputs (inclusive). Wide enough to cover the presets,
+ * narrow enough to keep the model away from degenerate values (zero speed, zero O₂ use).
+ */
+export const EVA_PARAM_RANGES: Record<keyof EvaParams, { min: number; max: number }> = {
+  speedFlatMS: { min: 0.2, max: 2 },
+  loadMassKg: { min: 40, max: 150 },
+  o2_available_kg: { min: 0.1, max: 5 },
+};
+
+/** Clamps each provided field to its range; non-finite values are ignored (the field is dropped). */
+export function clampEvaParams(partial: Partial<EvaParams>): Partial<EvaParams> {
+  const out: Partial<EvaParams> = {};
+  for (const key of Object.keys(EVA_PARAM_RANGES) as (keyof EvaParams)[]) {
+    const v = partial[key];
+    if (v === undefined || !Number.isFinite(v)) continue;
+    const { min, max } = EVA_PARAM_RANGES[key];
+    out[key] = Math.min(max, Math.max(min, v));
+  }
+  return out;
+}

@@ -126,7 +126,7 @@ Agentes: considere a data atual. Depois do feature freeze, **recuse** propor ou 
 
 | Prioridade | Item |
 |---|---|
-| Must | Jezero-only 2D map with 4+ layers from 3+ missions and provenance labels: HiRISE, CTX, MOLA, THEMIS and a spectral layer (CRISM). See [`docs/decisions/0001-jezero-only.md`](docs/decisions/0001-jezero-only.md) |
+| Must | Jezero-only 2D map with 4+ layers from 3+ missions and provenance labels: HiRISE, CTX, MOLA and THEMIS (the CRISM spectral layer was dropped on 2026-11-15). See [`docs/decisions/0001-jezero-only.md`](docs/decisions/0001-jezero-only.md) |
 | Must | Rota A* com custo por declividade, distância, tempo e perfil de elevação |
 | Must | Orçamento de O₂ com ponto de não retorno e veredito GO / NO-GO |
 | Must | Painel de condições com o último sol disponível (MEDA) |
@@ -213,7 +213,7 @@ A rota em GeoJSON é o ponto de encontro de todas as frentes: o mesmo arquivo al
 - **Longitude:** dados de Marte aparecem em 0–360° ou −180–180°. **No contrato e no app, só −180 a 180.** Converta na borda (pipeline), nunca no meio do app.
 - **CRS dos tiles:** o Mars Trek usa EPSG:4326 (lat/lon puro), não o Web Mercator padrão do Leaflet. Configure o CRS do mapa e confira a ordem das linhas de tiles — um erro aqui desloca tudo.
 - **Unidades da declividade:** o gradiente precisa usar metros por pixel reais; senão a inclinação sai absurda.
-- **Alinhamento:** toda camada raster (THEMIS, CRISM) é reamostrada para o grid do relevo. Valide sobrepondo ao Mars Trek; 500 m de deslocamento faz a rota desviar de crateras que não existem.
+- **Alinhamento:** toda camada raster (THEMIS) é reamostrada para o grid do relevo. Valide sobrepondo ao Mars Trek; 500 m de deslocamento faz a rota desviar de crateras que não existem.
 - **Nodata:** trate buracos no raster explicitamente (intransponível ou interpolado, nunca zero silencioso).
 - **Cesium Mars:** só modo globo 3D (2D e Columbus View não funcionam); o elipsoide padrão precisa ser trocado pelo de Marte.
 

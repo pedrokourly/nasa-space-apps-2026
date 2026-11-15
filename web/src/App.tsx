@@ -13,10 +13,14 @@ import RouteController from './routing/RouteController'
 import RouteLayer from './map/RouteLayer'
 import RouteMarkers from './map/RouteMarkers'
 import RouteSummary from './ui/RouteSummary'
+import SimulationLayer from './map/SimulationLayer'
+import SimulationControl from './ui/SimulationControl'
 import TileHealth from './map/TileHealth'
+import TileLoading from './map/TileLoading'
 import DataStatus from './ui/DataStatus'
 import ViewToggle, { type ViewMode } from './ui/ViewToggle'
 import { useAppStore } from './state/store'
+import { useRouteHashSync } from './state/useRouteHashSync'
 import { LAYERS } from './map/layers'
 import type { LayerId } from './types/contract'
 import './ui/PlannerShell.css'
@@ -60,6 +64,7 @@ export default function App() {
       ? [(bbox[1] + bbox[3]) / 2, (bbox[0] + bbox[2]) / 2] as L.LatLngTuple
       : JEZERO_OVERVIEW
   }, [data?.meta.bbox])
+  useRouteHashSync()
 
   useEffect(() => {
     loadData(DATA_SOURCES).then(setData, (e: unknown) => setError(e instanceof Error ? e.message : String(e)))
@@ -210,8 +215,11 @@ export default function App() {
             <RouteController />
             <RouteLayer />
             <RouteMarkers />
+            <SimulationLayer />
             <RouteSummary />
+            <SimulationControl />
             <TileHealth />
+            <TileLoading />
             <DataStatus loading={!data && !error} error={error} />
             <PlanningAreaFocus meta={data?.meta ?? null} />
             <WaypointsLayer meta={data?.meta ?? null} />
