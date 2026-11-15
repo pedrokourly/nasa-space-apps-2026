@@ -85,6 +85,8 @@ export function createSimOverlay(scene: MarsScene, drawn: DrawnScene): SimOverla
 
   let walked: Cartesian3[] = []
   let following = false
+  /** Point the follow camera looks at: it eases toward the astronaut instead of snapping each frame. */
+  let camTarget: Cartesian3 | null = null
 
   const walkedLine = ds.entities.add({
     show: false,
@@ -130,6 +132,7 @@ export function createSimOverlay(scene: MarsScene, drawn: DrawnScene): SimOverla
   const release = () => {
     if (following && !viewer.isDestroyed()) viewer.camera.lookAtTransform(Matrix4.IDENTITY)
     following = false
+    camTarget = null
   }
 
   const at = (path: SimPath, i: number | undefined): Cartesian3 | undefined => {
@@ -172,8 +175,11 @@ export function createSimOverlay(scene: MarsScene, drawn: DrawnScene): SimOverla
       returnFlag.show = !!turn
 
       if (follow) {
+        // Ease the look-at point toward the astronaut (about 12% of the gap per frame), so the camera
+        // glides instead of jumping when the clock steps or the follow starts.
+        camTarget = camTarget ? Cartesian3.lerp(camTarget, here, 0.12, new Cartesian3()) : Cartesian3.clone(here)
         viewer.camera.lookAt(
-          here,
+          camTarget,
           new HeadingPitchRange(
             following ? viewer.camera.heading : 0,
             CesiumMath.toRadians(FOLLOW_PITCH_DEG),

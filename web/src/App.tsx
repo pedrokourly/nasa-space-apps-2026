@@ -148,6 +148,26 @@ export default function App() {
     [data, selectedTargetId],
   )
 
+  /**
+   * Layer button: an inactive layer turns on and opens its source panel; an active layer whose panel
+   * is closed (e.g. after ×) only reopens the panel; an active layer whose panel is open turns off.
+   * (Before, a press could turn the layer off while asking for its panel, so no panel appeared.)
+   */
+  const chooseSourceLayer = (id: LayerId) => {
+    selectTarget(null)
+    setActiveTool(null)
+    const active = activeLayers.includes(id)
+    if (!active) {
+      toggleLayer(id)
+      setSelectedSourceLayer(id)
+    } else if (selectedSourceLayer !== id) {
+      setSelectedSourceLayer(id)
+    } else {
+      toggleLayer(id)
+      setSelectedSourceLayer(null)
+    }
+  }
+
   const chooseTool = () => {
     setSelectedSourceLayer(null)
     selectTarget(null)
@@ -202,21 +222,19 @@ export default function App() {
       {tab === 'planning' && view === '2d' && <>
         <nav className="map-toolbar" aria-label="Map tools">
           <Button variant="ghost" size="icon" aria-label="Region information" title="Region information" aria-pressed={activeTool === 'info'} onClick={chooseTool}><InfoIcon /></Button>
-          <div className="map-toolbar__sources" role="group" aria-label="Map data sources">{SOURCE_LAYERS.map((layer) => <Button key={layer.id} variant="ghost" size="icon" aria-label={`Toggle ${layer.label} layer`} title={layer.label} aria-pressed={activeLayers.includes(layer.id)} className={selectedSourceLayer === layer.id ? 'is-selected' : undefined} onClick={(event) => { const host = document.getElementById('map-area')?.getBoundingClientRect().top ?? 0; setSourcePanelTop(event.currentTarget.getBoundingClientRect().top - host); toggleLayer(layer.id); selectTarget(null); setSelectedSourceLayer((current) => current === layer.id ? null : layer.id); setActiveTool(null) }}>{layer.icon === 'temperature' ? <ThermometerIcon /> : layer.icon === 'slope' ? <SlopeIcon /> : <LayersIcon />}</Button>)}</div>
+          <div className="map-toolbar__sources" role="group" aria-label="Map data sources">{SOURCE_LAYERS.map((layer) => <Button key={layer.id} variant="ghost" size="icon" aria-label={`Toggle ${layer.label} layer`} title={layer.label} aria-pressed={activeLayers.includes(layer.id)} className={selectedSourceLayer === layer.id ? 'is-selected' : undefined} onClick={(event) => { const host = document.getElementById('map-area')?.getBoundingClientRect().top ?? 0; setSourcePanelTop(event.currentTarget.getBoundingClientRect().top - host); chooseSourceLayer(layer.id) }}>{layer.icon === 'temperature' ? <ThermometerIcon /> : layer.icon === 'slope' ? <SlopeIcon /> : <LayersIcon />}</Button>)}</div>
           <Button variant="ghost" size="icon" aria-label="Full screen" title="Full screen" onClick={() => { if (document.fullscreenElement) void document.exitFullscreen(); else void document.documentElement.requestFullscreen().catch(() => undefined) }}><MaximizeIcon /></Button>
         </nav>
       </>}
 
       <main id="map-area" className="map-area" aria-label="Map area">
         {view === '3d' && tab === 'planning' ? (
-          <Suspense fallback={<div className="three-d-loading">Loading 3D view…</div>}><ThreeDView targets={data?.targets ?? null} follow={follow3d} /><div className="dock-stack">
-            {/* The 3D counterpart of the 2D "Recenter": the camera follows the astronaut during the EVA. */}
+          <Suspense fallback={<div className="three-d-loading">Loading 3D view…</div>}><ThreeDView targets={data?.targets ?? null} follow={follow3d} />{/* The 3D counterpart of the 2D "Recenter" (same slot and look): the camera follows the astronaut during the EVA. */}
             {route && route.geometry.coordinates.length >= 2 && <Button variant="secondary" size="lg" className="map-recenter three-d__follow" aria-pressed={follow3d} title={follow3d ? 'The camera follows the astronaut during the EVA' : 'Free camera: press to follow the astronaut'} onClick={() => setFollow3d((value) => !value)}>
               <span className="map-recenter__icon"><LocateIcon /></span>
               <span className="map-recenter__label">Follow astronaut</span>
             </Button>}
-            <div className="eva-dock eva-dock--idle eva-dock--3d"><SimulationControl /></div>
-          </div></Suspense>
+          </Suspense>
         ) : (
           <MapView onReady={setMapInstance}>
             <LayerManager />
@@ -261,7 +279,8 @@ export default function App() {
       )}
 
       {tab === 'mars-data' && <MarsDataScreen data={data} error={error} conditions={conditions} />}
-      {tab === 'planning' && view === '2d' && <RouteMetricsBar values={routeValues} waypointCount={waypoints.length} />}
+      {/* Same EVA component in 2D and 3D: the dock (Select route + Start EVA), then the metrics bar while the EVA runs. */}
+      {tab === 'planning' && <RouteMetricsBar values={routeValues} waypointCount={waypoints.length} />}
     </div>
   )
 }
