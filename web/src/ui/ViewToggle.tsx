@@ -16,8 +16,9 @@ export default function ViewToggle({ view, onChange }: Props) {
       className="view-toggle"
       onClick={() => onChange(to3d ? '3d' : '2d')}
       aria-label={to3d ? 'Switch to the 3D view' : 'Switch to the 2D map'}
+      title={to3d ? 'Switch to the 3D view' : 'Switch to the 2D map'}
     >
-      {to3d ? '3D view' : '2D map'}
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m12 2 9 5-9 5-9-5 9-5Z"/><path d="M3 7v10l9 5 9-5V7M12 12v10"/></svg>
     </button>
   )
 }

@@ -30,7 +30,6 @@
   font-size: 22px;
   cursor: pointer;
 }
-.map-toolbar button:hover,
 .map-toolbar button.is-active {
   background: #302113;
   color: #ff902e;
@@ -232,7 +231,7 @@
   bottom: 18px;
   left: 18px;
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr)) auto;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   align-items: center;
   gap: 8px;
   min-height: 78px;
@@ -438,7 +437,7 @@
 
 @media (max-width: 900px) {
   .route-metrics {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     row-gap: 5px;
     min-height: 112px;
   }
@@ -695,4 +694,60 @@
   .route-summary.route-summary--alert { top: 112px; }
   .route-metrics { bottom: 27px; }
   .leaflet-control-attribution { bottom: 3px !important; }
+}
+
+/* Compact source controls and persistent map legends. */
+.map-toolbar { width: 94px; }
+.map-toolbar > button { width: 76px; }
+.map-toolbar__sources { display: flex; flex-direction: column; gap: 3px; }
+.map-toolbar__sources button { width: 76px; height: 32px; border: 0; border-radius: 8px; background: transparent; color: #d8dbe0; font-size: 9px; font-weight: 700; letter-spacing: .04em; cursor: pointer; }
+.map-toolbar__sources button.is-active { background: #302113; color: #ff902e; box-shadow: inset 0 0 0 1px rgb(255 138 43 / 50%); }
+.map-toolbar__sources button:focus-visible, .map-toolbar > button:focus-visible { outline: 2px solid #ff8a2b; outline-offset: 2px; }
+.map-toolbar__sources button:hover, .map-toolbar > button:hover:not(.is-active) { background: transparent; color: #d8dbe0; }
+.map-toolbar { width: 64px; }
+.map-toolbar > button { width: 44px; }
+.map-toolbar__sources button { display: grid; width: 44px; height: 44px; padding: 0; place-items: center; font-size: inherit; }
+.map-toolbar__sources button svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.map-layer-legends { position: absolute; z-index: 1150; top: 50%; left: 98px; width: min(350px, calc(100vw - 112px)); max-height: min(50vh, 420px); overflow: auto; border: 1px solid rgb(255 255 255 / 12%); border-radius: 12px; background: rgb(10 12 15 / 94%); box-shadow: 0 10px 28px rgb(0 0 0 / 38%); backdrop-filter: blur(12px); transform: translateY(-50%); }
+.map-layer-legends__heading { position: sticky; top: 0; display: flex; align-items: center; justify-content: space-between; padding: 8px 10px 6px; border-bottom: 1px solid rgb(255 255 255 / 9%); background: rgb(10 12 15 / 97%); color: #ff9a43; font-size: 10px; letter-spacing: .06em; text-transform: uppercase; }
+.map-layer-legends__heading button { width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent; color: #bbc2cb; font-size: 18px; cursor: pointer; }
+.map-layer-legends__heading button:hover { color: white; }
+.map-layer-legends[data-layer-active="false"] .provenance__legend { display: none; }
+.map-layer-legends .provenance__legend { display: none; }
+.map-layer-legends .provenance { padding: 8px 10px; border: 0; font-size: 9px; }
+.map-layer-legends .provenance__item + .provenance__item { margin-top: 7px; padding-top: 6px; border-top: 1px solid rgb(255 255 255 / 9%); }
+.map-layer-legends .provenance__line { font-size: 9px; }
+.map-layer-legends .provenance__legend { margin-top: 3px; }
+.map-layer-legends .provenance__legend-bar { height: 6px; }
+.map-view__telemetry { position: absolute; top: 88px; right: 18px; z-index: 1000; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; padding: 7px 10px; border: 1px solid rgb(255 255 255 / 13%); border-radius: 9px; background: rgb(10 12 15 / 84%); color: #c8cdd3; box-shadow: 0 5px 15px rgb(0 0 0 / 20%); pointer-events: none; }
+.map-view__coords { position: static; padding: 0; border: 0; border-radius: 0; background: transparent; color: inherit; font-size: 11px; }
+.map-view__telemetry .leaflet-control-scale { float: none; width: 100%; margin: 0; color: inherit; font-size: 10px; text-align: right; }
+.map-view__telemetry .leaflet-control-scale-line { display: inline-block; padding: 0 2px 1px; border: 1px solid #89929d; border-top: 0; background: transparent; color: #c8cdd3; box-shadow: none; line-height: 1.1; text-shadow: none; }
+.app-tabs { background: transparent; }
+.map-active-legends { position: absolute; z-index: 1110; bottom: calc(30px + 78px + 14px); left: 28px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; width: min(860px, calc(100vw - 56px)); pointer-events: none; }
+.map-active-legends__item { min-width: 0; padding: 7px 10px; border: 1px solid rgb(255 255 255 / 14%); border-radius: 10px; background: rgb(10 12 15 / 94%); box-shadow: 0 8px 24px rgb(0 0 0 / 34%); }
+.map-active-legends .provenance__legend { margin: 0; }
+.map-active-legends .provenance__legend-title { color: #f2f3f5; font-size: 10px; }
+.map-active-legends .provenance__legend-bar { height: 8px; margin: 5px 0 3px; }
+.map-active-legends .provenance__legend-labels { font-size: 9px; }
+.map-active-legends .provenance__legend-note { display: block; margin-top: 3px; font-size: 9px; }
+.app-brand__mark svg.mars-icon { fill: none; stroke: none; }
+.app-brand__mark svg.mars-icon .mars-icon__planet { fill: url(#marsSurface); stroke: none; }
+.view-toggle { display: grid; width: 46px; height: 40px; margin-left: 5px; padding: 0; place-items: center; border-radius: 10px; }
+.view-toggle svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+@media (max-width: 600px) {
+  .map-toolbar { width: auto; }
+  .map-toolbar > button { width: 40px; }
+  .map-toolbar__sources { flex-direction: row; }
+  .map-toolbar__sources button { width: 40px; height: 40px; padding: 0; }
+  .map-toolbar__sources button svg { width: 21px; height: 21px; }
+  .map-layer-legends { top: auto; right: 8px; bottom: 193px; left: 8px; width: auto; max-height: min(35vh, 300px); transform: none; }
+  .map-layer-legends { left: 78px; width: calc(100vw - 88px); }
+  .map-active-legends { bottom: 144px; left: 8px; gap: 5px; width: calc(100vw - 16px); }
+  .map-active-legends__item { padding: 6px 5px; }
+  .map-active-legends .provenance__legend-title { font-size: 8px; }
+  .map-active-legends .provenance__legend-labels { font-size: 7px; }
+  .map-active-legends .provenance__legend-note { display: none; }
+  .sim-control { bottom: 222px; }
+  .map-view__telemetry { top: 118px; right: 10px; max-width: 52vw; }
 }
