@@ -3,12 +3,13 @@ import L from 'leaflet';
 import { useMap } from './MapContext';
 import { useAppStore } from '../state/store';
 import { TRANSPARENT_TILE_URL } from './loadingState';
-import { LAYERS, isTileLayer, type TileLayerDef } from './layers';
+import { BACKDROP_ID, LAYERS, getLayer, isGlobal, isTileLayer, type TileLayerDef } from './layers';
 
 /** HiRISE Jezero goes up to native z17; above that the map does not allow zooming. */
 const MAX_ZOOM = 17;
 
 /** Stacking order inside the tile pane: backdrop < base < overlays. */
+const Z_BACKDROP = 1;
 const Z_BASE = 2;
 const Z_DETAIL = 3;
 const Z_OVERLAY = 4;
@@ -46,6 +47,12 @@ export default function LayerManager() {
     const base = LAYERS.find((l) => l.type === 'base' && activeLayers.includes(l.id));
     const wanted = new Map<string, { def: TileLayerDef; z: number; opacity?: number }>();
     if (base && isTileLayer(base)) {
+      // The local base (CTX Jezero) is transparent outside its coverage, so a global, opaque
+      // backdrop goes underneath. Its own key keeps it independent of the THEMIS overlay toggle.
+      const backdrop = getLayer(BACKDROP_ID);
+      if (!isGlobal(base) && backdrop && isTileLayer(backdrop)) {
+        wanted.set(`backdrop:${backdrop.id}`, { def: backdrop, z: Z_BACKDROP, opacity: 1 });
+      }
       wanted.set(base.id, { def: base, z: Z_BASE });
     }
     // An overlay that is also the backdrop takes over the same tile layer (overlay z and opacity).
