@@ -4,11 +4,8 @@ import type L from 'leaflet';
 const TREK = 'https://trek.nasa.gov/tiles/Mars/EQ/';
 const TILES = '/1.0.0/default/default028mm/{z}/{y}/{x}.';
 
-/** Optional color legend, gradient or categorical (never with invented values). */
-export type LegendDef = GradientLegend | CategoricalLegend;
-
-/** Gradient bar with labels at both ends. */
-export interface GradientLegend {
+/** Optional color legend (gradient bar with labels, without inventing values). */
+export interface LegendDef {
   title: string;
   /** CSS gradient colors, from the minimum (left) to the maximum (right). */
   gradient: string[];
@@ -18,22 +15,14 @@ export interface GradientLegend {
   note?: string;
 }
 
-/** Color swatches with a label each (e.g. the CRISM mineral classes). */
-export interface CategoricalLegend {
-  title: string;
-  entries: { color: string; label: string }[];
-  note?: string;
-}
-
 export interface LayerDef {
   id: string;
   name: string;
   /**
    * How the layer is drawn: `tiles` (default, Mars Trek WMTS, handled by LayerManager) or a
-   * data-driven overlay with its own component (`slope` = SlopeLayer, `crism` = CrismLayer: a PNG
-   * plus a JSON from the pipeline, whose provenance and legend are read from `crism.json`).
+   * data-driven overlay with its own component (`slope` = SlopeLayer).
    */
-  kind?: 'tiles' | 'slope' | 'crism';
+  kind?: 'tiles' | 'slope';
   /** Tile `{z}/{y}/{x}` template (tile layers only). */
   url?: string;
   /**
@@ -186,27 +175,6 @@ export const LAYERS: LayerDef[] = [
       maxLabel: '≥ 25° (route avoids)',
       note: 'Below 10° is transparent; 25° is the routing limit (assumption)',
     },
-  },
-  {
-    // Georeferenced PNG + JSON from the pipeline (Mars Trek serves CRISM only as footprints, not
-    // tiles; see docs/decisions/0001-jezero-only.md). Product ID, date and legend come from
-    // crism.json at runtime (CrismLayer), so `legend` is left out here.
-    id: 'crism',
-    name: 'CRISM minerals',
-    kind: 'crism',
-    type: 'overlay',
-    defaultOpacity: 0.7,
-    missionId: 'mro-crism',
-    shortLabel: 'MRO/CRISM',
-    dataKind: 'Mineral map',
-    // Placeholder: CrismLayer positions the image with the bbox of crism.json.
-    bounds: [
-      [18.364672, 77.279195],
-      [18.635047, 77.558793],
-    ],
-    attribution: 'NASA PDS Geosciences Node · MRO/CRISM',
-    product: 'CRISM MTRDR browse product (ID in crism.json)',
-    sourceUrl: 'https://pds-geosciences.wustl.edu/missions/mro/crism.htm',
   },
 ];
 

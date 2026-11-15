@@ -52,25 +52,3 @@
   color: #9aa0a6;
   font-style: italic;
 }
-
-.provenance__legend-entries {
-  display: grid;
-  gap: 0.15rem;
-  margin: 0.15rem 0;
-  padding: 0;
-  list-style: none;
-}
-
-.provenance__legend-entries li {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.provenance__legend-swatch {
-  flex: none;
-  width: 0.8rem;
-  height: 0.8rem;
-  border-radius: 2px;
-  border: 1px solid rgb(255 255 255 / 35%);
-}
