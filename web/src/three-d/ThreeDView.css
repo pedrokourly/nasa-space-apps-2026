@@ -61,6 +61,22 @@
   border-radius: 2px;
 }
 
+.three-d__swatch--dashed,
+.three-d__swatch--dotted {
+  height: 0;
+  border-radius: 0;
+  border-top: 3px dashed currentColor;
+}
+
+.three-d__swatch--dotted {
+  border-top-style: dotted;
+}
+
+.three-d__follow {
+  margin-top: 0.25rem;
+  cursor: pointer;
+}
+
 .three-d__hint,
 .three-d__busy {
   position: absolute;

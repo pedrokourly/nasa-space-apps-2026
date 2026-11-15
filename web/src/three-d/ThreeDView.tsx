@@ -11,7 +11,15 @@ import {
   destroyMarsScene,
   type MarsScene,
 } from './marsViewer'
-import { drawRouteScene } from './routeScene'
+import {
+  COLOR_RETURN_HABITAT,
+  COLOR_RETURN_START,
+  drawRouteScene,
+  type DrawnScene,
+} from './routeScene'
+import { createSimOverlay, type SimOverlay } from './simulationScene'
+import { useSimulationStore } from '../state/simulationStore'
+import { useSimulationPath, useSimulationSnapshot } from '../routing/useSimulation'
 import './ThreeDView.css'
 
 interface Props {
@@ -39,6 +47,13 @@ export default function ThreeDView({ targets }: Props) {
   } | null>(null)
   const route = useAppStore((s) => s.route)
   const waypoints = useAppStore((s) => s.waypoints)
+  const [drawn, setDrawn] = useState<DrawnScene | null>(null)
+  const [follow, setFollow] = useState(true)
+  const overlayRef = useRef<SimOverlay | null>(null)
+  const simStatus = useSimulationStore((s) => s.status)
+  const simPath = useSimulationPath()
+  const simSnap = useSimulationSnapshot()
+  const simActive = simStatus !== 'idle' && simSnap !== null
 
   // Viewer lifecycle: created on mount, destroyed on unmount.
   useEffect(() => {
@@ -77,6 +92,7 @@ export default function ThreeDView({ targets }: Props) {
           return
         }
         dispose = drawn?.dispose
+        setDrawn(drawn)
         setSettled({ route, waypoints, targets })
       },
       (e: unknown) => {
@@ -88,9 +104,30 @@ export default function ThreeDView({ targets }: Props) {
     )
     return () => {
       cancelled = true
+      setDrawn(null)
       dispose?.()
     }
   }, [scene, route, waypoints, targets])
+
+  // EVA simulation overlay: one per drawn scene (it needs the scene's exaggeration and heights).
+  useEffect(() => {
+    if (!scene || !drawn) return
+    const overlay = createSimOverlay(scene, drawn)
+    overlayRef.current = overlay
+    return () => {
+      overlayRef.current = null
+      overlay.dispose()
+    }
+  }, [scene, drawn])
+
+  // Moves the astronaut on every simulation frame, with the same plan and clock as the 2D map.
+  useEffect(() => {
+    overlayRef.current?.update(
+      simActive ? simPath : null,
+      simActive ? simSnap : null,
+      follow && simStatus === 'running',
+    )
+  }, [drawn, simActive, simPath, simSnap, simStatus, follow])
 
   const drawing =
     !settled ||
@@ -126,6 +163,24 @@ export default function ThreeDView({ targets }: Props) {
               <span className="three-d__swatch" style={{ background: SLOPE_COLORS.steep }} />
               {`Slope > ${SLOPE_STEEP_DEG}°`}
             </div>
+            {route?.properties.return_path && (
+              <div className="three-d__legend-row">
+                <span className="three-d__swatch three-d__swatch--dashed" style={{ color: COLOR_RETURN_HABITAT }} />
+                Way home to habitat (estimate)
+              </div>
+            )}
+            {route?.properties.return_to_start?.return_path && (
+              <div className="three-d__legend-row">
+                <span className="three-d__swatch three-d__swatch--dotted" style={{ color: COLOR_RETURN_START }} />
+                Way back to start (estimate)
+              </div>
+            )}
+            {hasRoute && (
+              <label className="three-d__legend-row three-d__follow">
+                <input type="checkbox" checked={follow} onChange={(e) => setFollow(e.target.checked)} />
+                Follow astronaut during EVA
+              </label>
+            )}
             <div className="three-d__legend-source">Relief: Cesium Mars (Cesium ion)</div>
           </aside>
           {!hasRoute && (
