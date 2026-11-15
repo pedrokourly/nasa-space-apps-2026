@@ -83,13 +83,13 @@ Geometry fixed in `pipeline/jezero_grid.py` and written to `web/public/data/meta
 
 | Item | Value |
 |---|---|
-| bbox `[minLon, minLat, maxLon, maxLat]` | `[77.36, 18.40, 77.50, 18.50]` |
-| bbox size (haversine, R = 3389.5 km) | 7.86 km (x) × 5.92 km (y), inside the 5 to 15 km range |
+| bbox `[minLon, minLat, maxLon, maxLat]` | `[77.32, 18.40, 77.50, 18.50]` |
+| bbox size (haversine, R = 3389.5 km) | 10.10 km (x) × 5.92 km (y), inside the 5 to 15 km range |
 | Inside the DTM coverage | Yes (lon 77.2229 to 77.5840; lat 18.3068 to 18.6693) |
 | DTM nodata inside the bbox | 0.00% (decimated read) |
-| Elevation in the bbox | −2,647 m to −2,392 m (decimated sample) |
+| Elevation in the bbox | −2,647 m to −2,255 m (decimated sample) |
 | Grid | 512 × 512 cells |
-| Meters per cell | x = 15.345 m, y = 11.554 m (R = 3389.5 km) |
+| Meters per cell | x = 19.729 m, y = 11.554 m (R = 3389.5 km) |
 | CRS | EPSG:4326 (lon/lat), row 0 = north |
 | nodata written in the `.bin` files | `-3.4028234663852886e+38` (lowest float32, same as the mock) |
 | Longitude | −180 to 180, positive east |
@@ -99,19 +99,19 @@ Geometry fixed in `pipeline/jezero_grid.py` and written to `web/public/data/meta
 Compared with the 708 rover stops published by NASA MMGIS (`https://mars.nasa.gov/mmgis-maps/M20/Layers/json/M20_waypoints.json`, read in memory, not versioned; fields `sol`, `lon`, `lat`, `elev_geoid`).
 
 - **Landing site:** the first waypoint (sol 13) is at 77.4509°E, 18.4446°N, the same point as the mock habitat, inside the bbox. The coordinates agree with Wikidata and NASA GISS Mars24 (Octavia E. Butler Landing).
-- **Traverse coverage:** 313 of the 708 stops fall inside the bbox, all from sols 13 to 886 (crater floor and the delta front campaign). From sol ~896 the rover climbs west (lon < 77.36) and, from sol 1815 on, leaves even the DTM coverage (lon < 77.2229). **The bbox covers only the first part of the traverse, not all of it.**
+- **Traverse coverage:** 394 of the 708 stops fall inside the bbox, all from sols 13 to 1131 (crater floor, delta front, upper fan and the start of the margin unit campaign). After that the rover moves west (lon < 77.32) and, from sol 1815 on, leaves even the DTM coverage (lon < 77.2229). **The bbox covers most of the traverse so far, not all of it.**
 - **Delta:** a JGR paper (Sun et al., 2023, doi:10.1029/2022JE007613) places the landing site ~2 km from the west delta front, around 77.41°E, inside the bbox. The real targets were fixed in #28 (see `docs/targets.md`).
 - **DTM altitude against the rover's** (612 stops with valid data): DTM − rover difference with median 0.00 m, mean 0.57 m, standard deviation 1.41 m, 5th and 95th percentiles of −0.09 and 4.11 m, maximum 5.37 m. This indicates the DTM uses the same vertical reference as the rover and that the horizontal registration is good. It is not a USGS statement, it is our own measurement.
 
-**Why we kept the mock bbox.** It lies entirely over valid DTM data and already contains the mock target and route points (habitat at 77.4508°E 18.4447°N, delta front, carbonate margin). Changing the bbox would force changes in every mock with no gain. The real `meta.json` ended up equal to the mock except for the `source` field.
+**Why the bbox was extended west.** The first bbox, `[77.36, 18.40, 77.50, 18.50]` (the mock one), left out the Margin Unit samples, 0.5 to 1.8 km further west, where the strongest orbital carbonate signal is. It was extended to `[77.32, 18.40, 77.50, 18.50]`: still entirely over valid DTM data (0.00% nodata), 10.10 km wide (inside the 5 to 15 km range), and it still contains the mock bbox, so the mock targets and route keep working. The real `meta.json` now has the same grid size, `crs`, `nodata` and other fields as the mock, but a wider bbox and a larger `m_per_cell_x`.
 
 **Why a lon/lat grid (EPSG:4326) and not a local metric grid.**
 - Mars Trek and the app's Leaflet use EPSG:4326: the route, the targets and the overlays (such as `slope.png`) share one system, with no reprojection in the browser.
 - The contract and `web/src/types/contract.ts` already fix `crs: "EPSG:4326"`; changing it would require changes in every workstream.
 - The source DTM is already a lon/lat grid (Equirectangular with standard parallel 0): each pixel spans the same angle in x and y. Resampling to the app grid is a block average, with no distortion.
-- The cost is that the cell is not square in meters (15.3 × 11.6 m). `m_per_cell_x` and `m_per_cell_y` describe that; routing and the slope (#25) must use both values, never just one.
+- The cost is that the cell is not square in meters (19.7 × 11.6 m). `m_per_cell_x` and `m_per_cell_y` describe that; routing and the slope (#25) must use both values, never just one.
 
-**Resampling note (#24).** The DTM's 1 m pixels are x ≈ 0.948 m on the ground and y = 1.000 m; the bbox spans ~8,300 × 5,917 DTM pixels. The reduction to 512 × 512 must use averaging (`Resampling.average`), and the DTM nodata (`-3.4028226550889045e+38`) must be converted to the contract nodata.
+**Resampling note (#24).** The DTM's 1 m pixels are x ≈ 0.948 m on the ground and y = 1.000 m; the bbox spans ~10,670 × 5,917 DTM pixels. The reduction to 512 × 512 must use averaging (`Resampling.average`), and the DTM nodata (`-3.4028226550889045e+38`) must be converted to the contract nodata.
 
 **Radius.** The meters per cell use the app radius (3389.5 km). With the DTM radius (3396.19 km) they would be ~0.2% larger; the difference does not matter for the route, but the two radii must not be mixed in one calculation.
 
@@ -124,24 +124,24 @@ Built by `pipeline/export_elevation.py` from the 1 m DTM, in `web/public/data/el
 | Format | Float32 little-endian, row-major, row 0 = north, 512 × 512 |
 | Size | 1,048,576 bytes (512 × 512 × 4) |
 | Valid cells | 262,144 of 262,144 (no nodata inside the bbox) |
-| Elevation | min −2,646.73 m, max −2,392.54 m, mean −2,537.21 m |
+| Elevation | min −2,646.70 m, max −2,255.07 m, mean −2,506.06 m |
 | Reproducible | Two runs produce identical bytes |
 | Reading | `numpy.fromfile(..., dtype="<f4").reshape(512, 512)` |
 | Provenance | MRO, HiRISE, USGS Astrogeology, DOI 10.5066/P9REJ9JN (`source` field of `meta.json`) |
 
-**How it was made.** The script reads only the DTM window covering the bbox (about 8,300 × 5,900 pixels, not the whole 21,400 × 21,488 file) and resamples by **block average** (`Resampling.average`) to the 512 × 512 grid. There is no reprojection: the DTM is already a lon/lat grid (`x = R·lon`, `y = R·lat`, R = 3,396,190 m), with longitude −180 to 180.
+**How it was made.** The script reads only the DTM window covering the bbox (about 10,700 × 5,900 pixels, not the whole 21,400 × 21,488 file) and resamples by **block average** (`Resampling.average`) to the 512 × 512 grid. There is no reprojection: the DTM is already a lon/lat grid (`x = R·lon`, `y = R·lat`, R = 3,396,190 m), with longitude −180 to 180.
 
 **nodata rule.** The DTM nodata (`-3.4028226550889045e+38`) becomes the contract one (`-3.4028234663852886e+38`, lowest float32). A grid cell is nodata if **any** 1 m pixel inside it was nodata, and it never becomes 0. This does not happen today, but it applies to a future bbox.
 
-**Validation.** With the 313 rover stops inside the bbox (MMGIS/NASA, `elev_geoid`):
+**Validation.** With the 390 rover stops inside the bbox (MMGIS/NASA, `elev_geoid`):
 
 | Comparison | Median | Std. dev. | Max \|diff\| |
 |---|---|---|---|
-| 1 m DTM − rover altitude | 0.00 m | 0.06 m | 0.43 m |
-| `elevation.bin` − 1 m DTM (same point) | 0.02 m | 0.37 m | 2.14 m |
-| `elevation.bin` − rover altitude | 0.03 m | 0.37 m | 2.17 m |
+| 1 m DTM − rover altitude | 0.00 m | 0.08 m | 0.74 m |
+| `elevation.bin` − 1 m DTM (same point) | 0.00 m | 0.44 m | 2.03 m |
+| `elevation.bin` − rover altitude | 0.00 m | 0.44 m | 2.00 m |
 
-The grid difference comes from averaging over 15 × 12 m cells on sloped terrain, not from a shift. For the horizontal alignment, we overlaid a hillshade of `elevation.bin` (azimuth 315°, altitude 45°) on the Mars Trek 25 cm HiRISE tiles at 50% opacity: the features (crater rims, the delta scarp, small mounds) look sharp, with no doubled edges, and the delta scarp continues unbroken across the bbox edge. A one-cell shift (~12 px at the zoom used) would be visible. The visual check was an inspection on a test page outside the repository; the systematic validation against Mars Trek remains #32.
+The grid difference comes from averaging over 20 × 12 m cells on sloped terrain, not from a shift. For the horizontal alignment, we overlaid a hillshade of `elevation.bin` (azimuth 315°, altitude 45°) on the Mars Trek 25 cm HiRISE tiles at 50% opacity: the features (crater rims, the delta scarp, small mounds) look sharp, with no doubled edges, and the delta scarp continues unbroken across the bbox edge. A one-cell shift (~12 px at the zoom used) would be visible. The visual check was an inspection on a test page outside the repository, done on the original bbox; the western extension is covered by the rover-altitude numbers above but was not re-inspected by eye. The systematic validation against Mars Trek remains #32.
 
 ## slope.bin (issue #25)
 
@@ -152,25 +152,27 @@ Built by `pipeline/export_slope.py` from `elevation.bin` and `meta.json`, in `we
 | Format | Float32 little-endian, row-major, row 0 = north, 512 × 512, in **degrees** |
 | Size | 1,048,576 bytes, the same grid as `elevation.bin` |
 | Valid cells | 260,100 of 262,144; nodata: 2,044 (the 1-cell grid border) |
-| Slope | min 0.00°, max 43.75°, mean 3.59°, median 2.28° |
-| Cells above 10° / 15° / 25° | 6.74% / 2.94% / 0.46% |
+| Slope | min 0.01°, max 42.67°, mean 3.91°, median 2.69° |
+| Cells above 10° / 15° / 25° | 6.48% / 2.35% / 0.34% |
 | Provenance | MRO, HiRISE, USGS Astrogeology, DOI 10.5066/P9REJ9JN (same as `elevation.bin`) |
 
-**Method.** Horn slope (the same as `gdaldem slope`): `dz/dx` and `dz/dy` from a weighted 3 × 3 kernel, using the real meters per cell from `meta.json` (x = 15.345 m, y = 11.554 m), and `slope = degrees(arctan(hypot(dz/dx, dz/dy)))`. Using the same cell size on both axes would give a wrong answer, and an automated test covers that (a 10° ramp in y with different cell sizes returns 10° within 0.1°).
+**Method.** Horn slope (the same as `gdaldem slope`): `dz/dx` and `dz/dy` from a weighted 3 × 3 kernel, using the real meters per cell from `meta.json` (x = 19.729 m, y = 11.554 m), and `slope = degrees(arctan(hypot(dz/dx, dz/dy)))`. Using the same cell size on both axes would give a wrong answer, and an automated test covers that (a 10° ramp in y with different cell sizes returns 10° within 0.1°).
 
 **nodata rule.** A cell has a value only if all 9 kernel cells are valid. A nodata cell contaminates its 8 neighbours, and the **1-cell grid border is nodata** (no neighbours), never 0. Today `elevation.bin` has no holes, so only the border is nodata.
 
-**Assumption: slope scale.** The slope comes from the **512 × 512 grid (~15 × 12 m)**, not from the 1 m DTM. Reason: it is the scale of the routing (A* moves cell by cell) and it keeps `slope.bin` consistent with `elevation.bin`. It is an assumption, not a physical truth. Comparison on the same 262,144 cells (`pipeline/slope_scale_check.py`):
+**Assumption: slope scale.** The slope comes from the **512 × 512 grid (~20 × 12 m)**, not from the 1 m DTM. Reason: it is the scale of the routing (A* moves cell by cell) and it keeps `slope.bin` consistent with `elevation.bin`. It is an assumption, not a physical truth. Comparison on the same 262,144 cells (`pipeline/slope_scale_check.py`):
 
 | Scale | Mean | > 15° | > 25° | Correlation with the grid |
 |---|---|---|---|---|
-| A) ~15 m grid (`slope.bin`) | 3.59° | 2.94% | 0.46% | n/a |
-| B) 1 m DTM, mean per cell | 4.85° | 3.62% | 0.58% | 0.93 |
-| C) 1 m DTM, max per cell | 9.60° | 14.72% | 3.47% | 0.76 |
+| A) ~20 × 12 m grid (`slope.bin`) | 3.91° | 2.35% | 0.34% | n/a |
+| B) 1 m DTM, mean per cell | 5.69° | 3.98% | 0.48% | 0.85 |
+| C) 1 m DTM, max per cell | 12.63° | 28.55% | 10.17% | 0.56 |
 
-Scale A tends to **underestimate** steps and rocks a few meters wide; the 1 m DTM has pixels up to 74.9° and 0.78% above 25°. Scale C is much more conservative (34% of cells above 10°) and could feed a "safer" routing mode, but it would need another file. The impassable slope limit remains a Routing decision.
+Scale A tends to **underestimate** steps and rocks a few meters wide; the 1 m DTM has pixels up to 74.9° and 1.21% above 25°. Scale C is much more conservative (49% of cells above 10°) and could feed a "safer" routing mode, but it would need another file. The impassable slope limit remains a Routing decision.
 
-**Sanity check with real data.** At the 310 Perseverance stops inside the bbox with a valid slope, the slope averages 3.92°, with a maximum of 16.97° and none above 25°. This is consistent with a rover that avoids steep terrain, but it is not strong validation: the whole grid is also smooth (mean 3.59°).
+**Sanity check with real data.** At the 390 Perseverance stops inside the bbox with a valid slope, the slope averages 3.91°, with a maximum of 16.60° and none above 25°. This is consistent with a rover that avoids steep terrain, but it is not strong validation: the whole grid is also smooth (mean 3.91°).
+
+**Independent check with the rover's own tilt.** The MMGIS waypoints include the rover tilt (`tilt`, from its attitude sensors) at every stop. At the 390 stops inside the bbox (tilt mean 4.80°, max 20.33°), the correlation with `slope.bin` is 0.80 (Pearson) and 0.81 (Spearman), and `slope.bin` is on average 0.89° below the tilt. A 1 m slope computed on a 9 × 9 m window around each stop (the same Horn method on the 1 m DTM) correlates 0.79 (Spearman 0.74) with a mean difference of +0.25°. So the grid slope follows what the rover measured, and, as expected, it reads slightly lower than the real tilt because the grid cell smooths small steps. The rover tilt covers a few meters under the wheels, so this is a consistency check, not an exact match.
 
 ## Caveats
 

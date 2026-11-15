@@ -50,9 +50,10 @@ def test_committed_meta_is_in_sync_with_the_script():
     assert json.loads(META.read_text(encoding="utf-8")) == g.build_meta()
 
 
-def test_meta_has_the_same_fields_and_values_as_the_mock():
+def test_meta_has_the_same_fields_as_the_mock_and_its_bbox_contains_the_mock_bbox():
     real, mock = json.loads(META.read_text(encoding="utf-8")), json.loads(MOCK.read_text(encoding="utf-8"))
     assert set(real) == set(mock)
-    for k in real:
-        if k != "source":
-            assert real[k] == mock[k], k
+    # The real grid was extended west of the mock one, so the mock targets and route still fall inside it.
+    assert g.bbox_inside(tuple(mock["bbox"]), tuple(real["bbox"]))
+    for k in ("width", "height", "lon_convention", "nodata", "crs", "row0", "dtype"):
+        assert real[k] == mock[k], k

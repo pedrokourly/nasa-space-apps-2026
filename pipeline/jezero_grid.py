@@ -22,8 +22,8 @@ import numpy as np
 MARS_RADIUS_APP_M = 3_389_500.0
 
 # [minLon, minLat, maxLon, maxLat], longitude -180..180, positive east.
-# Same bbox as the mock (web/public/data/mock/meta.json): the mock targets and route already fall inside.
-BBOX = (77.36, 18.40, 77.50, 18.50)
+# Extended west (from 77.36) to include the Margin Unit samples; the mock targets and route still fall inside.
+BBOX = (77.32, 18.40, 77.50, 18.50)
 
 WIDTH = 512
 HEIGHT = 512

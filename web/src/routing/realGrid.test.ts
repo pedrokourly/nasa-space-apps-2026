@@ -7,6 +7,7 @@
 import { readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { LonLat } from '../lib/mars-geo';
+import { isInsideBbox } from '../lib/bbox';
 import { parseMeta, parseTargets } from '../lib/loadData';
 import { cellIndex, isNoData, lonLatToCell, type Grid } from './core/grid';
 import { route } from './core/route';
@@ -32,16 +33,12 @@ beforeAll(async () => {
 });
 
 describe('real Jezero grid (public/data)', () => {
-  it('has the same geometry as the mock, so targets and clicks line up', () => {
+  it('has the mock grid size and a bbox that contains the mock bbox, so mock targets and clicks still line up', () => {
     const real = parseMeta(readJson(new URL('meta.json', dataDir)));
     const mock = parseMeta(readJson(new URL('mock/meta.json', dataDir)));
-    expect([real.bbox, real.width, real.height, real.m_per_cell_x, real.m_per_cell_y]).toEqual([
-      mock.bbox,
-      mock.width,
-      mock.height,
-      mock.m_per_cell_x,
-      mock.m_per_cell_y,
-    ]);
+    expect([real.width, real.height]).toEqual([mock.width, mock.height]);
+    expect(isInsideBbox([mock.bbox[0], mock.bbox[1]], real.bbox)).toBe(true);
+    expect(isInsideBbox([mock.bbox[2], mock.bbox[3]], real.bbox)).toBe(true);
     expect(real.source).toMatch(/HiRISE/);
   });
 
@@ -59,7 +56,7 @@ describe('real Jezero grid (public/data)', () => {
     }
     expect(holes).toBe(0);
     expect(min).toBeGreaterThan(-2700);
-    expect(max).toBeLessThan(-2300);
+    expect(max).toBeLessThan(-2200);
   });
 
   it('slope is in degrees (0 to 90), no data only on the 1-cell border, and little of it is impassable', () => {
@@ -98,7 +95,7 @@ describe('real Jezero grid (public/data)', () => {
     expect(r.properties.verdict).toBe('GO');
     expect(r.properties.point_of_no_return).toBeUndefined();
     expect(r.properties.dist_m).toBeGreaterThan(5_000);
-    expect(r.properties.dist_m).toBeLessThan(15_000);
+    expect(r.properties.dist_m).toBeLessThan(20_000); // the margin target makes the loop ~16.6 km
     expect(ms).toBeLessThan(1000);
   });
 
