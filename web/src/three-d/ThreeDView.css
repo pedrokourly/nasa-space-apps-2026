@@ -224,10 +224,8 @@
   top: 88px;
 }
 
-/* In 3D there is no route metrics bar, so the EVA control sits in the bottom-right corner. */
-.three-d ~ .sim-control {
-  bottom: 36px;
-}
+/* The EVA dock (Select route + Start EVA) and "Follow astronaut" reuse the 2D dock and Recenter
+   placement and the UI kit styles (kit.css). */
 
 @media (max-width: 800px) {
   .three-d__legend {
@@ -237,9 +235,5 @@
 
   .three-d__busy {
     top: 132px;
-  }
-
-  .three-d ~ .sim-control {
-    bottom: 32px;
   }
 }

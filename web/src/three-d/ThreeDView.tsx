@@ -20,6 +20,8 @@ import {
 import { COLOR_WALKED, createSimOverlay, type SimOverlay } from './simulationScene'
 import { useSimulationStore } from '../state/simulationStore'
 import { useSimulationPath, useSimulationSnapshot } from '../routing/useSimulation'
+import { Badge, Button } from '../ui/kit'
+import { ChevronDownIcon, LocateIcon } from '../ui/icons'
 import './ThreeDView.css'
 
 interface Props {
@@ -161,9 +163,9 @@ export default function ThreeDView({ targets }: Props) {
               onClick={() => setLegendOpen((o) => !o)}
             >
               <span>3D route</span>
-              <span className="three-d__chip">Relief ×{VERTICAL_EXAGGERATION}</span>
-              <span className="three-d__chevron" aria-hidden="true">
-                {legendOpen ? '▾' : '▸'}
+              <Badge variant="outline">Relief ×{VERTICAL_EXAGGERATION}</Badge>
+              <span className={`three-d__chevron${legendOpen ? ' three-d__chevron--open' : ''}`}>
+                <ChevronDownIcon />
               </span>
             </button>
             {legendOpen && (
@@ -174,35 +176,26 @@ export default function ThreeDView({ targets }: Props) {
                   <span><i style={{ background: SLOPE_COLORS.moderate }} />{`${SLOPE_MODERATE_DEG}–${SLOPE_STEEP_DEG}°`}</span>
                   <span><i style={{ background: SLOPE_COLORS.steep }} />{`> ${SLOPE_STEEP_DEG}°`}</span>
                 </div>
-                {(route?.properties.return_path || route?.properties.return_to_start?.return_path) && (
+                {hasRoute && (
                   <>
-                    <div className="three-d__legend-section">Ways back (estimate)</div>
+                    {/* One list: the ways back (estimates) and the part of the EVA already walked. */}
+                    <div className="three-d__legend-section">Ways back and EVA</div>
                     {route?.properties.return_path && (
                       <div className="three-d__legend-row">
                         <span className="three-d__swatch three-d__swatch--dashed" style={{ color: COLOR_RETURN_HABITAT }} />
-                        To habitat
+                        To habitat (estimate)
                       </div>
                     )}
                     {route?.properties.return_to_start?.return_path && (
                       <div className="three-d__legend-row">
                         <span className="three-d__swatch three-d__swatch--dotted" style={{ color: COLOR_RETURN_START }} />
-                        To start
+                        To start (estimate)
                       </div>
                     )}
-                  </>
-                )}
-                {hasRoute && (
-                  <>
-                    <div className="three-d__legend-section">EVA simulation</div>
                     <div className="three-d__legend-row">
                       <span className="three-d__swatch" style={{ background: COLOR_WALKED }} />
                       Walked so far
                     </div>
-                    <label className="three-d__switch">
-                      <input type="checkbox" checked={follow} onChange={(e) => setFollow(e.target.checked)} />
-                      <span className="three-d__switch-track" aria-hidden="true" />
-                      Camera follows astronaut
-                    </label>
                   </>
                 )}
                 <div className="three-d__legend-source">Relief: Cesium Mars (Cesium ion)</div>
@@ -211,6 +204,22 @@ export default function ThreeDView({ targets }: Props) {
           </aside>
           {!hasRoute && (
             <div className="three-d__hint">Draw a route on the 2D map to see it in 3D</div>
+          )}
+          {/* The 3D counterpart of the 2D "Recenter": the camera follows the astronaut during the EVA. */}
+          {hasRoute && (
+            <Button
+              variant="secondary"
+              size="lg"
+              className={`map-recenter three-d__follow${simStatus !== 'idle' ? ' map-recenter--eva-active' : ''}`}
+              aria-pressed={follow}
+              title={follow ? 'The camera follows the astronaut during the EVA' : 'Free camera'}
+              onClick={() => setFollow((f) => !f)}
+            >
+              <span className="map-recenter__icon">
+                <LocateIcon />
+              </span>
+              <span className="map-recenter__label">Follow astronaut</span>
+            </Button>
           )}
           {drawing && <div className="three-d__busy">Reading terrain heights…</div>}
         </>

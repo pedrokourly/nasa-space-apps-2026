@@ -47,6 +47,15 @@ export function MapIcon() {
   return <svg {...base}><path d="m3 6.5 6-3 6 3 6-3v14l-6 3-6-3-6 3v-14Z" /><path d="M9 3.5v14" /><path d="M15 6.5v14" /></svg>;
 }
 
+/** Follow the astronaut: a crosshair locked on a point. */
+export function LocateIcon() {
+  return <svg {...base}><circle cx="12" cy="12" r="7" /><circle cx="12" cy="12" r="2.5" /><path d="M12 2v3" /><path d="M12 19v3" /><path d="M2 12h3" /><path d="M19 12h3" /></svg>;
+}
+
+export function ChevronDownIcon() {
+  return <svg {...base}><path d="m6 9 6 6 6-6" /></svg>;
+}
+
 export function ListIcon() {
   return <svg {...base}><path d="M9 6h11" /><path d="M9 12h11" /><path d="M9 18h11" /><path d="M4 6h.01" /><path d="M4 12h.01" /><path d="M4 18h.01" /></svg>;
 }

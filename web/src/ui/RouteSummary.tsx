@@ -5,7 +5,7 @@ import { profilePointAt } from '../routing/profilePoint';
 import { availablePlans, buildSimPath, SIM_PLAN_LABELS, type SimPlan } from '../routing/simulation';
 import type { ReturnPath, Route } from '../types/contract';
 import { ASSUMPTIONS_URL, COMPUTED_LABEL, ESTIMATE_LABEL, PNR_EXPLANATION, assumptionsLine } from '../routing/estimateText';
-import { RESERVE_NOTE } from './reserveNote';
+import { O2_LEFT_TITLE } from './reserveNote';
 import { Badge } from './kit';
 import './RouteSummary.css';
 
@@ -44,6 +44,15 @@ function VerdictPill({ verdict }: { verdict: Verdict | undefined }) {
   return <Badge variant={verdict === 'GO' ? 'success' : 'destructive'}>{verdict}</Badge>;
 }
 
+/**
+ * Best value of a column (lowest distance, time, O₂ used; highest O₂ left), or null when there is
+ * nothing to compare (fewer than 2 rows, or every row equal).
+ */
+function bestOf(values: number[], mode: 'min' | 'max'): number | null {
+  if (values.length < 2 || values.every((v) => v === values[0])) return null;
+  return mode === 'min' ? Math.min(...values) : Math.max(...values);
+}
+
 interface PlanRow {
   plan: SimPlan;
   verdict: Verdict | undefined;
@@ -60,6 +69,27 @@ interface PlanRow {
  */
 function PlansTable({ route, rows, o2Available }: { route: Route; rows: PlanRow[]; o2Available: number }) {
   const paths = useMemo(() => new Map(availablePlans(route).map((plan) => [plan, buildSimPath(route, plan)])), [route]);
+  // Values as shown (same rounding as the cells), so "best" matches what the reader compares.
+  const values = rows.flatMap(({ plan }) => {
+    const path = paths.get(plan);
+    if (!path) return [];
+    const used = path.o2_kg.at(-1) ?? 0;
+    return [{
+      plan,
+      dist: ((path.dist_m.at(-1) ?? 0) / 1000).toFixed(1),
+      time: String(Math.round((path.time_s.at(-1) ?? 0) / 60)),
+      used: used.toFixed(2),
+      left: Math.max(0, o2Available - used).toFixed(2),
+    }];
+  });
+  const best = {
+    dist: bestOf(values.map((v) => Number(v.dist)), 'min'),
+    time: bestOf(values.map((v) => Number(v.time)), 'min'),
+    used: bestOf(values.map((v) => Number(v.used)), 'min'),
+    left: bestOf(values.map((v) => Number(v.left)), 'max'),
+  };
+  const cls = (key: keyof typeof best, value: string) =>
+    `route-plans__num${best[key] !== null && Number(value) === best[key] ? ' route-plans__best' : ''}`;
   return (
     <table className="route-plans">
       <thead>
@@ -69,16 +99,13 @@ function PlansTable({ route, rows, o2Available }: { route: Route; rows: PlanRow[
           <th scope="col" className="route-plans__num">Distance</th>
           <th scope="col" className="route-plans__num">Time</th>
           <th scope="col" className="route-plans__num">O₂ used</th>
-          <th scope="col" className="route-plans__num">
-            O₂ left<span className="route-plans__note">{RESERVE_NOTE}</span>
-          </th>
+          <th scope="col" className="route-plans__num">{O2_LEFT_TITLE}</th>
         </tr>
       </thead>
       <tbody>
         {rows.map(({ plan, verdict, ret, nogo, pnrKm }) => {
-          const path = paths.get(plan);
-          if (!path) return null;
-          const used = path.o2_kg.at(-1) ?? 0;
+          const v = values.find((x) => x.plan === plan);
+          if (!v) return null;
           return (
             <tr key={plan} className={`route-plans__row route-plans__row--${plan}`} title={ret ? returnText(route, ret, nogo) : undefined}>
               <th scope="row">
@@ -92,10 +119,10 @@ function PlansTable({ route, rows, o2Available }: { route: Route; rows: PlanRow[
                 {ret && nogo && <span className="route-plans__sub">{returnText(route, ret, nogo)}</span>}
               </th>
               <td className="route-plans__verdict"><VerdictPill verdict={verdict} /></td>
-              <td className="route-plans__num" data-label="Distance">{((path.dist_m.at(-1) ?? 0) / 1000).toFixed(1)} km</td>
-              <td className="route-plans__num" data-label="Time">{Math.round((path.time_s.at(-1) ?? 0) / 60)} min</td>
-              <td className="route-plans__num" data-label="O₂ used">{used.toFixed(2)} kg</td>
-              <td className="route-plans__num" data-label={`O₂ left (${RESERVE_NOTE})`}>{Math.max(0, o2Available - used).toFixed(2)} kg</td>
+              <td className={cls('dist', v.dist)} data-label="Distance">{v.dist} km</td>
+              <td className={cls('time', v.time)} data-label="Time">{v.time} min</td>
+              <td className={cls('used', v.used)} data-label="O₂ used">{v.used} kg</td>
+              <td className={cls('left', v.left)} data-label={O2_LEFT_TITLE}>{v.left} kg</td>
             </tr>
           );
         })}

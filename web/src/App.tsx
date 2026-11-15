@@ -204,7 +204,7 @@ export default function App() {
 
       <main id="map-area" className="map-area" aria-label="Map area">
         {view === '3d' && tab === 'planning' ? (
-          <Suspense fallback={<div className="three-d-loading">Loading 3D view…</div>}><ThreeDView targets={data?.targets ?? null} /><SimulationControl /></Suspense>
+          <Suspense fallback={<div className="three-d-loading">Loading 3D view…</div>}><ThreeDView targets={data?.targets ?? null} /><div className="eva-dock eva-dock--idle eva-dock--3d"><SimulationControl /></div></Suspense>
         ) : (
           <MapView onReady={setMapInstance}>
             <LayerManager />
