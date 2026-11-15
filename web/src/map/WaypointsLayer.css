@@ -54,8 +54,19 @@
 }
 .waypoints-panel__actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
+  max-width: min(24rem, calc(100vw - 24px));
+}
+/* "More than 8 stops: …" notice: its own line under the two buttons. */
+.waypoints-panel__actions .sim-control__order-note {
+  flex: 1 0 100%;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.35;
+  text-align: center;
 }
 .waypoints-panel__actions > button {
   padding: 5px 9px;
@@ -79,7 +90,13 @@
   text-align: center;
 }
 
+/* Tablets: the header is taller (two rows), so the steps panel starts under it. */
+@media (min-width: 601px) and (max-width: 900px) {
+  .waypoints-panel { top: 124px; }
+}
+
 @media (max-width: 600px) {
-  .waypoints-panel { top: 110px; max-width: calc(100% - 20px); }
+  /* Under the header and the BASE LAYERS badge. */
+  .waypoints-panel { top: 148px; max-width: calc(100% - 20px); }
   .waypoints-panel__bar { flex-wrap: wrap; justify-content: center; gap: 6px; }
 }

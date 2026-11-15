@@ -1,15 +1,81 @@
+import { useState } from 'react'
 import type { AppData } from '../lib/loadData'
 import type { Conditions, ConditionStats, ConditionVariable, SolConditions } from '../types/contract'
 import { LAYERS } from '../map/layers'
+import { Button } from './kit'
 
 type Props = { data: AppData | null; error: string | null; conditions: Conditions | null }
+
+/** Team credits, shown in alphabetical order. A member without a GitHub link is shown as plain text. */
+const TEAM: { name: string; github?: string }[] = [
+  { name: 'Kourly', github: 'https://github.com/pedrokourly' },
+  { name: 'Corrêa', github: 'https://github.com/gustavomcss' },
+  { name: 'Paulo', github: 'https://github.com/PauloRicardo-05' },
+  { name: 'Monteiro', github: 'https://github.com/MeloLuc' },
+  { name: 'Cavalcante', github: 'https://github.com/cgonssalves' },
+  { name: 'Vinhal', github: 'https://github.com/michaelvinhal' },
+]
+const TEAM_SORTED = [...TEAM].sort((a, b) => a.name.localeCompare(b.name, 'pt'))
+
+function Credits() {
+  return <footer className="mars-data-credits">
+    <span>Developed by</span>
+    <ul>{TEAM_SORTED.map((member) => <li key={member.name}>
+      {member.github ? <a href={member.github} target="_blank" rel="noopener noreferrer">{member.name}</a> : member.name}
+    </li>)}</ul>
+  </footer>
+}
+
+/** Display unit for air temperature. The MEDA data (`conditions.json`, `unit`) is in kelvin. */
+type TempUnit = 'C' | 'K' | 'F'
+const TEMP_UNITS: TempUnit[] = ['C', 'K', 'F']
+const TEMP_UNIT_LABEL: Record<TempUnit, string> = { C: '°C', K: 'K', F: '°F' }
 
 function stats(value: ConditionVariable): ConditionStats | null {
   return value.status === 'ok' ? value : null
 }
 
-function fahrenheit(kelvin: number): string {
-  return `${(kelvin * 9 / 5 - 459.67).toFixed(1)} °F`
+/**
+ * `value` with `digits` decimals, halves rounded away from zero (736.05 → "736.1", −59.05 → "−59.1").
+ * Plain `toFixed` gives "736.0" because 736.05 is stored as 736.04999…; the 12-digit precision step
+ * removes that floating-point noise first.
+ */
+function fixed(value: number, digits: number): string {
+  const scale = 10 ** digits
+  const scaled = Number((Math.abs(value) * scale).toPrecision(12))
+  return (Math.sign(value) * Math.round(scaled) / scale).toFixed(digits)
+}
+
+/** One decimal, with a real minus sign. */
+function num(value: number): string {
+  return fixed(value, 1).replace('-', '−')
+}
+
+/** Kelvin converted to the chosen unit, with its symbol. */
+function inUnit(kelvin: number, unit: TempUnit): string {
+  if (unit === 'K') return `${num(kelvin)} K`
+  if (unit === 'C') return `${num(kelvin - 273.15)} °C`
+  return `${num(kelvin * 9 / 5 - 459.67)} °F`
+}
+
+/** Temperature in the chosen unit, followed by the source value in kelvin, e.g. "−59.1 °C (214.1 K)". */
+function temperatureText(kelvin: number, unit: TempUnit): string {
+  return unit === 'K' ? inUnit(kelvin, 'K') : `${inUnit(kelvin, unit)} (${num(kelvin)} K)`
+}
+
+function TempUnitControl({ unit, onChange }: { unit: TempUnit; onChange: (unit: TempUnit) => void }) {
+  return <div className="ui-toggle-group mars-data-units" role="group" aria-label="Temperature unit">
+    {TEMP_UNITS.map((u) => <Button variant="ghost" key={u} aria-pressed={unit === u} onClick={() => onChange(u)}>{TEMP_UNIT_LABEL[u]}</Button>)}
+  </div>
+}
+
+/** Wind or dust: its values when the file has them, otherwise "unavailable" with the reason from the file. */
+function OptionalVariable({ label, value }: { label: string; value: ConditionVariable | undefined }) {
+  if (!value) return null
+  if (value.status === 'ok') {
+    return <p className="mars-data-note"><strong>{label}:</strong> mean {fixed(value.mean, 1)} {value.unit} ({fixed(value.min, 1)}–{fixed(value.max, 1)} {value.unit})</p>
+  }
+  return <p className="mars-data-note"><strong>{label}: unavailable.</strong> {value.reason}</p>
 }
 
 function dateRange(sol: SolConditions): string {
@@ -28,6 +94,7 @@ export default function MarsDataScreen({ data, error, conditions }: Props) {
   const temperature = latest ? stats(latest.variables.air_temperature) : null
   const pressure = latest ? stats(latest.variables.pressure) : null
   const humidity = latest ? stats(latest.variables.relative_humidity) : null
+  const [unit, setUnit] = useState<TempUnit>('C')
 
   return <section className="mars-data-screen" aria-label="Mars conditions dashboard">
     <div className="mars-data-screen__title">
@@ -37,14 +104,16 @@ export default function MarsDataScreen({ data, error, conditions }: Props) {
 
     <div className="mars-data-grid">
       <article className="mars-data-card">
-        <div className="mars-data-card__header"><span aria-hidden="true">◷</span><h2>MEDA observations · Sol {latest?.sol ?? '—'}</h2></div>
+        <div className="mars-data-card__header"><span aria-hidden="true">◷</span><h2>MEDA observations · Sol {latest?.sol ?? '—'}</h2>{temperature && <TempUnitControl unit={unit} onChange={setUnit} />}</div>
         {latest ? <>
           <div className="mars-data-metrics">
-            {temperature && <Metric label="Air temperature · mean" value={fahrenheit(temperature.mean)} range={`${fahrenheit(temperature.min)} to ${fahrenheit(temperature.max)}`} />}
-            {pressure && <Metric label="Surface pressure · mean" value={`${pressure.mean.toFixed(1)} Pa`} range={`${pressure.min.toFixed(1)}–${pressure.max.toFixed(1)} Pa`} />}
-            {humidity && <Metric label="Relative humidity · mean" value={`${humidity.mean.toFixed(2)}%`} range={`${humidity.min.toFixed(2)}–${humidity.max.toFixed(2)}%`} />}
+            {temperature && <Metric label="Air temperature · mean" value={temperatureText(temperature.mean, unit)} range={unit === 'K' ? `${num(temperature.min)}–${num(temperature.max)} K` : `${inUnit(temperature.min, unit)} to ${inUnit(temperature.max, unit)} · ${num(temperature.min)}–${num(temperature.max)} K`} />}
+            {pressure && <Metric label="Surface pressure · mean" value={`${fixed(pressure.mean, 1)} Pa`} range={`${fixed(pressure.min, 1)}–${fixed(pressure.max, 1)} Pa`} />}
+            {humidity && <Metric label="Relative humidity · mean" value={`${fixed(humidity.mean, 2)}%`} range={`${fixed(humidity.min, 2)}–${fixed(humidity.max, 2)}%`} />}
           </div>
-          <p className="mars-data-note">Observation window: {dateRange(latest)}. Wind and dust values are not included in these products.</p>
+          <p className="mars-data-note">Observation window: {dateRange(latest)}.</p>
+          <OptionalVariable label="Wind" value={latest.variables.wind} />
+          <OptionalVariable label="Dust" value={latest.variables.dust} />
           <footer><a href={conditions?.source.url} target="_blank" rel="noreferrer">{conditions?.source.instrument} · {conditions?.source.mission}</a> · Sol {latest.sol} · PDS release {conditions?.source.release} · DOI {conditions?.source.doi}</footer>
         </> : <p className="mars-data-note">MEDA conditions data is unavailable.</p>}
       </article>
@@ -71,7 +140,7 @@ export default function MarsDataScreen({ data, error, conditions }: Props) {
             const temp = stats(sol.variables.air_temperature)
             const press = stats(sol.variables.pressure)
             const rh = stats(sol.variables.relative_humidity)
-            return <tr key={sol.sol}><td><strong>{sol.sol}</strong><small>{dateRange(sol)}</small></td><td>{temp ? fahrenheit(temp.mean) : '—'}</td><td>{press ? `${press.mean.toFixed(1)} Pa` : '—'}</td><td>{rh ? `${rh.mean.toFixed(2)}%` : '—'}</td></tr>
+            return <tr key={sol.sol}><td><strong>{sol.sol}</strong><small>{dateRange(sol)}</small></td><td>{temp ? temperatureText(temp.mean, unit) : '—'}</td><td>{press ? `${fixed(press.mean, 1)} Pa` : '—'}</td><td>{rh ? `${fixed(rh.mean, 2)}%` : '—'}</td></tr>
           })}</tbody>
         </table><footer><a href={conditions.source.url} target="_blank" rel="noreferrer">{conditions.source.instrument} · {conditions.source.mission}</a> · {conditions.source.release} · DOI {conditions.source.doi}</footer></div> : <p className="mars-data-note">No MEDA sol records are available.</p>}
       </article>
@@ -100,5 +169,6 @@ export default function MarsDataScreen({ data, error, conditions }: Props) {
         <footer>Layer products available in the map. Dates and resolutions are shown only when present in product metadata.</footer>
       </article>
     </div>
+    <Credits />
   </section>
 }

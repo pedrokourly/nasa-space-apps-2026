@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import L from 'leaflet'
 import { findHabitat, loadData, type AppData, type DataSources } from './lib/loadData'
 import MapView from './map/MapView'
@@ -12,6 +12,7 @@ import RouteController from './routing/RouteController'
 import RouteLayer from './map/RouteLayer'
 import RouteMarkers from './map/RouteMarkers'
 import RouteSummary from './ui/RouteSummary'
+import { RESERVE_NOTE } from './ui/reserveNote'
 import SimulationLayer from './map/SimulationLayer'
 import SimulationControl from './ui/SimulationControl'
 import TileHealth from './map/TileHealth'
@@ -28,7 +29,11 @@ import ProvenanceBadge, { Legend } from './ui/ProvenanceBadge'
 import { LAYERS } from './map/layers'
 import type { LayerId, Conditions } from './types/contract'
 import MarsDataScreen from './ui/MarsDataScreen'
+import { Button } from './ui/kit'
+import { ChevronDownIcon, CloseIcon, InfoIcon, LayersIcon, LocateIcon, MaximizeIcon, NavigationIcon, RouteIcon, SlopeIcon, ThermometerIcon } from './ui/icons'
+import { PHONE_QUERY, useLayoutVar, useMediaQuery } from './ui/layoutVars'
 import './ui/PlannerShell.css'
+import './ui/kit.css'
 
 const ThreeDView = lazy(() => import('./three-d/ThreeDView'))
 const DATA_SOURCES: DataSources = { meta: 'real', targets: 'real', missions: 'real' }
@@ -51,6 +56,12 @@ export default function App() {
   const [tab, setTab] = useState<AppTab>('planning')
   const [activeTool, setActiveTool] = useState<ToolId | null>(null)
   const [selectedSourceLayer, setSelectedSourceLayer] = useState<LayerId | null>(null)
+  /** Top (px, inside the map area) of the layer button whose source panel is open: the panel opens beside it. */
+  const [sourcePanelTop, setSourcePanelTop] = useState<number | null>(null)
+  /** 3D view: the camera follows the astronaut during the EVA (toggled by "Follow astronaut"). */
+  const [follow3d, setFollow3d] = useState(true)
+  const headerRef = useRef<HTMLElement>(null)
+  useLayoutVar(headerRef, 'header')
   const [mapInstance, setMapInstance] = useState<L.Map | null>(null)
   const [recenterIndicator, setRecenterIndicator] = useState({ centered: false, rotation: 0 })
   const route = useAppStore((state) => state.route)
@@ -86,9 +97,13 @@ export default function App() {
     }).catch(() => { setConditions(null); setLatestSol(null) })
   }, [])
 
-  useEffect(() => {
+  // Selecting a target closes the source panel. Adjusted during render (not in an effect) to avoid
+  // an extra render pass.
+  const [prevTargetId, setPrevTargetId] = useState(selectedTargetId)
+  if (prevTargetId !== selectedTargetId) {
+    setPrevTargetId(selectedTargetId)
     if (selectedTargetId) setSelectedSourceLayer(null)
-  }, [selectedTargetId])
+  }
 
   useEffect(() => {
     if (!mapInstance) return
@@ -171,14 +186,14 @@ export default function App() {
   const panelTool = activeTool
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <a className="app-brand" href="#map-area" aria-label="Martian Map home">
+    <div className={`app${simulationStatus !== 'idle' ? ' app--eva' : ''}`}>
+      <header className="app-header" ref={headerRef}>
+        <a className="app-brand" href="#map-area" aria-label="Mars Route Planner home">
           <span className="app-brand__mark" aria-hidden="true"><svg className="mars-icon" viewBox="0 0 32 32"><defs><linearGradient id="marsSurface" x1="3" y1="5" x2="29" y2="28" gradientUnits="userSpaceOnUse"><stop stopColor="#ffb13b"/><stop offset=".52" stopColor="#ff641d"/><stop offset="1" stopColor="#c92b25"/></linearGradient><clipPath id="marsSurfaceClip"><circle cx="16" cy="16" r="14"/></clipPath></defs><circle className="mars-icon__planet" cx="16" cy="16" r="14"/><g clipPath="url(#marsSurfaceClip)" fill="#9f2028" opacity=".86"><path d="M-2 7c5-2 9-2 13 0 3 2 7 2 11 0 4-2 8-2 12 0v4c-5 2-9 2-13 0-3-2-7-2-11 0-4 2-8 2-12 0V7Z"/><path d="M-1 15c5-2 9-2 13 0 3 2 7 2 11 0 4-2 8-2 11 0v4c-5 2-9 2-13 0-3-2-7-2-11 0-4 2-8 2-12 0v-4Z"/><path d="M-1 23c5-2 9-2 13 0 3 2 7 2 11 0 4-2 8-2 11 0v4c-5 2-9 2-13 0-3-2-7-2-11 0-4 2-8 2-12 0v-4Z"/></g><circle cx="10" cy="11" r="1.25" fill="#ffd17a"/><circle cx="21" cy="21" r="1.6" fill="#ffd17a"/><circle cx="23" cy="11" r=".8" fill="#ffd17a"/></svg></span>
-          <span><strong>Martian Map</strong><small>Jezero crater · EVA planner</small></span>
+          <span><strong>Mars Route Planner</strong><small>Jezero crater · EVA planner</small></span>
         </a>
         <nav className="app-tabs" aria-label="Application views">
-          <button className={`app-tab ${tab === 'planning' ? 'app-tab--active' : ''}`} type="button" aria-pressed={tab === 'planning'} onClick={() => setTab('planning')}>◎ <span>Planning</span></button>
+          <button className={`app-tab ${tab === 'planning' ? 'app-tab--active' : ''}`} type="button" aria-pressed={tab === 'planning'} onClick={() => setTab('planning')}><RouteIcon /><span>Planning</span></button>
           <button className={`app-tab ${tab === 'mars-data' ? 'app-tab--active' : ''}`} type="button" aria-pressed={tab === 'mars-data'} onClick={() => { setTab('mars-data'); setActiveTool(null) }}><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14 14.8V5a3 3 0 0 0-6 0v9.8a5 5 0 1 0 6 0Z"/><path d="M11 8v9"/><circle cx="11" cy="19" r="1.7"/></svg><span>Conditions</span></button>
         </nav>
         <div className="app-status"><span className="app-readout"><small>Latest MEDA sol</small><strong>{latestSol !== null ? `SOL ${latestSol}` : 'SOL —'}</strong></span><ViewToggle view={view} onChange={setView} /></div>
@@ -186,15 +201,22 @@ export default function App() {
 
       {tab === 'planning' && view === '2d' && <>
         <nav className="map-toolbar" aria-label="Map tools">
-          <button type="button" aria-label="Region information" aria-pressed={activeTool === 'info'} className={activeTool === 'info' ? 'is-active' : ''} onClick={chooseTool}><span aria-hidden="true">ⓘ</span></button>
-          <div className="map-toolbar__sources" role="group" aria-label="Map data sources">{SOURCE_LAYERS.map((layer) => <button key={layer.id} type="button" aria-label={`Toggle ${layer.label} layer`} aria-pressed={activeLayers.includes(layer.id)} className={`${activeLayers.includes(layer.id) ? 'is-active' : ''}${selectedSourceLayer === layer.id ? ' is-selected' : ''}`} onClick={() => { toggleLayer(layer.id); selectTarget(null); setSelectedSourceLayer((current) => current === layer.id ? null : layer.id); setActiveTool(null) }}><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">{layer.icon === 'temperature' ? <><path d="M14 14.8V5a3 3 0 0 0-6 0v9.8a5 5 0 1 0 6 0Z"/><path d="M11 8v9"/><circle cx="11" cy="19" r="1.7"/></> : layer.icon === 'slope' ? <><path d="M3 20 10 7l4 7 3-5 4 11H3Z"/><path d="m7 17 4-3 3 2 4-5"/></> : <><path d="M3 19c3-1 4-6 8-6s5 4 10 2"/><path d="M4 14c3-1 4-5 8-5 3 0 4 2 7 1"/><path d="M6 8c2-.7 3-3 6-3 2 0 3 1 5 1"/></>}</svg></button>)}</div>
-          <button type="button" aria-label="Full screen" title="Full screen" onClick={() => { if (document.fullscreenElement) void document.exitFullscreen(); else void document.documentElement.requestFullscreen().catch(() => undefined) }}><span aria-hidden="true">⛶</span></button>
+          <Button variant="ghost" size="icon" aria-label="Region information" title="Region information" aria-pressed={activeTool === 'info'} onClick={chooseTool}><InfoIcon /></Button>
+          <div className="map-toolbar__sources" role="group" aria-label="Map data sources">{SOURCE_LAYERS.map((layer) => <Button key={layer.id} variant="ghost" size="icon" aria-label={`Toggle ${layer.label} layer`} title={layer.label} aria-pressed={activeLayers.includes(layer.id)} className={selectedSourceLayer === layer.id ? 'is-selected' : undefined} onClick={(event) => { const host = document.getElementById('map-area')?.getBoundingClientRect().top ?? 0; setSourcePanelTop(event.currentTarget.getBoundingClientRect().top - host); toggleLayer(layer.id); selectTarget(null); setSelectedSourceLayer((current) => current === layer.id ? null : layer.id); setActiveTool(null) }}>{layer.icon === 'temperature' ? <ThermometerIcon /> : layer.icon === 'slope' ? <SlopeIcon /> : <LayersIcon />}</Button>)}</div>
+          <Button variant="ghost" size="icon" aria-label="Full screen" title="Full screen" onClick={() => { if (document.fullscreenElement) void document.exitFullscreen(); else void document.documentElement.requestFullscreen().catch(() => undefined) }}><MaximizeIcon /></Button>
         </nav>
       </>}
 
       <main id="map-area" className="map-area" aria-label="Map area">
         {view === '3d' && tab === 'planning' ? (
-          <Suspense fallback={<div className="three-d-loading">Loading 3D view…</div>}><ThreeDView targets={data?.targets ?? null} /><SimulationControl /></Suspense>
+          <Suspense fallback={<div className="three-d-loading">Loading 3D view…</div>}><ThreeDView targets={data?.targets ?? null} follow={follow3d} /><div className="dock-stack">
+            {/* The 3D counterpart of the 2D "Recenter": the camera follows the astronaut during the EVA. */}
+            {route && route.geometry.coordinates.length >= 2 && <Button variant="secondary" size="lg" className="map-recenter three-d__follow" aria-pressed={follow3d} title={follow3d ? 'The camera follows the astronaut during the EVA' : 'Free camera: press to follow the astronaut'} onClick={() => setFollow3d((value) => !value)}>
+              <span className="map-recenter__icon"><LocateIcon /></span>
+              <span className="map-recenter__label">Follow astronaut</span>
+            </Button>}
+            <div className="eva-dock eva-dock--idle eva-dock--3d"><SimulationControl /></div>
+          </div></Suspense>
         ) : (
           <MapView onReady={setMapInstance}>
             <LayerManager />
@@ -208,7 +230,7 @@ export default function App() {
             <TileLoading />
             <DataStatus loading={!data && !error} error={error} />
             <FixedLayersBadge />
-            {data && selectedSourceLayer && activeLayers.includes(selectedSourceLayer) && <div className="map-layer-legends"><div className="map-layer-legends__heading"><strong>{SOURCE_LAYERS.find((layer) => layer.id === selectedSourceLayer)?.label} source</strong><button type="button" aria-label="Close source panel" onClick={() => setSelectedSourceLayer(null)}>×</button></div><ProvenanceBadge activeLayers={[selectedSourceLayer]} missions={data.missions} /></div>}
+            {data && selectedSourceLayer && activeLayers.includes(selectedSourceLayer) && <div className="map-layer-legends ui-card" style={sourcePanelTop !== null ? { ['--source-top' as string]: `${sourcePanelTop}px` } : undefined}><div className="map-layer-legends__heading"><strong>{SOURCE_LAYERS.find((layer) => layer.id === selectedSourceLayer)?.label} source</strong><Button variant="ghost" size="icon" className="map-layer-legends__close" aria-label="Close source panel" onClick={() => setSelectedSourceLayer(null)}><CloseIcon /></Button></div><ProvenanceBadge activeLayers={[selectedSourceLayer]} missions={data.missions} /></div>}
             <ActiveLayerLegends activeLayers={activeLayers} recenterElevated={simulationStatus !== 'idle'} />
             <PlanningAreaFocus meta={data?.meta ?? null} />
             <WaypointsLayer meta={data?.meta ?? null} />
@@ -219,7 +241,7 @@ export default function App() {
         {tab === 'planning' && view === '2d' && <>
           <button
             type="button"
-            className={`map-recenter${recenterIndicator.centered ? ' map-recenter--centered' : ''}${simulationStatus !== 'idle' ? ' map-recenter--eva-active' : ''}`}
+            className={`ui-btn ui-btn--secondary ui-btn--lg map-recenter${recenterIndicator.centered ? ' map-recenter--centered' : ''}${simulationStatus !== 'idle' ? ' map-recenter--eva-active' : ''}`}
             title="Recenter on habitat"
             aria-label={recenterIndicator.centered ? 'Map centered on habitat' : 'Recenter on habitat'}
             data-centered={recenterIndicator.centered}
@@ -228,7 +250,7 @@ export default function App() {
             className="map-recenter__icon"
             style={{ transform: `rotate(${recenterIndicator.rotation}deg)` }}
             aria-hidden="true"
-          ><svg viewBox="0 0 24 24" focusable="false"><path d="M12 2 4 21l8-4 8 4L12 2Z" /><path d="M12 17V8" /></svg></span>
+          ><NavigationIcon /></span>
             <span className="map-recenter__label">Recenter</span>
           </button>
         </>}
@@ -251,8 +273,8 @@ function ToolPanel({ data, selectedTarget, onSelectTarget, onClose }: {
   onClose: () => void
 }) {
   return (
-    <aside className="tool-panel" aria-label="Region information">
-      <div className="tool-panel__heading"><div><span className="tool-panel__eyebrow">JEZERO CRATER</span><h2>Region information</h2></div><button type="button" aria-label="Close panel" onClick={onClose}>×</button></div>
+    <aside className="tool-panel ui-card" aria-label="Region information">
+      <div className="tool-panel__heading"><div><span className="tool-panel__eyebrow">JEZERO CRATER</span><h2>Region information</h2></div><Button variant="ghost" size="icon" className="tool-panel__close" aria-label="Close panel" onClick={onClose}><CloseIcon /></Button></div>
       <p>Science targets and their source missions for the current map area.</p><div className="tool-target-list">{data?.targets.features.map((feature) => <button key={feature.properties.id} type="button" onClick={() => onSelectTarget(feature.properties.id)}><strong>{feature.properties.name}</strong><span>{feature.properties.why}</span></button>)}</div>{selectedTarget && <p className="tool-panel__selected">Selected: {selectedTarget.properties.name}</p>}
     </aside>
   )
@@ -279,13 +301,34 @@ function RouteMetricsBar({ values, waypointCount }: { values: { distance: string
   const remainingO2 = plannedO2 === undefined ? null : Math.max(0, o2Budget - plannedO2)
   const metrics = [
     { icon: '◉', label: 'O₂ consumed', value: `${snapshot?.o2_used_kg.toFixed(2) ?? plannedO2?.toFixed(2) ?? '—'} kg`, best: bestFor('oxygen') },
-    { icon: '▣', label: 'O₂ remaining', value: live ? `${snapshot.o2_left_kg.toFixed(2)} kg` : remainingO2 === null ? '—' : `${remainingO2.toFixed(2)} kg`, best: bestFor('oxygen') },
+    { icon: '▣', label: 'O₂ remaining', value: live ? `${snapshot.o2_left_kg.toFixed(2)} kg` : remainingO2 === null ? '—' : `${remainingO2.toFixed(2)} kg`, note: RESERVE_NOTE, best: bestFor('oxygen') },
     { icon: '◷', label: live ? 'Elapsed time' : 'Estimated time', value: live ? formatElapsed(snapshot.elapsed_s) : path ? `${Math.round((path.time_s.at(-1) ?? 0) / 60)} min` : '—', best: bestFor('time') },
     { icon: '⌁', label: 'Distance walked', value: live ? formatDistance(snapshot.dist_m) : path ? formatDistance(path.dist_m.at(-1) ?? 0) : `${waypointCount} points`, best: bestFor('distance') },
     { icon: '△', label: 'Elevation gain', value: values ? `+${Math.round(values.elevation)} m` : '—', best: false },
   ]
   if (!live) return <div className="eva-dock eva-dock--idle"><SimulationControl /></div>
-  return <footer className="route-metrics route-metrics--live" aria-label="Live EVA metrics">{metrics.map((metric) => <div className={`route-metric${metric.best ? ' route-metric--best' : ''}`} key={metric.label}><span className="route-metric__icon" aria-hidden="true">{metric.icon}</span><span><small>{metric.label}</small><strong>{metric.value}</strong></span></div>)}<div className="route-metrics__eva"><SimulationControl /></div></footer>
+  return <LiveMetrics metrics={metrics} />
+}
+
+type Metric = { icon: string; label: string; value: string; note?: string; best: boolean }
+
+/**
+ * EVA metrics bar while the simulation runs. On phones it is collapsible: collapsed it keeps the
+ * O₂ remaining and the elapsed time (plus the EVA controls); "All metrics" shows the rest.
+ * Its height is published as --eva-bar-* so Recenter and the tool bar stay above it.
+ */
+function LiveMetrics({ metrics }: { metrics: Metric[] }) {
+  const ref = useRef<HTMLElement>(null)
+  const phone = useMediaQuery(PHONE_QUERY)
+  const [expanded, setExpanded] = useState(false)
+  useLayoutVar(ref, 'eva-bar', [expanded, phone])
+  const compact = phone && !expanded
+  const shown = compact ? metrics.filter((m) => m.label === 'O₂ remaining' || m.label === 'Elapsed time') : metrics
+  return <footer ref={ref} className={`route-metrics route-metrics--live${compact ? ' route-metrics--compact' : ''}`} aria-label="EVA simulation metrics">
+    {shown.map((metric) => <div className={`route-metric${metric.best ? ' route-metric--best' : ''}`} key={metric.label}><span className="route-metric__icon" aria-hidden="true">{metric.icon}</span><span><small>{metric.label}</small><strong>{metric.value}</strong>{metric.note && <small className="route-metric__note">{metric.note}</small>}</span></div>)}
+    {phone && <Button variant="ghost" size="sm" className="route-metrics__toggle" aria-expanded={expanded} onClick={() => setExpanded((value) => !value)}>{expanded ? 'Fewer metrics' : 'All metrics'}<ChevronDownIcon /></Button>}
+    <div className="route-metrics__eva"><SimulationControl /></div>
+  </footer>
 }
 
 function FixedLayersBadge() {

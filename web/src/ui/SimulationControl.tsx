@@ -3,6 +3,7 @@ import { useSimulationStore } from '../state/simulationStore'
 import { useActivePlan, useSimulationClock, useSimulationPath, useSimulationSnapshot } from '../routing/useSimulation'
 import { SIM_PLAN_LABELS, type SimPlan } from '../routing/simulation'
 import { ESTIMATE_LABEL } from '../routing/estimateText'
+import { Button, Select } from './kit'
 import './SimulationControl.css'
 
 /** EVA plan picker and lifecycle controls, embedded in the route dock. */
@@ -24,16 +25,16 @@ export default function SimulationControl() {
   return (
     <div className="eva-controls" role="group" aria-label="EVA route controls">
       <label className="eva-controls__plan">
-        <span>Select route</span>
-        <select aria-label="Select EVA route plan" value={plan} disabled={!hasRoute || plans.length < 2} onChange={(event) => setPlan(event.target.value as SimPlan)}>
+        <span className="ui-label">Select route</span>
+        <Select aria-label="Select EVA route plan" value={plan} disabled={!hasRoute || plans.length < 2} onChange={(event) => setPlan(event.target.value as SimPlan)}>
           {(plans.length ? plans : ['route' as SimPlan]).map((option) => <option key={option} value={option}>{SIM_PLAN_LABELS[option]}</option>)}
-        </select>
+        </Select>
       </label>
       <div className="eva-controls__buttons">
-        {(status === 'idle' || status === 'finished') && <button className="eva-controls__start" type="button" onClick={start} disabled={!hasRoute}>{status === 'finished' ? 'Restart EVA' : 'Start EVA'}</button>}
-        {status === 'running' && <button className="eva-controls__pause" type="button" onClick={pause}>Pause</button>}
-        {status === 'paused' && <button className="eva-controls__pause" type="button" onClick={resume}>Resume</button>}
-        {status !== 'idle' && <button className="eva-controls__reset" type="button" onClick={reset}>Reset</button>}
+        {(status === 'idle' || status === 'finished') && <Button size="lg" onClick={start} disabled={!hasRoute}>{status === 'finished' ? 'Restart EVA' : 'Start EVA'}</Button>}
+        {status === 'running' && <Button variant="secondary" onClick={pause}>Pause</Button>}
+        {status === 'paused' && <Button variant="secondary" onClick={resume}>Resume</Button>}
+        {status !== 'idle' && <Button variant="outline" onClick={reset}>Reset</Button>}
       </div>
       {status !== 'idle' && <div className="eva-controls__progress" role="progressbar" aria-label="EVA route progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress)}><span style={{ width: `${progress}%` }} /></div>}
       {snapshot?.pastPointOfNoReturn && status !== 'idle' && <p className="eva-controls__warning" role="alert">NO-GO: point of no return passed. Remaining O₂ does not cover the return estimate.</p>}

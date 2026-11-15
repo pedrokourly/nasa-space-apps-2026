@@ -1,5 +1,7 @@
 import { useAppStore } from '../state/store';
 import { isExactOrder, MAX_ORDER_STOPS } from '../routing/core/stopOrder';
+import { Button } from './kit';
+import { SortIcon } from './icons';
 
 /** Notice shown when the best order comes from the heuristic (more than `MAX_ORDER_STOPS` stops). */
 export const HEURISTIC_ORDER_NOTICE = `More than ${MAX_ORDER_STOPS} stops: Best order uses a heuristic and does not guarantee the best order.`;
@@ -29,9 +31,10 @@ export default function BestOrderControl() {
 
   return (
     <>
-      <button type="button" disabled={!canReorder} title={hint} onClick={requestBestOrder}>
+      <Button size="sm" disabled={!canReorder} title={hint} onClick={requestBestOrder}>
+        <SortIcon />
         Best order
-      </button>
+      </Button>
       {!exact && <p className="sim-control__order-note">{HEURISTIC_ORDER_NOTICE}</p>}
     </>
   );

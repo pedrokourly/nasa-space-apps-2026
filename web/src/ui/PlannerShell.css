@@ -280,6 +280,11 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* "includes the 10% reserve" under O₂ remaining: the verdict only plans on 90% of the supply. */
+.route-metric small.route-metric__note {
+  color: #ffb300;
+  font-size: 9px;
+}
 .route-metrics__action {
   display: flex;
   align-items: center;
@@ -369,6 +374,16 @@
   margin: 0;
   font-size: 13px;
 }
+/* Desktop: the tool bar sits right under the BASE LAYERS badge (top-left zone), so the route card
+   at the bottom left never runs into it. Phones and tablets keep their own placement below. */
+@media (min-width: 901px) {
+  .map-toolbar { top: 126px; bottom: auto; transform: none; }
+}
+/* Tablets: under the taller header and the steps panel, clear of the route card. */
+@media (min-width: 601px) and (max-width: 900px) {
+  .map-toolbar { top: 180px; bottom: auto; transform: none; }
+}
+
 .mars-data-card__fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

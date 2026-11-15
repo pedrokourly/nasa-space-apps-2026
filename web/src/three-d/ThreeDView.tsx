@@ -20,10 +20,14 @@ import {
 import { COLOR_WALKED, createSimOverlay, type SimOverlay } from './simulationScene'
 import { useSimulationStore } from '../state/simulationStore'
 import { useSimulationPath, useSimulationSnapshot } from '../routing/useSimulation'
+import { Badge } from '../ui/kit'
+import { ChevronDownIcon } from '../ui/icons'
 import './ThreeDView.css'
 
 interface Props {
   targets: TargetsCollection | null
+  /** The camera follows the astronaut while the EVA runs (the "Follow astronaut" button in App). */
+  follow: boolean
 }
 
 function messageOf(e: unknown): string {
@@ -36,7 +40,7 @@ function messageOf(e: unknown): string {
  * 3D view of the route over the real relief of Jezero (Cesium + Cesium Mars). Read-only: it only
  * reads `route`, `waypoints` and the targets, it never edits them. Loaded lazily by `App`.
  */
-export default function ThreeDView({ targets }: Props) {
+export default function ThreeDView({ targets, follow }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [scene, setScene] = useState<MarsScene | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -48,7 +52,6 @@ export default function ThreeDView({ targets }: Props) {
   const route = useAppStore((s) => s.route)
   const waypoints = useAppStore((s) => s.waypoints)
   const [drawn, setDrawn] = useState<DrawnScene | null>(null)
-  const [follow, setFollow] = useState(true)
   const [legendOpen, setLegendOpen] = useState(
     () => typeof window === 'undefined' || window.innerWidth > 800,
   )
@@ -161,9 +164,9 @@ export default function ThreeDView({ targets }: Props) {
               onClick={() => setLegendOpen((o) => !o)}
             >
               <span>3D route</span>
-              <span className="three-d__chip">Relief ×{VERTICAL_EXAGGERATION}</span>
-              <span className="three-d__chevron" aria-hidden="true">
-                {legendOpen ? '▾' : '▸'}
+              <Badge variant="outline">Relief ×{VERTICAL_EXAGGERATION}</Badge>
+              <span className={`three-d__chevron${legendOpen ? ' three-d__chevron--open' : ''}`}>
+                <ChevronDownIcon />
               </span>
             </button>
             {legendOpen && (
@@ -174,35 +177,26 @@ export default function ThreeDView({ targets }: Props) {
                   <span><i style={{ background: SLOPE_COLORS.moderate }} />{`${SLOPE_MODERATE_DEG}–${SLOPE_STEEP_DEG}°`}</span>
                   <span><i style={{ background: SLOPE_COLORS.steep }} />{`> ${SLOPE_STEEP_DEG}°`}</span>
                 </div>
-                {(route?.properties.return_path || route?.properties.return_to_start?.return_path) && (
+                {hasRoute && (
                   <>
-                    <div className="three-d__legend-section">Ways back (estimate)</div>
+                    {/* One list: the ways back (estimates) and the part of the EVA already walked. */}
+                    <div className="three-d__legend-section">Ways back and EVA</div>
                     {route?.properties.return_path && (
                       <div className="three-d__legend-row">
                         <span className="three-d__swatch three-d__swatch--dashed" style={{ color: COLOR_RETURN_HABITAT }} />
-                        To habitat
+                        To habitat (estimate)
                       </div>
                     )}
                     {route?.properties.return_to_start?.return_path && (
                       <div className="three-d__legend-row">
                         <span className="three-d__swatch three-d__swatch--dotted" style={{ color: COLOR_RETURN_START }} />
-                        To start
+                        To start (estimate)
                       </div>
                     )}
-                  </>
-                )}
-                {hasRoute && (
-                  <>
-                    <div className="three-d__legend-section">EVA simulation</div>
                     <div className="three-d__legend-row">
                       <span className="three-d__swatch" style={{ background: COLOR_WALKED }} />
                       Walked so far
                     </div>
-                    <label className="three-d__switch">
-                      <input type="checkbox" checked={follow} onChange={(e) => setFollow(e.target.checked)} />
-                      <span className="three-d__switch-track" aria-hidden="true" />
-                      Camera follows astronaut
-                    </label>
                   </>
                 )}
                 <div className="three-d__legend-source">Relief: Cesium Mars (Cesium ion)</div>

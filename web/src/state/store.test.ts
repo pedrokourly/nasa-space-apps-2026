@@ -16,9 +16,21 @@ describe('store', () => {
     expect(s().waypoints[1]).toEqual([77.39, 18.47]);
     s().moveWaypoint(9, [0, 0]);
     expect(s().waypoints).toHaveLength(2);
-    s().removeWaypoint(0);
-    expect(s().waypoints).toEqual([[77.39, 18.47]]);
     s().setWaypoints([]);
+    expect(s().waypoints).toEqual([]);
+  });
+
+  it('removing a point from a 3-point route leaves the other 2', () => {
+    const s = () => useAppStore.getState();
+    s().setWaypoints([[77.45, 18.44], [77.4, 18.46], [77.39, 18.47]]);
+    s().removeWaypoint(1);
+    expect(s().waypoints).toEqual([[77.45, 18.44], [77.39, 18.47]]);
+  });
+
+  it('removing a point from a 2-point route clears the list (a start alone is not a route)', () => {
+    const s = () => useAppStore.getState();
+    s().setWaypoints([[77.45, 18.44], [77.39, 18.47]]);
+    s().removeWaypoint(0);
     expect(s().waypoints).toEqual([]);
   });
 

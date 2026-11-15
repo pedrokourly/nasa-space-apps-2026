@@ -1,13 +1,7 @@
 .eva-controls { display: flex; min-width: 0; flex-direction: column; gap: 6px; }
-.eva-controls__plan { display: flex; min-width: 0; align-items: center; gap: 6px; color: #9ea6b1; font-size: 9px; }
-.eva-controls__plan span { flex: 0 0 auto; }
-.eva-controls__plan select { width: 100%; min-width: 0; padding: 5px 7px; border: 1px solid rgb(255 255 255 / 14%); border-radius: 7px; background: #171b21; color: #e7e9ed; font: inherit; font-size: 10px; }
-.eva-controls__buttons { display: flex; gap: 6px; }
-.eva-controls__buttons button { display: inline-flex; min-width: 0; min-height: 38px; flex: 1 1 auto; align-items: center; justify-content: center; padding: 0 10px; border: 1px solid rgb(255 146 42 / 52%); border-radius: 9px; background: linear-gradient(135deg, #e9680c, #ff922a); color: #fff; font-size: 11px; font-weight: 750; white-space: nowrap; cursor: pointer; }
-.eva-controls__buttons .eva-controls__pause, .eva-controls__buttons .eva-controls__reset { min-height: 30px; flex: 0 1 auto; border-color: rgb(255 255 255 / 14%); background: #1a1f26; color: #dce1e7; font-size: 10px; }
-.eva-controls__buttons .eva-controls__pause { border-color: rgb(255 176 63 / 42%); color: #ffba5b; }
-.eva-controls__buttons button:disabled { opacity: .45; cursor: not-allowed; }
-.eva-controls__buttons button:focus-visible, .eva-controls__plan select:focus-visible { outline: 2px solid #ff8a2b; outline-offset: 2px; }
+/* Buttons and the plan select use the UI kit (kit.css: .ui-btn, .ui-select, .ui-label). */
+.eva-controls__plan { display: flex; min-width: 0; flex-direction: column; align-items: stretch; gap: 6px; }
+.eva-controls__buttons { display: flex; gap: 8px; }
 .eva-controls__progress { height: 4px; overflow: hidden; border-radius: 4px; background: rgb(255 255 255 / 12%); }
 .eva-controls__progress span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #ff7a18, #ffc05a); box-shadow: 0 0 8px rgb(255 138 43 / 60%); transition: width 180ms linear; }
 .eva-controls__warning { margin: 0; padding: 6px 8px; border: 1px solid rgb(255 91 73 / 50%); border-radius: 8px; background: rgb(91 24 22 / 65%); color: #ffb3aa; font-size: 10px; line-height: 1.35; }
