@@ -17,7 +17,6 @@ import SimulationControl from './ui/SimulationControl'
 import TileHealth from './map/TileHealth'
 import TileLoading from './map/TileLoading'
 import DataStatus from './ui/DataStatus'
-import CopyRouteLink from './ui/CopyRouteLink'
 import { useRouteHashSync } from './state/useRouteHashSync'
 import ViewToggle,{ type ViewMode } from './ui/ViewToggle'
 
@@ -62,7 +61,6 @@ export default function App() {
             <SimulationLayer />
             <RouteSummary />
             <SimulationControl />
-            <CopyRouteLink />
             <TileHealth />
             <TileLoading />
             <DataStatus loading={!data && !error} error={error} />
