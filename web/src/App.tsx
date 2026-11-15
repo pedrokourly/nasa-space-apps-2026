@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
-import type L from 'leaflet'
+import L from 'leaflet'
 import { loadData, type AppData, type DataSource, type DataSources } from './lib/loadData'
 import MapView from './map/MapView'
 import TargetsLayer from './map/TargetsLayer'
@@ -24,16 +24,15 @@ import './ui/PlannerShell.css'
 const ThreeDView = lazy(() => import('./three-d/ThreeDView'))
 const DATA_SOURCES: DataSources = { meta: 'real', targets: 'real', missions: 'real' }
 const label = (source: DataSource) => (source === 'real' ? 'REAL DATA' : 'MOCK')
-const HABITAT: L.LatLngTuple = [18.44463, 77.45089]
+const JEZERO_OVERVIEW: L.LatLngTuple = [18.45, 77.43]
 
 type AppTab = 'planning' | 'mars-data'
-type ToolId = 'layers' | 'location' | 'terrain' | 'info' | 'risks' | 'route'
+type ToolId = 'layers' | 'terrain' | 'info' | 'risks' | 'route'
 type ToolButtonId = ToolId | 'home' | 'fullscreen'
 
 const TOOLS: { id: ToolButtonId; icon: string; label: string }[] = [
-  { id: 'home', icon: '⌂', label: 'Center on habitat' },
+  { id: 'home', icon: '⌂', label: 'Reset Jezero map view' },
   { id: 'layers', icon: '▱', label: 'Map layers' },
-  { id: 'location', icon: '⌖', label: 'Location' },
   { id: 'terrain', icon: '△', label: 'Terrain and relief' },
   { id: 'info', icon: 'ⓘ', label: 'Region information' },
   { id: 'fullscreen', icon: '⛶', label: 'Full screen' },
@@ -47,16 +46,62 @@ export default function App() {
   const [view, setView] = useState<ViewMode>('2d')
   const [tab, setTab] = useState<AppTab>('planning')
   const [activeTool, setActiveTool] = useState<ToolId | null>(null)
+  const [hoveredTool, setHoveredTool] = useState<'terrain' | 'risks' | null>(null)
   const [mapInstance, setMapInstance] = useState<L.Map | null>(null)
+  const [recenterIndicator, setRecenterIndicator] = useState({ centered: false, rotation: 0 })
   const route = useAppStore((state) => state.route)
   const waypoints = useAppStore((state) => state.waypoints)
   const activeLayers = useAppStore((state) => state.activeLayers)
   const selectedTargetId = useAppStore((state) => state.selectedTargetId)
   const selectTarget = useAppStore((state) => state.selectTarget)
+  const planningAreaCenter = useMemo(() => {
+    const bbox = data?.meta.bbox
+    return bbox
+      ? [(bbox[1] + bbox[3]) / 2, (bbox[0] + bbox[2]) / 2] as L.LatLngTuple
+      : JEZERO_OVERVIEW
+  }, [data?.meta.bbox])
 
   useEffect(() => {
     loadData(DATA_SOURCES).then(setData, (e: unknown) => setError(e instanceof Error ? e.message : String(e)))
   }, [])
+
+  useEffect(() => {
+    if (!mapInstance) return
+    const updateIndicator = () => {
+      const target = mapInstance.latLngToContainerPoint(planningAreaCenter)
+      const center = mapInstance.getSize().divideBy(2)
+      const dx = target.x - center.x
+      const dy = target.y - center.y
+      const centered = Math.hypot(dx, dy) < 4
+      setRecenterIndicator({
+        centered,
+        rotation: centered ? 0 : (Math.atan2(dy, dx) * 180) / Math.PI + 90,
+      })
+    }
+    updateIndicator()
+    mapInstance.on('move zoomend resize', updateIndicator)
+    return () => {
+      mapInstance.off('move zoomend resize', updateIndicator)
+    }
+  }, [mapInstance, planningAreaCenter])
+
+  useEffect(() => {
+    if (!mapInstance) return
+    let resizeFrame = 0
+    const invalidateMapSize = () => {
+      window.cancelAnimationFrame(resizeFrame)
+      resizeFrame = window.requestAnimationFrame(() => {
+        mapInstance.invalidateSize({ pan: false, debounceMoveend: true })
+      })
+    }
+    window.addEventListener('resize', invalidateMapSize)
+    document.addEventListener('fullscreenchange', invalidateMapSize)
+    return () => {
+      window.cancelAnimationFrame(resizeFrame)
+      window.removeEventListener('resize', invalidateMapSize)
+      document.removeEventListener('fullscreenchange', invalidateMapSize)
+    }
+  }, [mapInstance])
 
   const selectedTarget = useMemo(
     () => data?.targets.features.find((feature) => feature.properties.id === selectedTargetId),
@@ -72,7 +117,7 @@ export default function App() {
 
   const chooseTool = (tool: ToolButtonId) => {
     if (tool === 'home') {
-      mapInstance?.setView(HABITAT, 12)
+      mapInstance?.setView(JEZERO_OVERVIEW, 10)
       setActiveTool(null)
       return
     }
@@ -81,17 +126,16 @@ export default function App() {
       else void document.documentElement.requestFullscreen().catch(() => undefined)
       return
     }
-    if (tool === 'location') mapInstance?.setView(HABITAT, 12)
     if (tool === 'terrain') {
       const enabled = activeLayers.includes('mola') || activeLayers.includes('slope')
       setLayersEnabled(['mola', 'slope'], !enabled)
-      setActiveTool(enabled ? null : 'terrain')
+      setActiveTool(null)
       return
     }
     if (tool === 'risks') {
       const enabled = activeLayers.includes('slope')
       setLayersEnabled(['slope'], !enabled)
-      setActiveTool(enabled ? null : 'risks')
+      setActiveTool(null)
       return
     }
     setActiveTool((current) => (current === tool ? null : tool))
@@ -101,6 +145,20 @@ export default function App() {
     if (!mapInstance || !route) return
     const bounds = route.geometry.coordinates.map(([lon, lat]) => [lat, lon] as L.LatLngTuple)
     if (bounds.length) mapInstance.fitBounds(bounds, { padding: [100, 100], maxZoom: 14 })
+  }
+
+  const recenterOnPlanningArea = () => {
+    if (!mapInstance) return
+    const bbox = data?.meta.bbox
+    if (!bbox) {
+      mapInstance.setView(planningAreaCenter, 10)
+      return
+    }
+    const [minLon, minLat, maxLon, maxLat] = bbox
+    const bounds = L.latLngBounds([minLat, minLon], [maxLat, maxLon])
+    mapInstance.invalidateSize({ pan: false })
+    const zoom = mapInstance.getBoundsZoom(bounds, false, L.point(48, 48))
+    mapInstance.setView(planningAreaCenter, zoom, { animate: false })
   }
 
   const routeValues = route
@@ -114,6 +172,7 @@ export default function App() {
         }, 0),
       }
     : null
+  const panelTool = hoveredTool ?? (activeTool === 'terrain' || activeTool === 'risks' ? null : activeTool)
 
   return (
     <div className="app">
@@ -130,12 +189,12 @@ export default function App() {
       </header>
 
       {tab === 'planning' && view === '2d' && <>
-        <div className="location-chip"><span className="location-chip__pin" aria-hidden="true">⌖</span><span><strong>Jezero Crater</strong><small>18.4446° N · 77.4509° E</small></span></div>
         <nav className="map-toolbar" aria-label="Map tools">
           {TOOLS.map((tool) => {
             const terrainOn = tool.id === 'terrain' && (activeLayers.includes('mola') || activeLayers.includes('slope'))
-            const selected = tool.id === 'layers' ? activeTool === 'layers' : tool.id === 'terrain' ? terrainOn : tool.id !== 'home' && tool.id !== 'fullscreen' && activeTool === tool.id
-            return <button key={tool.id} type="button" title={tool.label} aria-label={tool.label} aria-pressed={tool.id !== 'home' && tool.id !== 'fullscreen' ? selected : undefined} className={selected ? 'is-active' : ''} onClick={() => chooseTool(tool.id)}><span aria-hidden="true">{tool.icon}</span></button>
+            const risksOn = tool.id === 'risks' && activeLayers.includes('slope')
+            const selected = tool.id === 'layers' ? activeTool === 'layers' : tool.id === 'terrain' ? terrainOn : tool.id === 'risks' ? risksOn : tool.id !== 'home' && tool.id !== 'fullscreen' && activeTool === tool.id
+            return <button key={tool.id} type="button" title={tool.label} aria-label={tool.label} aria-pressed={tool.id !== 'home' && tool.id !== 'fullscreen' ? selected : undefined} className={selected ? 'is-active' : ''} onMouseEnter={() => { if (tool.id === 'terrain' || tool.id === 'risks') setHoveredTool(tool.id) }} onMouseLeave={() => { if (tool.id === 'terrain' || tool.id === 'risks') setHoveredTool(null) }} onClick={() => chooseTool(tool.id)}><span aria-hidden="true">{tool.icon}</span></button>
           })}
         </nav>
       </>}
@@ -160,10 +219,26 @@ export default function App() {
             {data && <TargetCard targets={data.targets} missions={data.missions} />}
           </MapView>
         )}
+        {tab === 'planning' && view === '2d' && <>
+          <button
+            type="button"
+            className={`map-recenter${recenterIndicator.centered ? ' map-recenter--centered' : ''}`}
+            title="Recenter on habitat"
+            aria-label={recenterIndicator.centered ? 'Map centered on habitat' : 'Recenter on habitat'}
+            data-centered={recenterIndicator.centered}
+            onClick={recenterOnPlanningArea}
+          ><span
+            className="map-recenter__icon"
+            style={{ transform: `rotate(${recenterIndicator.rotation}deg)` }}
+            aria-hidden="true"
+          ><svg viewBox="0 0 24 24" focusable="false"><path d="M12 2 4 21l8-4 8 4L12 2Z" /><path d="M12 17V8" /></svg></span>
+            <span className="map-recenter__label">Recenter</span>
+          </button>
+        </>}
       </main>
 
-      {tab === 'planning' && view === '2d' && activeTool && activeTool !== 'layers' && (
-        <ToolPanel tool={activeTool} data={data} selectedTarget={selectedTarget ?? null} onSelectTarget={selectTarget} onClose={() => setActiveTool(null)} onCenter={() => mapInstance?.setView(HABITAT, 12)} onFitRoute={fitRoute} routeSummary={routeValues ? `${routeValues.distance} km · ${routeValues.time} min · ${routeValues.oxygen} kg O₂` : 'Add route points on the map to calculate a plan.'} waypointCount={waypoints.length} terrainSource={data?.meta.source} />
+      {tab === 'planning' && view === '2d' && panelTool && panelTool !== 'layers' && (
+        <ToolPanel tool={panelTool} hoverOnly={hoveredTool !== null} data={data} selectedTarget={selectedTarget ?? null} onSelectTarget={selectTarget} onClose={() => setActiveTool(null)} onFitRoute={fitRoute} routeSummary={routeValues ? `${routeValues.distance} km · ${routeValues.time} min · ${routeValues.oxygen} kg O₂` : 'Add route points on the map to calculate a plan.'} waypointCount={waypoints.length} terrainSource={data?.meta.source} />
       )}
 
       {tab === 'mars-data' && <MarsDataScreen data={data} error={error} />}
@@ -172,24 +247,23 @@ export default function App() {
   )
 }
 
-function ToolPanel({ tool, data, selectedTarget, onSelectTarget, onClose, onCenter, onFitRoute, routeSummary, waypointCount, terrainSource }: {
+function ToolPanel({ tool, hoverOnly = false, data, selectedTarget, onSelectTarget, onClose, onFitRoute, routeSummary, waypointCount, terrainSource }: {
   tool: ToolId
+  hoverOnly?: boolean
   data: AppData | null
   selectedTarget: AppData['targets']['features'][number] | null
   onSelectTarget: (id: string | null) => void
   onClose: () => void
-  onCenter: () => void
   onFitRoute: () => void
   routeSummary: string
   waypointCount: number
   terrainSource?: string
 }) {
-  const title: Record<ToolId, string> = { layers: 'Map layers', location: 'Location', terrain: 'Terrain and relief', info: 'Region information', risks: 'Risk analysis', route: 'Route planning' }
+  const title: Record<ToolId, string> = { layers: 'Map layers', terrain: 'Terrain and relief', info: 'Region information', risks: 'Risk analysis', route: 'Route planning' }
   const slope = LAYERS.find((layer) => layer.id === 'slope')
   return (
-    <aside className="tool-panel" aria-label={title[tool]}>
-      <div className="tool-panel__heading"><div><span className="tool-panel__eyebrow">JEZERO CRATER</span><h2>{title[tool]}</h2></div><button type="button" aria-label="Close panel" onClick={onClose}>×</button></div>
-      {tool === 'location' && <><p>Habitat · EVA start and return point A</p><p className="tool-panel__coordinates">18.4446° N · 77.4509° E</p><button className="panel-action" type="button" onClick={onCenter}>Center map on habitat</button></>}
+    <aside className={`tool-panel${hoverOnly ? ' tool-panel--hover' : ''}`} aria-label={title[tool]}>
+      <div className="tool-panel__heading"><div><span className="tool-panel__eyebrow">JEZERO CRATER</span><h2>{title[tool]}</h2></div>{!hoverOnly && <button type="button" aria-label="Close panel" onClick={onClose}>×</button>}</div>
       {tool === 'terrain' && <><p>Real elevation grid and derived slope layer for the Jezero route area.</p><div className="tool-panel__source"><strong>Terrain source</strong><span>{terrainSource ?? 'Source information unavailable'}</span></div>{slope?.legend && <><strong>{slope.legend.title}</strong><div className="slope-legend" style={{ background: `linear-gradient(90deg, ${slope.legend.gradient.join(', ')})` }} /><div className="slope-legend__labels"><span>{slope.legend.minLabel}</span><span>{slope.legend.maxLabel}</span></div><p className="tool-panel__note">{slope.legend.note}</p></>}</>}
       {tool === 'risks' && <><p>Steep terrain is highlighted over the map from the real slope grid.</p><div className="tool-panel__source"><strong>Risk layer</strong><span>{slope?.shortLabel ?? 'Terrain slope'} · {slope?.versionOrDate ?? 'Source date listed in provenance'}</span></div><p className="tool-panel__note">{slope?.legend?.note ?? 'Routing assumptions are shown with the layer provenance.'}</p></>}
       {tool === 'info' && <><p>Science targets and their source missions for the current map area.</p><div className="tool-target-list">{data?.targets.features.map((feature) => <button key={feature.properties.id} type="button" onClick={() => onSelectTarget(feature.properties.id)}><strong>{feature.properties.name}</strong><span>{feature.properties.why}</span></button>)}</div>{selectedTarget && <p className="tool-panel__selected">Selected: {selectedTarget.properties.name}</p>}</>}

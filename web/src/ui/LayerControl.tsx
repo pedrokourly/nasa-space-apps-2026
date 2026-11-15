@@ -15,8 +15,6 @@ interface Props {
 export default function LayerControl({ missions, terrainSource, visible = true }: Props) {
   const [open, setOpen] = useState(true)
   const activeLayers = useAppStore((state) => state.activeLayers)
-  const focusPlanningArea = useAppStore((state) => state.focusPlanningArea)
-  const setFocusPlanningArea = useAppStore((state) => state.setFocusPlanningArea)
   const toggleLayer = useAppStore((state) => state.toggleLayer)
   const permanentIds = ['ctx-jezero', 'hirise-jezero']
   const permanent = LAYERS.filter((layer) => permanentIds.includes(layer.id))
@@ -35,7 +33,6 @@ export default function LayerControl({ missions, terrainSource, visible = true }
           <legend>Permanent imagery</legend>
           {permanent.map((layer) => <div key={layer.id} className="layer-control__row layer-control__row--fixed"><span className="layer-control__lock" aria-hidden="true">●</span><span className="layer-control__name">{layer.id === 'ctx-jezero' ? 'CTX Jezero' : 'HiRISE Jezero'}</span><span className="layer-control__mission">{layer.shortLabel} · NASA</span></div>)}
         </fieldset>
-        <label className="layer-control__row layer-control__focus"><input type="checkbox" checked={focusPlanningArea} onChange={(event) => setFocusPlanningArea(event.target.checked)} /><span className="layer-control__name">Focus planning area</span></label>
         <fieldset className="layer-control__group layer-control__group--overlays">
           <legend>Terrain overlays</legend>
           {overlays.map((layer) => <label key={layer.id} className="layer-control__row layer-control__overlay-row"><input type="checkbox" checked={activeLayers.includes(layer.id)} onChange={() => toggleLayer(layer.id)} /><span className="layer-control__name">{layer.name}</span><span className="layer-control__mission">{layer.shortLabel}</span></label>)}
