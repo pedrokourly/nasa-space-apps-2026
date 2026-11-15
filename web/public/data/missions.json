@@ -46,5 +46,13 @@
     "agency": "NASA",
     "link": "https://science.nasa.gov/mission/mars-2020-perseverance/science-instruments/",
     "description": "Mars Environmental Dynamics Analyzer: the rover's weather sensors at Jezero (temperature, pressure, wind, humidity and dust)."
+  },
+  {
+    "id": "mars2020-rover",
+    "name": "Mars 2020 (Perseverance)",
+    "instrument": "Rover traverse and sample records",
+    "agency": "NASA",
+    "link": "https://science.nasa.gov/mission/mars-2020-perseverance/mars-rock-samples/",
+    "description": "Where Perseverance has driven and which rocks it has cored in Jezero. Used to place the science targets."
   }
 ]
