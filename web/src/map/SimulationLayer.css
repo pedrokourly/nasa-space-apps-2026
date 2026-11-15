@@ -26,3 +26,21 @@
 .sim-pnr-flag span::before {
   content: '\2691  ';
 }
+
+.sim-return-flag span {
+  position: absolute;
+  left: 8px;
+  top: -26px;
+  white-space: nowrap;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: #1a1f2b;
+  color: #ffb300;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid #ffb300;
+}
+
+.sim-return-flag span::before {
+  content: '\21A9  ';
+}
