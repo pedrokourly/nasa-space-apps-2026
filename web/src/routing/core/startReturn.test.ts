@@ -24,6 +24,10 @@ function o2UpTo(r: Route, i: number): number {
   return o2;
 }
 
+/** Last stop (vertex 0 or a leg end) reached before vertex `pnr`: where a NO-GO return starts. */
+const lastStopBefore = (r: Route, pnr: number): number =>
+  Math.max(0, ...(r.properties.legs ?? []).map((l) => l.to_vertex).filter((v) => v < pnr));
+
 describe('route(): second verdict against the start point (#69)', () => {
   // Rolling terrain so the walk is direction-dependent; the habitat sits in the south-west corner.
   const g = buildMockGrid(40, 40, (col, row) => ({ elev: -2500 + 6 * Math.sin(col / 5) + 4 * Math.cos(row / 7), slope: 3 }));
@@ -58,7 +62,7 @@ describe('route(): second verdict against the start point (#69)', () => {
     expect(route(g, pts, { habitat: S, o2_available_kg: 0.001 }).properties.return_to_start).toBeUndefined();
   });
 
-  it('start NO-GO: the start return leaves the last safe vertex, ends at the start and fits in the O₂', () => {
+  it('start NO-GO: the start return leaves the last stop before the point of no return, ends at the start and fits', () => {
     const full = route(g, pts, { habitat: H, o2_available_kg: 100 }).properties;
     const need = full.o2_kg + full.return_to_start!.return_path!.o2_kg;
     for (const k of [0.2, 0.5, 0.8, 0.99]) {
@@ -68,12 +72,18 @@ describe('route(): second verdict against the start point (#69)', () => {
       expect(s.verdict).toBe('NO-GO');
       const pnr = s.point_of_no_return!;
       expect(pnr).toBeGreaterThanOrEqual(1);
+      const stop = lastStopBefore(r, pnr);
+      if (stop === 0) {
+        // Turning back at the start itself: nothing to draw.
+        expect(s.return_path).toBeUndefined();
+        continue;
+      }
       const ret = s.return_path!;
-      expect(ret.from_vertex).toBe(pnr - 1);
-      expect(ret.coordinates[0]).toEqual(r.geometry.coordinates[pnr - 1]);
+      expect(ret.from_vertex).toBe(stop);
+      expect(ret.coordinates[0]).toEqual(r.geometry.coordinates[stop]);
       expect(lastOf(ret.coordinates)).toEqual(S);
-      // Route up to the last safe vertex + the dashed way back to the start fits in the O₂...
-      expect(o2UpTo(r, pnr - 1) + ret.o2_kg).toBeLessThanOrEqual(available + 1e-12);
+      // Route up to that stop + the dashed way back to the start fits in the O₂...
+      expect(o2UpTo(r, stop) + ret.o2_kg).toBeLessThanOrEqual(available + 1e-12);
       // ...and one vertex further it does not.
       expect(o2UpTo(r, pnr) + homeAt(r, startField, pnr)).toBeGreaterThan(available);
     }

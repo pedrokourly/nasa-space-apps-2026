@@ -1,9 +1,22 @@
 import { useAppStore } from '../state/store';
 import { profilePointAt } from '../routing/profilePoint';
-import type { ReturnPath } from '../types/contract';
+import type { ReturnPath, Route } from '../types/contract';
 import './RouteSummary.css';
 
+/** Map label of the stop at route vertex `vertex`: 'A' for the start, then 1, 2… as the waypoint markers. */
+function stopLabel(route: Route, vertex: number): string {
+  if (vertex === 0) return 'A';
+  const i = (route.properties.legs ?? []).findIndex((l) => l.to_vertex === vertex);
+  return i >= 0 ? String(i + 1) : String(vertex);
+}
+
+/** Text of the return estimate: from the last stop before the point of no return on NO-GO. */
+function returnLabel(route: Route, ret: ReturnPath, nogo: boolean): string {
+  return nogo ? `Return from stop ${stopLabel(route, ret.from_vertex)} (estimate)` : 'Return (estimate)';
+}
+
 interface VerdictLineProps {
+  route: Route;
   who: 'Habitat' | 'Start';
   verdict: 'GO' | 'NO-GO';
   /** Distance (km) of the point of no return along the route, on NO-GO. */
@@ -16,21 +29,22 @@ interface VerdictLineProps {
 }
 
 /** One compact verdict line of the two-verdict summary (habitat or start point). */
-function VerdictLine({ who, verdict, turnBackKm, unreachable, ret, kind }: VerdictLineProps) {
+function VerdictLine({ route, who, verdict, turnBackKm, unreachable, ret, kind }: VerdictLineProps) {
   const nogo = verdict === 'NO-GO';
   return (
     <span className="route-summary__line">
       <span className="route-summary__who">{who}</span>
       <span className={`route-summary__verdict route-summary__verdict--${nogo ? 'nogo' : 'go'}`}>{verdict}</span>
       {unreachable && <span className="route-summary__pnr">Start is too far from the habitat for the available O₂ (estimate)</span>}
-      {turnBackKm !== null && <span className="route-summary__pnr">Turn back by {turnBackKm.toFixed(2)} km</span>}
+      {turnBackKm !== null && <span className="route-summary__pnr">Point of no return at {turnBackKm.toFixed(2)} km</span>}
       {ret && (
         <span className={`route-summary__return route-summary__return--${kind}`}>
           <span className="route-summary__return-swatch" aria-hidden="true" />
-          {nogo ? 'Return from turn-back point (estimate)' : 'Return (estimate)'}: {(ret.dist_m / 1000).toFixed(1)} km ·{' '}
+          {returnLabel(route, ret, nogo)}: {(ret.dist_m / 1000).toFixed(1)} km ·{' '}
           {Math.round(ret.time_s / 60)} min · {ret.o2_kg.toFixed(2)} kg O₂
         </span>
       )}
+      {!ret && nogo && !unreachable && <span className="route-summary__note">Turn back at the start</span>}
       {!ret && !nogo && <span className="route-summary__note">Route ends at the {kind === 'habitat' ? 'habitat' : 'start'}</span>}
     </span>
   );
@@ -80,6 +94,7 @@ export default function RouteSummary() {
           {km} km · {min} min · {o2} kg O₂{p.mock ? ' (mock)' : ''}
         </span>
         <VerdictLine
+          route={route}
           who="Habitat"
           verdict={p.verdict}
           turnBackKm={pnr ? pnr.dist_m / 1000 : null}
@@ -88,6 +103,7 @@ export default function RouteSummary() {
           kind="habitat"
         />
         <VerdictLine
+          route={route}
           who="Start"
           verdict={toStart.verdict}
           turnBackKm={startPnr ? startPnr.dist_m / 1000 : null}
@@ -112,11 +128,11 @@ export default function RouteSummary() {
       {startUnreachable && (
         <span className="route-summary__pnr">Start is too far from the habitat for the available O₂ (estimate)</span>
       )}
-      {pnr && <span className="route-summary__pnr">Turn back by {(pnr.dist_m / 1000).toFixed(2)} km</span>}
+      {pnr && <span className="route-summary__pnr">Point of no return at {(pnr.dist_m / 1000).toFixed(2)} km</span>}
       {ret && !startUnreachable && (
         <span className="route-summary__return">
           <span className="route-summary__return-swatch" aria-hidden="true" />
-          {nogo ? 'Return from turn-back point (estimate)' : 'Return (estimate)'}: {(ret.dist_m / 1000).toFixed(1)} km ·{' '}
+          {returnLabel(route, ret, nogo)}: {(ret.dist_m / 1000).toFixed(1)} km ·{' '}
           {Math.round(ret.time_s / 60)} min · {ret.o2_kg.toFixed(2)} kg O₂
         </span>
       )}

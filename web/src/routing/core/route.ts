@@ -73,12 +73,14 @@ interface ReturnVerdict {
  * return over its return field `home(i)`:
  * - GO iff `fwd[last] + home(last) <= available`;
  * - NO-GO: point of no return = first vertex with `fwd[i] + home(i) > available`;
- * - way home from the last vertex (GO) or from the last safe vertex `pnr − 1` (NO-GO); none when
- *   `pnr` is 0 or that vertex is already `homeCell`.
+ * - way home from the last vertex (GO) or, on NO-GO, from the last STOP reached before the point of
+ *   no return (the latest `stopVertex` below `pnr`), which leaves an O₂ margin compared with turning
+ *   back at the very last safe vertex; none when `pnr` is 0 or that stop is already `homeCell`.
  */
 function returnVerdict(
   grid: Grid,
   path: Cell[],
+  stopVertex: number[],
   fwd: number[],
   available: number,
   homeCell: Cell,
@@ -107,10 +109,15 @@ function returnVerdict(
   }
 
   // Estimated way home drawn on the map, from where the astronaut turns home: the last vertex on a
-  // GO route, the last safe vertex on a NO-GO one. None when even the start cannot get home
-  // (pnr = 0) or that vertex is already the home cell. It follows the same field as the verdict, so
-  // its O₂ equals `home(from)`.
-  const from = pnr === undefined ? last : pnr - 1;
+  // GO route; on a NO-GO one, the last stop reached before the point of no return. Every vertex
+  // before `pnr` is safe (O₂ spent + O₂ home never decreases), so that stop is safe too, with some O₂
+  // to spare. None when even the start cannot get home (pnr = 0) or that stop is already the home
+  // cell. It follows the same field as the verdict, so its O₂ equals `home(from)`.
+  let from = last;
+  if (pnr !== undefined) {
+    from = -1;
+    for (const v of stopVertex) if (v < pnr && v > from) from = v;
+  }
   const fromCell = from >= 0 ? path[from]! : undefined;
   let returnPath: ReturnPath | undefined;
   if (fromCell && (fromCell.col !== homeCell.col || fromCell.row !== homeCell.row)) {
@@ -145,8 +152,9 @@ function returnVerdict(
  * set and there is no `return_path`.
  *
  * `return_path`: the optimal way home, from vertex `from_vertex` to the habitat. GO: from the last
- * vertex (absent when the route ends at the habitat). NO-GO: from the last safe vertex
- * (`point_of_no_return − 1`), so the route up to there plus this return fits in the O₂ available.
+ * vertex (absent when the route ends at the habitat). NO-GO: from the last stop reached before the
+ * point of no return (a vertex in `legs`, or 0 for the start), so the route up to there plus this
+ * return fits in the O₂ available with a margin; absent when that stop is the habitat itself.
  *
  * `return_to_start`: when the start cell is not the habitat cell, a second, independent verdict with
  * the same rules against the route's first point: its own GO / NO-GO, point of no return (always ≥ 1,
@@ -216,12 +224,12 @@ export function route(grid: Grid, points: LonLat[], options: RouteOptions = {}):
   // Habitat verdict. The habitat falls back to the first point, so the start verdict below exists only
   // when the start cell is not the habitat cell.
   const habitat = habitatCell(grid, options.habitat, stops[0]!, costProfile);
-  const toHabitat = returnVerdict(grid, path, fwd, available, habitat, costProfile, walk);
+  const toHabitat = returnVerdict(grid, path, stopVertex, fwd, available, habitat, costProfile, walk);
   const startUnreachable = toHabitat.pnr === 0;
   const start = stops[0]!;
   const toStart =
     start.col !== habitat.col || start.row !== habitat.row
-      ? returnVerdict(grid, path, fwd, available, start, costProfile, walk)
+      ? returnVerdict(grid, path, stopVertex, fwd, available, start, costProfile, walk)
       : undefined;
 
   return {

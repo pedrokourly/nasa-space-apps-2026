@@ -130,8 +130,9 @@ describe('real Jezero grid (public/data)', () => {
     const p = r.properties;
     expect(p.verdict).toBe('NO-GO');
     expect(p.point_of_no_return).toBeGreaterThan(0);
-    expect(p.return_path!.from_vertex).toBe(p.point_of_no_return! - 1);
-    expect(p.return_path!.coordinates[0]).toEqual(r.geometry.coordinates[p.point_of_no_return! - 1]);
+    const stop = Math.max(0, ...(p.legs ?? []).map((l) => l.to_vertex).filter((v) => v < p.point_of_no_return!));
+    expect(p.return_path!.from_vertex).toBe(stop);
+    expect(p.return_path!.coordinates[0]).toEqual(r.geometry.coordinates[stop]);
     expect(lonLatToCell(grid.meta, p.return_path!.coordinates.at(-1)!)).toEqual(habitatCell);
   });
 

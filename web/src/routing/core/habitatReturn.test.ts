@@ -27,6 +27,10 @@ function o2UpTo(r: Route, i: number): number {
 
 const lastOf = <T,>(a: T[]): T => a[a.length - 1]!;
 
+/** Last stop (vertex 0 or a leg end) reached before vertex `pnr`: where a NO-GO return starts. */
+const lastStopBefore = (r: Route, pnr: number): number =>
+  Math.max(0, ...(r.properties.legs ?? []).map((l) => l.to_vertex).filter((v) => v < pnr));
+
 describe('route(): way home to the real habitat (#69)', () => {
   // Rolling terrain so the walk is direction-dependent; the habitat sits in the south-west corner.
   const g = buildMockGrid(40, 40, (col, row) => ({ elev: -2500 + 6 * Math.sin(col / 5) + 4 * Math.cos(row / 7), slope: 3 }));
@@ -63,7 +67,7 @@ describe('route(): way home to the real habitat (#69)', () => {
     expect(route(g, pts, { habitat: H, o2_available_kg: need * 0.999 }).properties.verdict).toBe('NO-GO');
   });
 
-  it('NO-GO: the return starts at the last safe vertex, ends at the habitat and fits in the O₂', () => {
+  it('NO-GO: the return starts at the last stop before the point of no return, ends at the habitat and fits', () => {
     const total = route(g, pts, { habitat: H, o2_available_kg: 100 }).properties;
     const need = total.o2_kg + total.return_path!.o2_kg;
     for (const k of [0.4, 0.6, 0.8, 0.95, 0.999]) {
@@ -75,11 +79,12 @@ describe('route(): way home to the real habitat (#69)', () => {
       expect(pnr).toBeGreaterThanOrEqual(1);
       expect(p.start_unreachable).toBeUndefined();
       const ret = p.return_path!;
-      expect(ret.from_vertex).toBe(pnr - 1);
-      expect(ret.coordinates[0]).toEqual(r.geometry.coordinates[pnr - 1]);
+      const stop = lastStopBefore(r, pnr);
+      expect(ret.from_vertex).toBe(stop);
+      expect(ret.coordinates[0]).toEqual(r.geometry.coordinates[stop]);
       expect(lastOf(ret.coordinates)).toEqual(H);
-      // Acceptance criterion: route up to the last safe vertex + dashed return fits in the O₂.
-      expect(o2UpTo(r, pnr - 1) + ret.o2_kg).toBeLessThanOrEqual(available + 1e-12);
+      // Acceptance criterion: route up to that stop + dashed return fits in the O₂, with margin.
+      expect(o2UpTo(r, stop) + ret.o2_kg).toBeLessThanOrEqual(available + 1e-12);
       // ...and one vertex further it does not (that is what makes it the point of no return).
       const field = returnCostField(g, lonLatToCell(g.meta, H)!);
       const at = lonLatToCell(g.meta, r.geometry.coordinates[pnr]!)!;

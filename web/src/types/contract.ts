@@ -160,8 +160,8 @@ export interface RouteLeg {
  * `targets.geojson`; the route's first point when there is none). Traced over the same return cost
  * field as the GO / NO-GO verdict.
  * - GO route: it starts at the last vertex.
- * - NO-GO route: it starts at the last safe vertex (`point_of_no_return − 1`), where the astronaut
- *   must turn back.
+ * - NO-GO route: it starts at the last stop (the start or a requested point) reached before the
+ *   point of no return, where the plan turns back with an O₂ margin.
  */
 export interface ReturnPath {
   /** Vertex index (in the route's LineString) where the return starts. */
@@ -194,9 +194,9 @@ export interface ReturnToStart {
   point_of_no_return?: number;
   /**
    * Estimated way back to the start cell (see `ReturnPath`, with the start cell in place of the
-   * habitat): from the last vertex on GO, from `point_of_no_return − 1` on NO-GO. Absent when that
-   * vertex is already the start cell (e.g. a GO loop that ends at the start, or a NO-GO whose point
-   * of no return is 1).
+   * habitat): from the last vertex on GO, from the last stop before `point_of_no_return` on NO-GO.
+   * Absent when that point is already the start cell (e.g. a GO loop that ends at the start, or a
+   * NO-GO whose last stop before the point of no return is the start itself).
    */
   return_path?: ReturnPath;
 }
