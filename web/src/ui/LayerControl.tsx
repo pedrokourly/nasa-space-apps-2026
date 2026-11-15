@@ -14,7 +14,9 @@ export default function LayerControl({
   /** `meta.json` `source`: provenance of the elevation grid used for routing. */
   terrainSource?: string;
 }) {
-  const [open, setOpen] = useState(true);
+  // Starts collapsed so the open list does not cover the east of the planning area on 1366×768;
+  // the provenance block stays visible either way.
+  const [open, setOpen] = useState(false);
   const activeLayers = useAppStore((s) => s.activeLayers);
   const layerOpacity = useAppStore((s) => s.layerOpacity);
   const toggleLayer = useAppStore((s) => s.toggleLayer);
