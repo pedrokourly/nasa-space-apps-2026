@@ -1,4 +1,5 @@
 import { useAppStore } from '../state/store';
+import { useSimulationStore } from '../state/simulationStore';
 import { profilePointAt } from '../routing/profilePoint';
 import type { ReturnPath, Route } from '../types/contract';
 import { ASSUMPTIONS_URL, COMPUTED_LABEL, ESTIMATE_LABEL, PNR_EXPLANATION, assumptionsLine } from '../routing/estimateText';
@@ -57,6 +58,8 @@ export default function RouteSummary() {
   const route = useAppStore((s) => s.route);
   const error = useAppStore((s) => s.routeError);
   const o2Available = useAppStore((s) => s.evaParams.o2_available_kg);
+  const simulationStatus = useSimulationStore((s) => s.status);
+  const liveClass = simulationStatus === 'idle' ? '' : ' route-summary--live';
 
   if (status === 'computing') {
     return (
@@ -105,7 +108,7 @@ export default function RouteSummary() {
     const startNogo = toStart.verdict === 'NO-GO';
     const startPnr = startNogo ? profilePointAt(route, toStart.point_of_no_return) : null;
     return (
-      <div className="route-summary route-summary--info route-summary--dual" role="status" aria-live="polite">
+      <div className={`route-summary route-summary--info route-summary--dual${liveClass}`} role="status" aria-live="polite">
         <span className="route-summary__totals">
           {km} km · {min} min · {o2} kg O₂{p.mock ? ' (mock)' : ''}
         </span>
@@ -133,7 +136,7 @@ export default function RouteSummary() {
   }
 
   return (
-    <div className="route-summary route-summary--info route-summary--stacked" role="status" aria-live="polite">
+    <div className={`route-summary route-summary--info route-summary--stacked${liveClass}`} role="status" aria-live="polite">
       <div className="route-summary__line">
       {p.verdict && (
         <span className={`route-summary__verdict route-summary__verdict--${p.verdict === 'GO' ? 'go' : 'nogo'}`}>

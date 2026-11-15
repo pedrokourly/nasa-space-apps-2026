@@ -20,7 +20,10 @@ import DataStatus from './ui/DataStatus'
 import ViewToggle, { type ViewMode } from './ui/ViewToggle'
 import { useAppStore } from './state/store'
 import { useRouteHashSync } from './state/useRouteHashSync'
-import { useSimulationSnapshot } from './routing/useSimulation'
+import { useSimulationPath, useSimulationSnapshot } from './routing/useSimulation'
+import { useSimulationStore } from './state/simulationStore'
+import { formatDistance, formatElapsed } from './ui/simulationFormat'
+import { availablePlans, buildSimPath } from './routing/simulation'
 import ProvenanceBadge, { Legend } from './ui/ProvenanceBadge'
 import { LAYERS } from './map/layers'
 import type { LayerId, Conditions } from './types/contract'
@@ -55,7 +58,7 @@ export default function App() {
   const selectedTargetId = useAppStore((state) => state.selectedTargetId)
   const selectTarget = useAppStore((state) => state.selectTarget)
   const toggleLayer = useAppStore((state) => state.toggleLayer)
-  const simulation = useSimulationSnapshot()
+  const simulationStatus = useSimulationStore((state) => state.status)
   const planningAreaCenter = useMemo(() => {
     const bbox = data?.meta.bbox
     return bbox
@@ -174,7 +177,7 @@ export default function App() {
           <button className={`app-tab ${tab === 'planning' ? 'app-tab--active' : ''}`} type="button" aria-pressed={tab === 'planning'} onClick={() => setTab('planning')}>◎ <span>Planning</span></button>
           <button className={`app-tab ${tab === 'mars-data' ? 'app-tab--active' : ''}`} type="button" aria-pressed={tab === 'mars-data'} onClick={() => { setTab('mars-data'); setActiveTool(null) }}>▱ <span>Mars data</span></button>
         </nav>
-        <div className="app-status"><span className="app-readout"><small>Latest MEDA sol</small><strong>{latestSol !== null ? `SOL ${latestSol}` : 'SOL —'}</strong></span><span className="app-readout app-readout--oxygen"><small>O₂ remaining</small><strong>{simulation ? `${simulation.o2_left_kg.toFixed(2)} kg` : 'O₂ —'}</strong></span><ViewToggle view={view} onChange={setView} /></div>
+        <div className="app-status"><span className="app-readout"><small>Latest MEDA sol</small><strong>{latestSol !== null ? `SOL ${latestSol}` : 'SOL —'}</strong></span><ViewToggle view={view} onChange={setView} /></div>
       </header>
 
       {tab === 'planning' && view === '2d' && <>
@@ -197,7 +200,6 @@ export default function App() {
             <RouteMarkers />
             <SimulationLayer />
             <RouteSummary />
-            <SimulationControl />
             <TileHealth />
             <TileLoading />
             <DataStatus loading={!data && !error} error={error} />
@@ -213,7 +215,7 @@ export default function App() {
         {tab === 'planning' && view === '2d' && <>
           <button
             type="button"
-            className={`map-recenter${recenterIndicator.centered ? ' map-recenter--centered' : ''}`}
+            className={`map-recenter${recenterIndicator.centered ? ' map-recenter--centered' : ''}${simulationStatus !== 'idle' ? ' map-recenter--eva-active' : ''}`}
             title="Recenter on habitat"
             aria-label={recenterIndicator.centered ? 'Map centered on habitat' : 'Recenter on habitat'}
             data-centered={recenterIndicator.centered}
@@ -253,15 +255,33 @@ function ToolPanel({ data, selectedTarget, onSelectTarget, onClose }: {
 }
 
 function RouteMetricsBar({ values, waypointCount }: { values: { distance: string; time: number; oxygen: string; elevation: number } | null; waypointCount: number }) {
+  const path = useSimulationPath()
+  const snapshot = useSimulationSnapshot()
+  const status = useSimulationStore((state) => state.status)
+  const selectedPlan = useSimulationStore((state) => state.plan)
+  const route = useAppStore((state) => state.route)
+  const o2Budget = useAppStore((state) => state.evaParams.o2_available_kg)
+  const live = status !== 'idle' && snapshot !== null
+  const comparison = useMemo(() => route ? availablePlans(route).map((plan) => ({ plan, path: buildSimPath(route, plan) })) : [], [route])
+  const selectedComparison = comparison.find((entry) => entry.plan === selectedPlan)?.path ?? path
+  const bestFor = (field: 'oxygen' | 'time' | 'distance', lowerIsBetter = true) => {
+    const selectedValue = field === 'oxygen' ? selectedComparison?.o2_kg.at(-1) : field === 'time' ? selectedComparison?.time_s.at(-1) : selectedComparison?.dist_m.at(-1)
+    const candidates = comparison.map(({ path: candidate }) => field === 'oxygen' ? candidate.o2_kg.at(-1) : field === 'time' ? candidate.time_s.at(-1) : candidate.dist_m.at(-1)).filter((value): value is number => value !== undefined)
+    if (selectedValue === undefined || candidates.length < 2) return false
+    const best = lowerIsBetter ? Math.min(...candidates) : Math.max(...candidates)
+    return Math.abs(selectedValue - best) < 0.001
+  }
+  const plannedO2 = path?.o2_kg.at(-1)
+  const remainingO2 = plannedO2 === undefined ? null : Math.max(0, o2Budget - plannedO2)
   const metrics = [
-    { icon: '◉', label: 'O₂ consumed', value: values ? `${values.oxygen} kg` : '—' },
-    { icon: '▣', label: 'O₂ remaining', value: 'Not configured' },
-    { icon: '◷', label: 'Estimated time', value: values ? `${values.time} min` : '—' },
-    { icon: '⌁', label: 'Distance', value: values ? `${values.distance} km` : `${waypointCount} points` },
-    { icon: '△', label: 'Elevation gain', value: values ? `+${Math.round(values.elevation)} m` : '—' },
-    { icon: '♡', label: 'Vital signs', value: 'Not loaded' },
+    { icon: '◉', label: 'O₂ consumed', value: `${snapshot?.o2_used_kg.toFixed(2) ?? plannedO2?.toFixed(2) ?? '—'} kg`, best: bestFor('oxygen') },
+    { icon: '▣', label: 'O₂ remaining', value: live ? `${snapshot.o2_left_kg.toFixed(2)} kg` : remainingO2 === null ? '—' : `${remainingO2.toFixed(2)} kg`, best: bestFor('oxygen') },
+    { icon: '◷', label: live ? 'Elapsed time' : 'Estimated time', value: live ? formatElapsed(snapshot.elapsed_s) : path ? `${Math.round((path.time_s.at(-1) ?? 0) / 60)} min` : '—', best: bestFor('time') },
+    { icon: '⌁', label: 'Distance walked', value: live ? formatDistance(snapshot.dist_m) : path ? formatDistance(path.dist_m.at(-1) ?? 0) : `${waypointCount} points`, best: bestFor('distance') },
+    { icon: '△', label: 'Elevation gain', value: values ? `+${Math.round(values.elevation)} m` : '—', best: false },
   ]
-  return <footer className="route-metrics" aria-label="Route summary metrics">{metrics.map((metric) => <div className="route-metric" key={metric.label}><span className="route-metric__icon" aria-hidden="true">{metric.icon}</span><span><small>{metric.label}</small><strong>{metric.value}</strong></span></div>)}</footer>
+  if (!live) return <div className="eva-dock eva-dock--idle"><SimulationControl /></div>
+  return <footer className="route-metrics route-metrics--live" aria-label="Live EVA metrics">{metrics.map((metric) => <div className={`route-metric${metric.best ? ' route-metric--best' : ''}`} key={metric.label}><span className="route-metric__icon" aria-hidden="true">{metric.icon}</span><span><small>{metric.label}</small><strong>{metric.value}</strong></span></div>)}<div className="route-metrics__eva"><SimulationControl /></div></footer>
 }
 
 function FixedLayersBadge() {
