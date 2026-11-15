@@ -60,8 +60,10 @@ cd web && npm test
 | O₂ available at departure | 1.0 kg (`o2_available_kg` option) | **Assumption** |
 
 - Vertices are cell centers; distance uses `haversine` (R = 3389.5 km).
-- **Verdict:** GO if the O₂ of the trip plus the optimal return from its last point (`core/returnField.ts`, least O₂ home from every cell) fits in what is available. For a loop (habitat → targets → habitat) the O₂ of the trip is enough.
-- **Point of no return** (`point_of_no_return`, vertex index): first vertex from which the astronaut can no longer get back to the habitat with the O₂ left, by the least-O₂ way home. The last safe vertex is the one before. Present exactly when the verdict is NO-GO.
+- **Habitat** (`habitat` option, `RouteRequest.habitat`, #69): where the way home leads; the app passes the `habitat` feature of `targets.geojson`. Default, or when it is outside the grid or impassable: the route's first point. The O₂ is still counted from the route's first point with the full supply (**assumption**).
+- **Verdict:** GO if the O₂ of the trip plus the optimal return from its last point to the habitat (`core/returnField.ts`, least O₂ home from every cell) fits in what is available. For a loop (habitat → targets → habitat) the O₂ of the trip is enough.
+- **Point of no return** (`point_of_no_return`, vertex index): first vertex from which the astronaut can no longer get back to the habitat with the O₂ left, by the least-O₂ way home. The last safe vertex is the one before. Present exactly when the verdict is NO-GO. When it is 0 the start cannot reach the habitat: `start_unreachable: true` and no `return_path`.
+- **Return path** (`return_path`): the least-O₂ way home, from vertex `from_vertex` to the habitat: the last vertex on a GO route, the last stop reached before the point of no return on a NO-GO one (an O₂ margin over turning back at the last safe vertex).
 - **Legs** (`legs`, S5): one per pair of consecutive points, with `from_vertex`, `to_vertex`, `dist_m`, `time_s`, `o2_kg`; they add up to the totals.
 - Errors: `OutOfGridError` (point outside the grid), `BlockedPointError` (point on an impassable cell), `NoPathError` (no path), `Error` (fewer than 2 points). See "Response states" below.
 - Points in the same cell give a valid zero-length route (two equal vertices).

@@ -29,3 +29,12 @@
 .leaflet-tooltip.profile-hover-tooltip::before {
   display: none;
 }
+
+/* Start point of no return (`return_to_start`): violet ring, matching the dotted start return line. */
+.pnr-icon--start {
+  box-shadow: 0 0 0 3px #c084fc;
+}
+
+.leaflet-tooltip.pnr-tooltip--start {
+  border-color: #c084fc;
+}

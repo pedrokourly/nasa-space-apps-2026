@@ -102,7 +102,8 @@ export default function WaypointsLayer({ meta }: Props) {
       marker.bindPopup(popup);
       marker.on('popupopen', () => {
         const idx = indexOf(marker);
-        label.textContent = idx === 0 ? 'Start (habitat)' : `Stop ${idx}`;
+        // The start may be away from the habitat: the way home always leads to the habitat marker.
+        label.textContent = idx === 0 ? 'Start' : `Stop ${idx}`;
       });
 
       marker.on('contextmenu', (e: L.LeafletMouseEvent) => {

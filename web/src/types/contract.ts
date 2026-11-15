@@ -156,16 +156,49 @@ export interface RouteLeg {
 }
 
 /**
- * Estimated least-O₂ way home from the route's last vertex to the habitat (the route's first point).
- * It is the return the GO / NO-GO verdict counts on, traced over the return cost field.
+ * Estimated least-O₂ way home from a route vertex to the habitat (the `habitat` feature of
+ * `targets.geojson`; the route's first point when there is none). Traced over the same return cost
+ * field as the GO / NO-GO verdict.
+ * - GO route: it starts at the last vertex.
+ * - NO-GO route: it starts at the last stop (the start or a requested point) reached before the
+ *   point of no return, where the plan turns back with an O₂ margin.
  */
 export interface ReturnPath {
-  /** `[lon, lat]` positions (−180 to 180), from the route's last vertex to the habitat cell. */
+  /** Vertex index (in the route's LineString) where the return starts. */
+  from_vertex: number;
+  /** `[lon, lat]` positions (−180 to 180), from the route vertex `from_vertex` to the habitat cell. */
   coordinates: [lon: number, lat: number][];
   dist_m: number;
   time_s: number;
-  /** Equals the return O₂ the verdict adds to the route's own `o2_kg`. */
+  /**
+   * Least O₂ to walk home from `from_vertex`. GO: the return O₂ the verdict adds to the route's own
+   * `o2_kg`. NO-GO: the O₂ of the route up to `from_vertex` plus this fits in the O₂ available.
+   */
   o2_kg: number;
+}
+
+/**
+ * Second, independent verdict against the route's START point (its first point), computed only when
+ * the start cell is not the habitat cell. Same rules as the habitat verdict, with the start cell as
+ * home: the O₂ is counted from the start with the full supply, and the way back is the least-O₂ path
+ * to the start cell (not necessarily the way the astronaut came).
+ */
+export interface ReturnToStart {
+  /** GO iff the route's `o2_kg` plus the least O₂ from its last vertex back to the start fits in the O₂ available. */
+  verdict: 'GO' | 'NO-GO';
+  /**
+   * Index of the FIRST vertex where the O₂ spent plus the least O₂ back to the start exceeds what is
+   * available; the last safe vertex is this index − 1. Present only when `verdict` is `'NO-GO'`, and
+   * always ≥ 1 (the start is 0 O₂ from itself).
+   */
+  point_of_no_return?: number;
+  /**
+   * Estimated way back to the start cell (see `ReturnPath`, with the start cell in place of the
+   * habitat): from the last vertex on GO, from the last stop before `point_of_no_return` on NO-GO.
+   * Absent when that point is already the start cell (e.g. a GO loop that ends at the start, or a
+   * NO-GO whose last stop before the point of no return is the start itself).
+   */
+  return_path?: ReturnPath;
 }
 
 export interface RouteProps {
@@ -179,16 +212,29 @@ export interface RouteProps {
   verdict?: 'GO' | 'NO-GO';
   /**
    * Index (in the LineString) of the FIRST vertex from which the astronaut can no longer get back
-   * to the habitat (the route's first point) with the O₂ left, by the least-O₂ way home.
-   * The last safe vertex is this index − 1.
-   * Present only when `verdict` is `'NO-GO'`.
+   * to the habitat (see `ReturnPath`) with the O₂ left, by the least-O₂ way home. The O₂ is counted
+   * from the route's first point with the full supply (assumption). The last safe vertex is this
+   * index − 1. Present only when `verdict` is `'NO-GO'`. `0` means even the start cannot reach the
+   * habitat (`start_unreachable`).
    */
   point_of_no_return?: number;
   /**
-   * Estimated way home from the last vertex. Present only when the route does not end at the habitat
-   * and a way home exists.
+   * `true` when even the route's first point cannot reach the habitat with the O₂ available (or has
+   * no way home): NO-GO with `point_of_no_return` 0 and no `return_path`. Absent otherwise.
+   */
+  start_unreachable?: true;
+  /**
+   * Estimated way home to the habitat (see `ReturnPath` for where it starts). Absent when the route
+   * ends at the habitat (GO), when the start cannot reach it (`start_unreachable`) or when the
+   * starting vertex is already the habitat.
    */
   return_path?: ReturnPath;
+  /**
+   * Verdict, point of no return and way back against the route's start point (see `ReturnToStart`).
+   * Present only when the start cell is not the habitat cell; `verdict`, `point_of_no_return`,
+   * `start_unreachable` and `return_path` above stay the habitat ones.
+   */
+  return_to_start?: ReturnToStart;
   mock?: boolean;
 }
 

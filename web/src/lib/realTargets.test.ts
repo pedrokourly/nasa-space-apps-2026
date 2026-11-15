@@ -1,7 +1,7 @@
 /// <reference types="node" />
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { parseMeta, parseMissions, parseTargets } from './loadData';
+import { findHabitat, parseMeta, parseMissions, parseTargets } from './loadData';
 import { isInsideBbox } from './bbox';
 
 const dir = new URL('../../public/data/', import.meta.url);
@@ -15,6 +15,13 @@ describe('real targets.geojson', () => {
   it('is accepted by the app parser, with 3 to 5 targets', () => {
     expect(targets.features.length).toBeGreaterThanOrEqual(3);
     expect(targets.features.length).toBeLessThanOrEqual(5);
+  });
+
+  it('has a habitat feature the router can measure the way home against (#69)', () => {
+    const habitat = findHabitat(targets);
+    expect(habitat).not.toBeNull();
+    expect(isInsideBbox(habitat!, meta.bbox)).toBe(true);
+    expect(findHabitat({ type: 'FeatureCollection', features: [] })).toBeNull();
   });
 
   it('keeps every target inside the real meta.json bbox', () => {
