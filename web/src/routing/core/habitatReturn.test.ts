@@ -10,8 +10,12 @@ import { answerRoute } from '../respond';
 import { cellIndex, cellToLonLat, lonLatToCell, type Grid } from './grid';
 import { buildMockGrid, flatGrid, MOCK_STEEP_DEG } from './mockGrid';
 import { returnCostField } from './returnField';
+import { O2_RESERVE_FRACTION } from './walk';
 import { createRouter, route } from './route';
 import { DEFAULT_WALK, segmentCost } from './walk';
+
+/** Share of the O₂ the plan may use: the supply minus the safety reserve. */
+const USABLE = 1 - O2_RESERVE_FRACTION;
 
 const pt = (g: Grid, col: number, row: number): LonLat => cellToLonLat(g.meta, col, row);
 
@@ -63,16 +67,16 @@ describe('route(): way home to the real habitat (#69)', () => {
     const toStart = route(g, pts, { o2_available_kg: 100 }).properties;
     const need = toHabitat.o2_kg + toHabitat.return_path!.o2_kg;
     expect(need).not.toBeCloseTo(toStart.o2_kg + toStart.return_path!.o2_kg, 6);
-    expect(route(g, pts, { habitat: H, o2_available_kg: need * 1.001 }).properties.verdict).toBe('GO');
-    expect(route(g, pts, { habitat: H, o2_available_kg: need * 0.999 }).properties.verdict).toBe('NO-GO');
+    expect(route(g, pts, { habitat: H, o2_available_kg: (need / USABLE) * 1.001 }).properties.verdict).toBe('GO');
+    expect(route(g, pts, { habitat: H, o2_available_kg: (need / USABLE) * 0.999 }).properties.verdict).toBe('NO-GO');
   });
 
   it('NO-GO: the return starts at the last stop before the point of no return, ends at the habitat and fits', () => {
     const total = route(g, pts, { habitat: H, o2_available_kg: 100 }).properties;
     const need = total.o2_kg + total.return_path!.o2_kg;
     for (const k of [0.4, 0.6, 0.8, 0.95, 0.999]) {
-      const available = homeFromStart + (need - homeFromStart) * k;
-      const r = route(g, pts, { habitat: H, o2_available_kg: available });
+      const available = homeFromStart + (need - homeFromStart) * k; // usable O₂
+      const r = route(g, pts, { habitat: H, o2_available_kg: available / USABLE });
       const p = r.properties;
       expect(p.verdict).toBe('NO-GO');
       const pnr = p.point_of_no_return!;
@@ -93,7 +97,7 @@ describe('route(): way home to the real habitat (#69)', () => {
   });
 
   it('a start that cannot reach the habitat with the O₂ available: pnr 0, flagged, no return', () => {
-    const r = route(g, pts, { habitat: H, o2_available_kg: homeFromStart * 0.9 });
+    const r = route(g, pts, { habitat: H, o2_available_kg: (homeFromStart * 0.9) / USABLE });
     const p = r.properties;
     expect(p.verdict).toBe('NO-GO');
     expect(p.point_of_no_return).toBe(0);

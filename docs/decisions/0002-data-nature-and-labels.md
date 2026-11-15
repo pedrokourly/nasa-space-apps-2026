@@ -38,7 +38,7 @@ The risk is that a judge reads an estimate or an old measurement as live mission
 
 2. **The conditions panel shows the latest sol as the main reading** (`latest_sol`), with its UTC dates and the min, mean and max of each variable. The other sols may appear as small context, or be left out. The words "live", "current", "now" and "today" are never used for this data. The allowed wording is "last data available".
 
-3. **O₂, time, GO / NO-GO and the point of no return are always labeled as estimates.** The route panel states the key assumptions in one line (O₂ available 1.0 kg; metabolic model scaled to Mars gravity) and points to `docs/routing-assumptions.md`. The tooltip of the warning reads: "First point where the O₂ left is not enough to walk back the cheapest way, under the model's assumptions."
+3. **O₂, time, GO / NO-GO and the point of no return are always labeled as estimates.** The route panel states the key assumptions in one line (O₂ available 0.73 kg from the NASA lunar suit PLSS, 10% kept as reserve; metabolic model scaled to Mars gravity) and points to `docs/routing-assumptions.md`. The tooltip of the warning reads: "First point where the O₂ left is not enough to walk back the cheapest way, under the model's assumptions."
 
 4. **Unavailable means no number.** A variable without data is shown as unavailable and is never filled, estimated or copied from another sol.
 
@@ -55,5 +55,5 @@ The risk is that a judge reads an estimate or an old measurement as live mission
 
 ## Open questions
 
-- There is no sourced value for the O₂ a real suit carries; `DEFAULT_O2_AVAILABLE_KG` is an assumption. Product can replace it with a cited figure.
+- ~~There is no sourced value for the O₂ a real suit carries.~~ Resolved on 2026-11-15: `DEFAULT_O2_AVAILABLE_KG` is now 0.73 kg, the primary O₂ of NASA's lunar EMU PLSS design (1.6 lbm, NASA NTRS 20160002044). The O₂ use and the verdict are still labeled "Estimate".
 - Whether to show the previous two sols or only the latest one is a UI choice.

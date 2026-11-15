@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Route } from '../types/contract';
+import { DEFAULT_O2_AVAILABLE_KG } from './core/walk';
 import { buildTimeline, simulationStateAt } from './simulation';
 
 /** Straight line of 5 vertices, 100 m apart, with a hill, so segments have different costs. */
@@ -45,7 +46,7 @@ describe('simulationStateAt', () => {
     expect(s.dist_m).toBe(0);
     expect(s.elapsed_s).toBe(0);
     expect(s.o2_used_kg).toBe(0);
-    expect(s.o2_left_kg).toBe(1);
+    expect(s.o2_left_kg).toBe(DEFAULT_O2_AVAILABLE_KG);
     expect(s.finished).toBe(false);
     expect(s.pastPointOfNoReturn).toBe(false);
   });

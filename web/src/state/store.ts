@@ -30,6 +30,10 @@ export interface AppState {
   /** Merges `partial` into `evaParams`, clamped to `EVA_PARAM_RANGES`; non-finite values are ignored. */
   setEvaParams: (partial: Partial<EvaParams>) => void;
 
+  /** Grows by one each time the planner asks for the best order; `useRouting` reacts to it. */
+  bestOrderRequest: number;
+  requestBestOrder: () => void;
+
   setWaypoints: (pts: LonLat[]) => void;
   addWaypoint: (p: LonLat) => void;
   moveWaypoint: (i: number, p: LonLat) => void;
@@ -63,6 +67,9 @@ export const useAppStore = create<AppState>()((set) => ({
 
   evaParams: { ...DEFAULT_EVA_PARAMS },
   setEvaParams: (partial) => set((s) => ({ evaParams: { ...s.evaParams, ...clampEvaParams(partial) } })),
+
+  bestOrderRequest: 0,
+  requestBestOrder: () => set((s) => ({ bestOrderRequest: s.bestOrderRequest + 1 })),
 
   setWaypoints: (waypoints) => set({ waypoints }),
   addWaypoint: (p) => set((s) => ({ waypoints: [...s.waypoints, p] })),

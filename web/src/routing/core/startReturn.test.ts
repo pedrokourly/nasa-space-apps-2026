@@ -9,7 +9,10 @@ import { cellIndex, cellToLonLat, lonLatToCell, type Grid } from './grid';
 import { buildMockGrid } from './mockGrid';
 import { returnCostField } from './returnField';
 import { route } from './route';
-import { DEFAULT_WALK, segmentCost } from './walk';
+import { DEFAULT_WALK, O2_RESERVE_FRACTION, segmentCost } from './walk';
+
+/** Share of the O₂ the plan may use: the supply minus the safety reserve. */
+const USABLE = 1 - O2_RESERVE_FRACTION;
 
 const pt = (g: Grid, col: number, row: number): LonLat => cellToLonLat(g.meta, col, row);
 const lastOf = <T,>(a: T[]): T => a[a.length - 1]!;
@@ -66,8 +69,8 @@ describe('route(): second verdict against the start point (#69)', () => {
     const full = route(g, pts, { habitat: H, o2_available_kg: 100 }).properties;
     const need = full.o2_kg + full.return_to_start!.return_path!.o2_kg;
     for (const k of [0.2, 0.5, 0.8, 0.99]) {
-      const available = need * k;
-      const r = route(g, pts, { habitat: H, o2_available_kg: available });
+      const available = need * k; // usable O₂
+      const r = route(g, pts, { habitat: H, o2_available_kg: available / USABLE });
       const s = r.properties.return_to_start!;
       expect(s.verdict).toBe('NO-GO');
       const pnr = s.point_of_no_return!;
@@ -111,7 +114,7 @@ describe('route(): second verdict against the start point (#69)', () => {
     const needStart = big.properties.o2_kg + homeAt(big, startFieldOf(near[0]!), last);
     const needHabitat = big.properties.o2_kg + homeAt(big, habitatField, last);
     expect(needStart).toBeLessThan(needHabitat);
-    const p = route(g, near, { habitat: H, o2_available_kg: (needStart + needHabitat) / 2 }).properties;
+    const p = route(g, near, { habitat: H, o2_available_kg: (needStart + needHabitat) / 2 / USABLE }).properties;
     expect(p.verdict).toBe('NO-GO');
     expect(p.return_to_start!.verdict).toBe('GO');
     expect(p.return_to_start!.point_of_no_return).toBeUndefined();
@@ -124,7 +127,7 @@ describe('route(): second verdict against the start point (#69)', () => {
     const needStart = big.properties.o2_kg + homeAt(big, startFieldOf(oneWay[0]!), last);
     const needHabitat = big.properties.o2_kg + homeAt(big, habitatField, last);
     expect(needHabitat).toBeLessThan(needStart);
-    const p = route(g, oneWay, { habitat: H, o2_available_kg: (needStart + needHabitat) / 2 }).properties;
+    const p = route(g, oneWay, { habitat: H, o2_available_kg: (needStart + needHabitat) / 2 / USABLE }).properties;
     expect(p.verdict).toBe('GO');
     expect(p.point_of_no_return).toBeUndefined();
     expect(p.return_to_start!.verdict).toBe('NO-GO');

@@ -24,7 +24,8 @@ function getRouter(): Promise<RouteFn> {
 }
 
 /** ROUTING PLUG POINT: the real `route()` (A* over the grid, time, O₂, verdict). */
-const routeImpl: RouteFn = async (points, params, habitat) => (await getRouter())(points, params, habitat);
+const routeImpl: RouteFn = async (points, params, habitat, run) =>
+  (await getRouter())(points, params, habitat, run);
 
 /** Artificial delay (ms) in dev only, to see "Computing route…". Off by default (VITE_ROUTE_MOCK_DELAY_MS). */
 const DEV_DELAY_MS = import.meta.env.DEV ? Number(import.meta.env.VITE_ROUTE_MOCK_DELAY_MS ?? 0) || 0 : 0;

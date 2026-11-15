@@ -6202,7 +6202,7 @@
       }
     ],
     "verdict": "NO-GO",
-    "point_of_no_return": 214,
+    "point_of_no_return": 195,
     "mock": true
   }
 }

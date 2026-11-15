@@ -4,7 +4,7 @@
  * 8 neighbors; a diagonal move is only allowed when both orthogonal cells beside it are free
  * (it does not "cut the corner" of an obstacle).
  */
-import { buildCostGrid, BLOCKED, DEFAULT_PROFILE, type CostProfile } from './cost';
+import { BLOCKED, costGridFor, DEFAULT_PROFILE, type CostProfile } from './cost';
 import { cellIndex, inBounds, type Cell, type Grid } from './grid';
 import { MinHeap } from './heap';
 
@@ -34,7 +34,7 @@ function search(
   if (!inBounds(meta, start.col, start.row)) throw new RangeError(`start outside the grid: (${start.col}, ${start.row})`);
   if (!inBounds(meta, goal.col, goal.row)) throw new RangeError(`goal outside the grid: (${goal.col}, ${goal.row})`);
 
-  const costs = buildCostGrid(grid, profile);
+  const costs = costGridFor(grid, profile);
   const s = cellIndex(meta, start.col, start.row);
   const t = cellIndex(meta, goal.col, goal.row);
   if (costs[s] === BLOCKED || costs[t] === BLOCKED) return null;

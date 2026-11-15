@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { ESTIMATE_LABEL } from '../routing/estimateText';
 import L from 'leaflet';
 import { useAppStore } from '../state/store';
 import { useSimulationStore } from '../state/simulationStore';
@@ -78,6 +79,7 @@ export default function SimulationControl() {
               NO-GO: point of no return passed. The remaining O₂ no longer covers the way back.
             </p>
           )}
+          <p className="sim-control__estimate">O₂ and time: {ESTIMATE_LABEL}.</p>
           {status === 'finished' && <p className="sim-control__done">EVA finished.</p>}
         </>
       )}

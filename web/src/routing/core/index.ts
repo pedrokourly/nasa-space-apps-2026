@@ -9,3 +9,4 @@ export * from './route';
 export * from './gridBinary';
 export * from './heap';
 export * from './returnField';
+export * from './stopOrder';

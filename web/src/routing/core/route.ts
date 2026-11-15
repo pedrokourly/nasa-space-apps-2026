@@ -16,17 +16,20 @@
 import { haversine, type LonLat } from '../../lib/mars-geo';
 import type { ReturnPath, Route, RouteLeg } from '../../types/contract';
 import { findPath } from './astar';
-import { BLOCKED, cellFactor, DEFAULT_PROFILE, type CostProfile } from './cost';
+import { BLOCKED, cellFactor, DEFAULT_PROFILE, ROUTE_MODES, type CostProfile, type RouteMode } from './cost';
 import { BlockedPointError, NoPathError, OutOfGridError } from './errors';
 import { cellIndex, cellToLonLat, lonLatToCell, type Cell, type Grid } from './grid';
 import { returnCostField, traceReturnPath } from './returnField';
-import { DEFAULT_O2_AVAILABLE_KG, DEFAULT_WALK, segmentCost, type EvaParams, type WalkProfile } from './walk';
+import { routeBestOrder } from './stopOrder';
+import { DEFAULT_O2_AVAILABLE_KG, DEFAULT_WALK, O2_RESERVE_FRACTION, segmentCost, type EvaParams, type WalkProfile } from './walk';
 
 export interface RouteOptions {
   cost?: CostProfile;
   walk?: WalkProfile;
   /** O₂ available at departure (kg). Default: `DEFAULT_O2_AVAILABLE_KG` (assumption). */
   o2_available_kg?: number;
+  /** Share of the O₂ kept as a safety reserve (0 to 1). Default: `O2_RESERVE_FRACTION` (10%). */
+  o2_reserve_fraction?: number;
   /**
    * Habitat position `[lon, lat]`: where the way home leads. Default: the route's first point. When it
    * is outside the grid or on an impassable cell, the route's first point is used instead.
@@ -38,7 +41,8 @@ export interface RouteOptions {
 const fieldCache = new WeakMap<Grid, Map<string, Float64Array>>();
 const FIELD_CACHE_SIZE = 4;
 
-function cachedReturnField(grid: Grid, home: Cell, cost: CostProfile, walk: WalkProfile): Float64Array {
+/** `returnCostField` for this grid, habitat and profiles, computed once and reused (small LRU). */
+export function cachedReturnField(grid: Grid, home: Cell, cost: CostProfile, walk: WalkProfile): Float64Array {
   let byKey = fieldCache.get(grid);
   if (!byKey) fieldCache.set(grid, (byKey = new Map()));
   const key = `${home.col},${home.row}|${JSON.stringify(cost)}|${JSON.stringify(walk)}`;
@@ -54,7 +58,7 @@ function cachedReturnField(grid: Grid, home: Cell, cost: CostProfile, walk: Walk
 }
 
 /** Habitat cell: `habitat` when it is inside the grid and passable, else `fallback` (the first point). */
-function habitatCell(grid: Grid, habitat: LonLat | undefined, fallback: Cell, costProfile: CostProfile): Cell {
+export function habitatCell(grid: Grid, habitat: LonLat | undefined, fallback: Cell, costProfile: CostProfile): Cell {
   if (!habitat) return fallback;
   const cell = lonLatToCell(grid.meta, habitat);
   if (!cell || cellFactor(grid, cellIndex(grid.meta, cell.col, cell.row), costProfile) === BLOCKED) return fallback;
@@ -142,6 +146,9 @@ function returnVerdict(
  * `NoPathError` (no path between two points) or `Error` (fewer than 2 points).
  * Points that fall in the same cell give a zero-length line with two equal vertices (valid GeoJSON).
  *
+ * Safety reserve: the verdicts and points of no return only count on the O₂ available minus the
+ * reserve (`o2_reserve_fraction`, 10% by default). Below, "the O₂ available" means that usable amount.
+ *
  * Verdict: GO if the O₂ of the trip plus the optimal return from its last point to the habitat (zero
  * when the route ends at the habitat) fits in the available amount.
  *
@@ -165,7 +172,10 @@ export function route(grid: Grid, points: LonLat[], options: RouteOptions = {}):
   if (points.length < 2) throw new Error('route needs at least 2 points');
   const costProfile = options.cost ?? DEFAULT_PROFILE;
   const walk = options.walk ?? DEFAULT_WALK;
-  const available = options.o2_available_kg ?? DEFAULT_O2_AVAILABLE_KG;
+  const supply = options.o2_available_kg ?? DEFAULT_O2_AVAILABLE_KG;
+  const reserve = Math.min(1, Math.max(0, options.o2_reserve_fraction ?? O2_RESERVE_FRACTION));
+  /** O₂ the plan may use: the supply minus the safety reserve. */
+  const available = supply * (1 - reserve);
   const { meta } = grid;
 
   const stops: Cell[] = points.map((p, i) => {
@@ -258,21 +268,33 @@ export function route(grid: Grid, points: LonLat[], options: RouteOptions = {}):
   };
 }
 
+/** How one request runs (#65): the route mode and whether to reorder the stops. */
+export interface RouteRun {
+  mode?: RouteMode;
+  /** Reorder the stops (habitat kept first) to use the least O₂; no return point is added. */
+  optimizeOrder?: boolean;
+}
+
 /**
- * Binds the grid and options: returns the `(points, params?, habitat?) => Route` function the Worker
- * expects (`RouteFn`). Optional EVA `params` are merged onto the bound walk profile and O₂ supply; an
- * optional `habitat` replaces the bound one.
+ * Binds the grid and options: returns the `(points, params?, habitat?, run?) => Route` function the
+ * Worker expects (`RouteFn`). Optional EVA `params` are merged onto the bound walk profile and O₂
+ * supply; an optional `habitat` replaces the bound one; `run.mode` picks the cost profile and
+ * `run.optimizeOrder` reorders the stops (`routeBestOrder`).
  */
 export function createRouter(
   grid: Grid,
   options: RouteOptions = {},
-): (points: LonLat[], params?: Partial<EvaParams>, habitat?: LonLat) => Route {
-  return (points, params, habitat) => {
-    const opts: RouteOptions = habitat ? { ...options, habitat } : options;
-    if (!params) return route(grid, points, opts);
-    const walk: WalkProfile = { ...(opts.walk ?? DEFAULT_WALK) };
-    if (params.speedFlatMS !== undefined) walk.speedFlatMS = params.speedFlatMS;
-    if (params.loadMassKg !== undefined) walk.loadMassKg = params.loadMassKg;
-    return route(grid, points, { ...opts, walk, o2_available_kg: params.o2_available_kg ?? opts.o2_available_kg });
+): (points: LonLat[], params?: Partial<EvaParams>, habitat?: LonLat, run?: RouteRun) => Route {
+  return (points, params, habitat, run) => {
+    const opts: RouteOptions = habitat ? { ...options, habitat } : { ...options };
+    if (params) {
+      const walk: WalkProfile = { ...(opts.walk ?? DEFAULT_WALK) };
+      if (params.speedFlatMS !== undefined) walk.speedFlatMS = params.speedFlatMS;
+      if (params.loadMassKg !== undefined) walk.loadMassKg = params.loadMassKg;
+      opts.walk = walk;
+      opts.o2_available_kg = params.o2_available_kg ?? opts.o2_available_kg;
+    }
+    if (run?.mode) opts.cost = ROUTE_MODES[run.mode];
+    return run?.optimizeOrder ? routeBestOrder(grid, points, opts) : route(grid, points, opts);
   };
 }
