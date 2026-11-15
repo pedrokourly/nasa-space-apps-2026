@@ -17,6 +17,17 @@ describe('walking model', () => {
     expect(walkingSpeed(-0.05)).toBeGreaterThan(walkingSpeed(0)); // Tobler peak: a slight downhill
   });
 
+  it('Tobler known values: 6 km/h at the peak (5% downhill), 5.04 km/h on flat, exp(-0.35) of flat on a 10% climb', () => {
+    // Tobler (1993): v = 6·exp(−3.5·|S + 0.05|) km/h. With the flat speed set to Tobler's own
+    // (6·exp(−0.175) = 5.037 km/h) the normalized form must give back the original numbers.
+    const tobler = { ...DEFAULT_WALK, speedFlatMS: (6 * Math.exp(-0.175)) / 3.6 };
+    expect(walkingSpeed(0, tobler) * 3.6).toBeCloseTo(5.037, 3);
+    expect(walkingSpeed(-0.05, tobler) * 3.6).toBeCloseTo(6, 10);
+    expect(walkingSpeed(0.1, tobler) * 3.6).toBeCloseTo(6 * Math.exp(-0.525), 10); // 3.549 km/h
+    expect(walkingSpeed(0.1)).toBeCloseTo(0.7047, 4); // default: 1 m/s on flat ground
+    expect(walkingSpeed(-0.2)).toBeCloseTo(walkingSpeed(0.1), 10); // symmetric around the 5% downhill
+  });
+
   it('climbing uses more O₂ than walking the same stretch on flat terrain', () => {
     const flat = segmentCost(100, 0);
     const up = segmentCost(100, 20);
