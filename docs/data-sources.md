@@ -34,6 +34,8 @@ The Mars Trek tile files carry no credit, DOI or license: their title is just th
 - **THEMIS:** the related page [Mars THEMIS Controlled Mosaics and Final Smithed Kernels](https://astrogeology.usgs.gov/search/map/mars-themis-controlled-mosaics-and-final-smithed-kernels) has no DOI, date or use constraint. We did not confirm it is the exact product behind `THEMIS_DayIR_ControlledMosaics_100m_v2_oct2018`. Its references include Christensen et al. (2004), *The Thermal Emission Imaging System (THEMIS) for the Mars 2001 Odyssey mission*, Space Sci. Rev. 110, 85-130, and Fergason, Lee and Weller (2013), *THEMIS Geodetically Controlled Mosaics of Mars*, 44th Lunar and Planetary Science Conference.
 - **MOLA:** the FGDC XML metadata of the USGS page [Mars MGS MOLA Global Color Shaded Relief 463m](https://astrogeology.usgs.gov/search/map/mars_mgs_mola_global_color_shaded_relief_463m), downloaded by a teammate on 2026-11-15, describes a 463 m/pixel color shaded relief of the MOLA global elevation model: more than 600 million laser measurements gathered in 1999 to 2001 by MOLA on Mars Global Surveyor, elevations above the areoid, a total elevation uncertainty of at least ±3 m, map processed on 2003-03-31. It lists no publication date and **no DOI**. Access constraint: public domain; use constraint: none. We **assume** it is the product behind the Mars Trek ID `Mars_MGS_MOLA_ClrShade_merge_global_463m` (same resolution and type), but the Mars Trek ID contains `merge` and we did not confirm the match.
 
+For issue #32 the HiRISE tiles of the area (30 tiles at zoom 15) were downloaded once into `data/raw/mars-trek-tiles/`, which git ignores, to measure the alignment ([alignment-validation.md](alignment-validation.md)). The three small crops in `docs/img/` are illustrations cut from those tiles.
+
 Terms of use for the tiles are those of [NASA Mars Trek](https://trek.nasa.gov/mars/); we found no license text on the tile endpoints. The map layers belong to the Mapa 2D workstream; this table only records their sources.
 
 ## 3. Citations to copy
@@ -117,7 +119,7 @@ Every source above has an entry in `web/public/data/missions.json`. The entry `m
 | Leaflet 1.9.4 | 2D map | BSD-2-Clause (read from `package.json` in `node_modules`) |
 | React and React DOM 19.3.1 | Interface | MIT (read from `package.json` in `node_modules`) |
 | Zustand 5.1.0 | State | MIT (read from `package.json` in `node_modules`) |
-| Python: numpy, rasterio, pytest | Data pipeline | Versions pinned in `pipeline/requirements.txt` |
+| Python: numpy, rasterio, pillow, pytest | Data pipeline | Versions pinned in `pipeline/requirements.txt` (Pillow reads the Mars Trek tiles in the alignment check) |
 
 ## 9. Link check
 
