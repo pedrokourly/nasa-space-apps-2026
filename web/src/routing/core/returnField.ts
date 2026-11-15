@@ -69,3 +69,75 @@ export function returnCostField(
   }
   return field;
 }
+
+/** The optimal way home traced over a return field, with its totals. */
+export interface ReturnTrace {
+  /** Cells from `from` (inclusive) to the habitat (inclusive). */
+  cells: Cell[];
+  dist_m: number;
+  time_s: number;
+  o2_kg: number;
+}
+
+/**
+ * Follows `field` (from `returnCostField`) downhill from `from` to the habitat: at each cell it steps
+ * to the neighbor `n` that minimizes `O₂(cur → n) + field[n]`, the same choice the field's Dijkstra
+ * made, so no new search is needed. Uses the same neighbors, blocked-cell and corner-cutting rules as
+ * A* and the field, and the same step length and walking model as `route()`.
+ *
+ * Returns `null` when there is no way home (`from` blocked or cut off) or the field is inconsistent
+ * (a step that does not strictly lower the field, or more steps than cells).
+ */
+export function traceReturnPath(
+  grid: Grid,
+  field: Float64Array,
+  from: Cell,
+  cost: CostProfile = DEFAULT_PROFILE,
+  walk: WalkProfile = DEFAULT_WALK,
+): ReturnTrace | null {
+  const { meta } = grid;
+  const { width, height } = meta;
+  const costs = buildCostGrid(grid, cost);
+  let cur = cellIndex(meta, from.col, from.row);
+  if (!Number.isFinite(field[cur]!)) return null;
+
+  const cells: Cell[] = [{ col: from.col, row: from.row }];
+  let dist_m = 0;
+  let time_s = 0;
+  let o2_kg = 0;
+  for (let steps = 0; field[cur]! > 0; steps++) {
+    if (steps >= width * height) return null;
+    const col = cur % width;
+    const row = (cur - col) / width;
+    const a = cellToLonLat(meta, col, row);
+    let best = -1;
+    let bestScore = Infinity;
+    let bestD = 0;
+    let bestSeg = { time_s: 0, o2_kg: 0 };
+    for (const [dc, dr] of NEIGHBORS) {
+      const nc = col + dc;
+      const nr = row + dr;
+      if (nc < 0 || nc >= width || nr < 0 || nr >= height) continue;
+      const n = nr * width + nc;
+      if (costs[n] === BLOCKED || !Number.isFinite(field[n]!)) continue;
+      if (dc !== 0 && dr !== 0 && (costs[row * width + nc] === BLOCKED || costs[nr * width + col] === BLOCKED)) continue;
+      const d = haversine(a, cellToLonLat(meta, nc, nr));
+      const seg = segmentCost(d, grid.elevation[n]! - grid.elevation[cur]!, walk);
+      const score = seg.o2_kg + field[n]!;
+      if (score < bestScore) {
+        best = n;
+        bestScore = score;
+        bestD = d;
+        bestSeg = seg;
+      }
+    }
+    // Every step must strictly lower the field; otherwise the trace could loop.
+    if (best < 0 || !(field[best]! < field[cur]!)) return null;
+    dist_m += bestD;
+    time_s += bestSeg.time_s;
+    o2_kg += bestSeg.o2_kg;
+    cur = best;
+    cells.push({ col: cur % width, row: (cur - (cur % width)) / width });
+  }
+  return { cells, dist_m, time_s, o2_kg };
+}
