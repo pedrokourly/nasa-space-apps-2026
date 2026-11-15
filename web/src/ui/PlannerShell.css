@@ -383,35 +383,7 @@
 @media (min-width: 601px) and (max-width: 900px) {
   .map-toolbar { top: 180px; bottom: auto; transform: none; }
 }
-/* Temperature unit control (°C / K / °F); the source value in kelvin always stays visible. */
-.mars-data-units {
-  display: flex;
-  gap: 2px;
-  margin-left: auto;
-  padding: 2px;
-  border: 1px solid rgb(255 255 255 / 12%);
-  border-radius: 8px;
-}
-.mars-data-units button {
-  min-width: 32px;
-  padding: 3px 8px;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: #aab1ba;
-  font: inherit;
-  font-size: 12px;
-  cursor: pointer;
-}
-.mars-data-units button[aria-pressed='true'] {
-  background: #ff8a2b;
-  color: #1b1208;
-  font-weight: 700;
-}
-.mars-data-units button:focus-visible {
-  outline: 2px solid #00e5ff;
-  outline-offset: 1px;
-}
+
 .mars-data-card__fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -1,0 +1,330 @@
+/*
+ * UI kit: design tokens and base components following the shadcn/ui conventions (MIT), written in
+ * plain CSS because the app does not use Tailwind. Same names as shadcn: background / foreground,
+ * card, primary, secondary, muted, accent, destructive, border, input, ring, radius; Button variants
+ * (default, secondary, outline, ghost, destructive) and sizes (sm, default, lg, icon); Badge; Card;
+ * Select; Label. Loaded after the older stylesheets, so these rules win where they apply.
+ */
+:root {
+  --background: #090b0e;
+  --foreground: #f4f5f7;
+  --card: rgb(12 15 19 / 94%);
+  --card-foreground: #f4f5f7;
+  --popover: #0f1318;
+  --primary: #ff8a2b;
+  --primary-hover: #ff9b47;
+  --primary-foreground: #1b1208;
+  --secondary: #1b2027;
+  --secondary-hover: #242a33;
+  --secondary-foreground: #f4f5f7;
+  --muted: #171c23;
+  --muted-foreground: #98a0ad;
+  --accent: rgb(255 138 43 / 14%);
+  --accent-foreground: #ffb454;
+  --destructive: #ff5a4f;
+  --success: #34d399;
+  --warning: #ffb300;
+  --info: #00e5ff;
+  --border: rgb(255 255 255 / 12%);
+  --input: rgb(255 255 255 / 18%);
+  --ring: #ffb454;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --radius-lg: 14px;
+  --shadow: 0 8px 24px rgb(0 0 0 / 40%);
+
+  /* Semantic type scale (minimum 12 px). */
+  --text-xs: 12px;   /* captions, units, field labels */
+  --text-sm: 13px;   /* secondary text, table cells, small buttons */
+  --text-base: 14px; /* body text, buttons */
+  --text-lg: 16px;   /* values */
+  --text-xl: 20px;   /* key numbers */
+  --leading-tight: 1.25;
+  --leading-normal: 1.45;
+  --icon: 20px;
+  --icon-sm: 16px;
+}
+
+/* ---------- Button ---------- */
+.ui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 36px;
+  min-width: 0;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: var(--text-base);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, opacity 150ms ease;
+}
+.ui-btn svg {
+  display: block;
+  flex: none;
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ui-btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.ui-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ui-btn--default { background: var(--primary); color: var(--primary-foreground); }
+.ui-btn--default:hover:not(:disabled) { background: var(--primary-hover); }
+.ui-btn--secondary { border-color: var(--border); background: var(--secondary); color: var(--secondary-foreground); }
+.ui-btn--secondary:hover:not(:disabled) { background: var(--secondary-hover); }
+.ui-btn--outline { border-color: var(--input); background: transparent; color: var(--foreground); }
+.ui-btn--outline:hover:not(:disabled) { background: var(--secondary); }
+.ui-btn--ghost { background: transparent; color: var(--foreground); }
+.ui-btn--ghost:hover:not(:disabled) { background: var(--secondary); }
+.ui-btn--destructive { background: var(--destructive); color: #fff; }
+
+/* Pressed toggles (aria-pressed): accent fill, as the active layer buttons. */
+.ui-btn[aria-pressed='true'] {
+  border-color: rgb(255 138 43 / 50%);
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.ui-btn--sm { height: 32px; padding: 0 12px; border-radius: var(--radius-sm); font-size: var(--text-sm); }
+.ui-btn--lg { height: 42px; padding: 0 20px; font-size: var(--text-base); }
+.ui-btn--lg svg { width: var(--icon); height: var(--icon); }
+.ui-btn--icon { width: 44px; height: 44px; padding: 0; }
+.ui-btn--icon svg { width: 22px; height: 22px; stroke-width: 1.8; }
+.ui-btn--block { width: 100%; }
+
+/* ---------- Badge ---------- */
+.ui-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  white-space: nowrap;
+}
+.ui-badge--success { border-color: rgb(52 211 153 / 45%); background: rgb(52 211 153 / 16%); color: #56e4a8; }
+.ui-badge--destructive { border-color: rgb(255 90 79 / 50%); background: rgb(255 90 79 / 16%); color: #ff8279; }
+.ui-badge--warning { border-color: rgb(255 179 0 / 45%); background: rgb(255 179 0 / 14%); color: var(--warning); }
+.ui-badge--outline { border-color: var(--input); color: var(--muted-foreground); }
+
+/* ---------- Card ---------- */
+.ui-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  color: var(--card-foreground);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px);
+}
+
+/* ---------- Label, Select ---------- */
+.ui-label {
+  color: var(--muted-foreground);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+}
+.ui-select {
+  width: 100%;
+  height: 36px;
+  min-width: 0;
+  padding: 0 32px 0 12px;
+  border: 1px solid var(--input);
+  border-radius: var(--radius);
+  background: var(--secondary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2398a0ad' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center / 16px;
+  color: var(--foreground);
+  font: inherit;
+  font-size: var(--text-base);
+  appearance: none;
+  cursor: pointer;
+}
+.ui-select:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.ui-select:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ---------- Toggle group (segmented control) ---------- */
+.ui-toggle-group {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--muted);
+}
+.ui-toggle-group .ui-btn { height: 28px; padding: 0 10px; border-radius: var(--radius-sm); font-size: var(--text-sm); }
+.ui-toggle-group .ui-btn[aria-pressed='true'] { border-color: transparent; background: var(--primary); color: var(--primary-foreground); }
+
+/* =====================================================================
+ * Where the kit is applied. Scoped under .app so it wins over the older
+ * per-component rules (PlannerShell.css, SimulationControl.css …).
+ * ===================================================================== */
+
+/* Left tool bar: one column of identical 44 px icon buttons, icons centered on the same axis. */
+.app .map-toolbar {
+  align-items: center;
+  width: auto;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+}
+.app .map-toolbar__sources { align-items: center; gap: 4px; }
+.app .map-toolbar .ui-btn { width: 44px; height: 44px; padding: 0; border-radius: var(--radius); font-size: 0; transform: none; }
+.app .map-toolbar .ui-btn:not([aria-pressed='true']) { color: #d8dbe0; }
+.app .map-toolbar .ui-btn.is-selected { box-shadow: inset 0 0 0 1px var(--ring); }
+@media (max-width: 600px) {
+  .app .map-toolbar { flex-direction: row; justify-content: space-between; width: auto; }
+  .app .map-toolbar__sources { flex-direction: row; }
+  .app .map-toolbar .ui-btn { width: 40px; height: 40px; }
+}
+
+/* Route dock (action bar, bottom right): Recenter, Select route, Start EVA. */
+.app .map-recenter.ui-btn {
+  gap: 8px;
+  border-color: var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--accent-foreground);
+  font-size: var(--text-base);
+  font-weight: 600;
+  box-shadow: var(--shadow);
+}
+.app .map-recenter.ui-btn:hover { background: var(--secondary); }
+.app .map-recenter__icon { width: var(--icon); height: var(--icon); flex: 0 0 var(--icon); }
+.app .map-recenter__icon svg { width: 100%; height: 100%; stroke-width: 2; }
+.app .map-recenter__label { font-size: var(--text-base); font-weight: 600; }
+
+.app .eva-dock--idle {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+.app .eva-controls { gap: 8px; }
+.app .eva-controls__plan { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
+.app .eva-controls__buttons { display: flex; gap: 8px; }
+.app .eva-controls__buttons .ui-btn { flex: 1 1 auto; min-height: 0; }
+.app .eva-controls__buttons .ui-btn--lg { height: 42px; }
+.app .eva-controls__estimate { color: var(--muted-foreground); font-size: var(--text-xs); line-height: var(--leading-normal); }
+.app .eva-controls__warning { font-size: var(--text-xs); }
+
+.app .map-toolbar .ui-btn svg { width: 22px; height: 22px; stroke-width: 1.8; }
+.app .map-toolbar .ui-btn[aria-pressed='true'] { background: var(--accent); color: var(--accent-foreground); }
+.app .eva-controls .ui-select {
+  height: 36px;
+  min-height: 36px;
+  padding: 0 32px 0 12px;
+  border-color: var(--input);
+  background: var(--secondary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2398a0ad' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center / 16px;
+  font-size: var(--text-base);
+}
+
+/* Top center actions: Manage steps, Best order (outline, small; same height and icon size). */
+.app .waypoints-panel__actions { gap: 8px; }
+.app .waypoints-panel__actions .ui-btn {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--foreground);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  transform: none;
+}
+.app .waypoints-panel__actions .ui-btn:hover:not(:disabled) { background: var(--secondary); }
+.app .waypoints-panel__actions .ui-btn[aria-expanded='true'] { border-color: rgb(255 138 43 / 50%); color: var(--accent-foreground); }
+.app .waypoints-panel__actions .sim-control__order-note { color: var(--warning); font-size: var(--text-xs); }
+
+/* Route card text sizes. */
+.app .route-summary--card { font-size: var(--text-sm); }
+.app .route-plans thead th { font-size: var(--text-xs); }
+.app .route-plans tbody th,
+.app .route-plans td { font-size: var(--text-sm); }
+.app .route-plans__sub,
+.app .route-plans__note,
+.app .route-summary--card .route-summary__labels,
+.app .route-summary__details > summary { font-size: var(--text-xs); }
+
+/* Simulation metrics bar: label → value hierarchy. */
+.app .route-metric small { font-size: var(--text-xs); }
+.app .route-metric strong { font-size: var(--text-lg); }
+.app .route-metric small.route-metric__note { font-size: var(--text-xs); white-space: normal; overflow: visible; }
+/* While the EVA runs, Recenter sits above the (taller) metrics bar instead of under it. */
+@media (min-width: 901px) {
+  .app .map-recenter--eva-active { bottom: 240px; }
+}
+
+/* Header, map labels and readouts: nothing under 12 px. */
+.app .app-brand small,
+.app .app-readout small { font-size: var(--text-xs); }
+.app .app-brand > span:last-child { min-width: 0; }
+.app .app-brand small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* The steps panel is centered with left: 50%; max-content keeps its two buttons on one line. */
+.app .waypoints-panel { width: max-content; max-width: calc(100vw - 24px); }
+.app .waypoints-panel__actions .ui-btn { flex: none; }
+
+/* Phones: the plan blocks share one row of column labels (shown on the first block only). */
+@media (max-width: 600px) {
+  .app .route-plans tbody tr:not(:first-child) .route-plans__num::before { display: none; }
+  .app .route-plans tbody tr:not(:first-child) .route-plans__num { margin-top: 2px; }
+}
+.app .app-readout strong { font-size: var(--text-base); }
+.app .fixed-layers-badge,
+.app .fixed-layers-badge span,
+.app .fixed-layers-badge__label { font-size: var(--text-xs); }
+.app .planning-area-label { font-size: var(--text-xs); }
+.app .map-view__coords,
+.app .leaflet-control-scale-line { font-size: var(--text-xs); }
+.app .leaflet-control-attribution,
+.app .leaflet-control-attribution a,
+.app .leaflet-control-attribution span { font-size: var(--text-xs) !important; line-height: 18px !important; }
+
+/* Conditions: same scale. */
+.app .mars-data-card__header h2 { font-size: var(--text-base); }
+.app .mars-data-metric > span { font-size: var(--text-xs); }
+.app .mars-data-metric > strong { font-size: var(--text-xl); }
+.app .mars-data-metric > small { font-size: var(--text-xs); }
+.app .mars-data-note { font-size: var(--text-sm); }
+.app .mars-data-table th { font-size: var(--text-xs); }
+.app .mars-data-table td { font-size: var(--text-sm); }
+.app .mars-data-table td:first-child small { font-size: var(--text-xs); }
+.app .mars-data-units { margin-left: auto; }
+.app .mars-data-card footer,
+.app .mars-data-screen .tool-panel__eyebrow,
+.app .data-status-pill,
+.app .mars-data-target a,
+.app .mars-data-target p,
+.app .mars-data-missions span,
+.app .mars-data-missions p { font-size: var(--text-xs); }
+
+.app .mars-data-target strong,
+.app .mars-data-missions strong { font-size: var(--text-sm); }
+
+/* Tablets: the header has two rows, so the badge starts under it. */
+@media (min-width: 601px) and (max-width: 900px) {
+  .app .fixed-layers-badge { top: 124px; }
+}

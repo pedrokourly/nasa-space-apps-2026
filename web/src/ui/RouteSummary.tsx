@@ -6,6 +6,7 @@ import { availablePlans, buildSimPath, SIM_PLAN_LABELS, type SimPlan } from '../
 import type { ReturnPath, Route } from '../types/contract';
 import { ASSUMPTIONS_URL, COMPUTED_LABEL, ESTIMATE_LABEL, PNR_EXPLANATION, assumptionsLine } from '../routing/estimateText';
 import { RESERVE_NOTE } from './reserveNote';
+import { Badge } from './kit';
 import './RouteSummary.css';
 
 type Verdict = 'GO' | 'NO-GO';
@@ -40,7 +41,7 @@ function returnText(route: Route, ret: ReturnPath, nogo: boolean): string {
 
 function VerdictPill({ verdict }: { verdict: Verdict | undefined }) {
   if (!verdict) return <span className="route-plans__none">—</span>;
-  return <span className={`route-summary__verdict route-summary__verdict--${verdict === 'GO' ? 'go' : 'nogo'}`}>{verdict}</span>;
+  return <Badge variant={verdict === 'GO' ? 'success' : 'destructive'}>{verdict}</Badge>;
 }
 
 interface PlanRow {

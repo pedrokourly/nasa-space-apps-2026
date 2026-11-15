@@ -29,7 +29,10 @@ import ProvenanceBadge, { Legend } from './ui/ProvenanceBadge'
 import { LAYERS } from './map/layers'
 import type { LayerId, Conditions } from './types/contract'
 import MarsDataScreen from './ui/MarsDataScreen'
+import { Button } from './ui/kit'
+import { InfoIcon, LayersIcon, MaximizeIcon, NavigationIcon, RouteIcon, SlopeIcon, ThermometerIcon } from './ui/icons'
 import './ui/PlannerShell.css'
+import './ui/kit.css'
 
 const ThreeDView = lazy(() => import('./three-d/ThreeDView'))
 const DATA_SOURCES: DataSources = { meta: 'real', targets: 'real', missions: 'real' }
@@ -183,7 +186,7 @@ export default function App() {
           <span><strong>Martian Map</strong><small>Jezero crater · EVA planner</small></span>
         </a>
         <nav className="app-tabs" aria-label="Application views">
-          <button className={`app-tab ${tab === 'planning' ? 'app-tab--active' : ''}`} type="button" aria-pressed={tab === 'planning'} onClick={() => setTab('planning')}>◎ <span>Planning</span></button>
+          <button className={`app-tab ${tab === 'planning' ? 'app-tab--active' : ''}`} type="button" aria-pressed={tab === 'planning'} onClick={() => setTab('planning')}><RouteIcon /><span>Planning</span></button>
           <button className={`app-tab ${tab === 'mars-data' ? 'app-tab--active' : ''}`} type="button" aria-pressed={tab === 'mars-data'} onClick={() => { setTab('mars-data'); setActiveTool(null) }}><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14 14.8V5a3 3 0 0 0-6 0v9.8a5 5 0 1 0 6 0Z"/><path d="M11 8v9"/><circle cx="11" cy="19" r="1.7"/></svg><span>Conditions</span></button>
         </nav>
         <div className="app-status"><span className="app-readout"><small>Latest MEDA sol</small><strong>{latestSol !== null ? `SOL ${latestSol}` : 'SOL —'}</strong></span><ViewToggle view={view} onChange={setView} /></div>
@@ -191,9 +194,9 @@ export default function App() {
 
       {tab === 'planning' && view === '2d' && <>
         <nav className="map-toolbar" aria-label="Map tools">
-          <button type="button" aria-label="Region information" aria-pressed={activeTool === 'info'} className={activeTool === 'info' ? 'is-active' : ''} onClick={chooseTool}><span aria-hidden="true">ⓘ</span></button>
-          <div className="map-toolbar__sources" role="group" aria-label="Map data sources">{SOURCE_LAYERS.map((layer) => <button key={layer.id} type="button" aria-label={`Toggle ${layer.label} layer`} aria-pressed={activeLayers.includes(layer.id)} className={`${activeLayers.includes(layer.id) ? 'is-active' : ''}${selectedSourceLayer === layer.id ? ' is-selected' : ''}`} onClick={() => { toggleLayer(layer.id); selectTarget(null); setSelectedSourceLayer((current) => current === layer.id ? null : layer.id); setActiveTool(null) }}><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">{layer.icon === 'temperature' ? <><path d="M14 14.8V5a3 3 0 0 0-6 0v9.8a5 5 0 1 0 6 0Z"/><path d="M11 8v9"/><circle cx="11" cy="19" r="1.7"/></> : layer.icon === 'slope' ? <><path d="M3 20 10 7l4 7 3-5 4 11H3Z"/><path d="m7 17 4-3 3 2 4-5"/></> : <><path d="M3 19c3-1 4-6 8-6s5 4 10 2"/><path d="M4 14c3-1 4-5 8-5 3 0 4 2 7 1"/><path d="M6 8c2-.7 3-3 6-3 2 0 3 1 5 1"/></>}</svg></button>)}</div>
-          <button type="button" aria-label="Full screen" title="Full screen" onClick={() => { if (document.fullscreenElement) void document.exitFullscreen(); else void document.documentElement.requestFullscreen().catch(() => undefined) }}><span aria-hidden="true">⛶</span></button>
+          <Button variant="ghost" size="icon" aria-label="Region information" title="Region information" aria-pressed={activeTool === 'info'} onClick={chooseTool}><InfoIcon /></Button>
+          <div className="map-toolbar__sources" role="group" aria-label="Map data sources">{SOURCE_LAYERS.map((layer) => <Button key={layer.id} variant="ghost" size="icon" aria-label={`Toggle ${layer.label} layer`} title={layer.label} aria-pressed={activeLayers.includes(layer.id)} className={selectedSourceLayer === layer.id ? 'is-selected' : undefined} onClick={() => { toggleLayer(layer.id); selectTarget(null); setSelectedSourceLayer((current) => current === layer.id ? null : layer.id); setActiveTool(null) }}>{layer.icon === 'temperature' ? <ThermometerIcon /> : layer.icon === 'slope' ? <SlopeIcon /> : <LayersIcon />}</Button>)}</div>
+          <Button variant="ghost" size="icon" aria-label="Full screen" title="Full screen" onClick={() => { if (document.fullscreenElement) void document.exitFullscreen(); else void document.documentElement.requestFullscreen().catch(() => undefined) }}><MaximizeIcon /></Button>
         </nav>
       </>}
 
@@ -224,7 +227,7 @@ export default function App() {
         {tab === 'planning' && view === '2d' && <>
           <button
             type="button"
-            className={`map-recenter${recenterIndicator.centered ? ' map-recenter--centered' : ''}${simulationStatus !== 'idle' ? ' map-recenter--eva-active' : ''}`}
+            className={`ui-btn ui-btn--secondary ui-btn--lg map-recenter${recenterIndicator.centered ? ' map-recenter--centered' : ''}${simulationStatus !== 'idle' ? ' map-recenter--eva-active' : ''}`}
             title="Recenter on habitat"
             aria-label={recenterIndicator.centered ? 'Map centered on habitat' : 'Recenter on habitat'}
             data-centered={recenterIndicator.centered}
@@ -233,7 +236,7 @@ export default function App() {
             className="map-recenter__icon"
             style={{ transform: `rotate(${recenterIndicator.rotation}deg)` }}
             aria-hidden="true"
-          ><svg viewBox="0 0 24 24" focusable="false"><path d="M12 2 4 21l8-4 8 4L12 2Z" /><path d="M12 17V8" /></svg></span>
+          ><NavigationIcon /></span>
             <span className="map-recenter__label">Recenter</span>
           </button>
         </>}

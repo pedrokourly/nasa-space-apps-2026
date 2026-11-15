@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { AppData } from '../lib/loadData'
 import type { Conditions, ConditionStats, ConditionVariable, SolConditions } from '../types/contract'
 import { LAYERS } from '../map/layers'
+import { Button } from './kit'
 
 type Props = { data: AppData | null; error: string | null; conditions: Conditions | null }
 
@@ -43,8 +44,8 @@ function temperatureText(kelvin: number, unit: TempUnit): string {
 }
 
 function TempUnitControl({ unit, onChange }: { unit: TempUnit; onChange: (unit: TempUnit) => void }) {
-  return <div className="mars-data-units" role="group" aria-label="Temperature unit">
-    {TEMP_UNITS.map((u) => <button type="button" key={u} aria-pressed={unit === u} onClick={() => onChange(u)}>{TEMP_UNIT_LABEL[u]}</button>)}
+  return <div className="ui-toggle-group mars-data-units" role="group" aria-label="Temperature unit">
+    {TEMP_UNITS.map((u) => <Button variant="ghost" key={u} aria-pressed={unit === u} onClick={() => onChange(u)}>{TEMP_UNIT_LABEL[u]}</Button>)}
   </div>
 }
 
