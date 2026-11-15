@@ -209,6 +209,11 @@ export interface RouteProps {
   profile: [dist_m: number, elev_m: number][];
   /** One entry per pair of consecutive requested points; their sums equal `dist_m`, `time_s` and `o2_kg`. */
   legs?: RouteLeg[];
+  /**
+   * Only when the best order was requested: indexes into the requested points, in the order the
+   * route visits them, habitat first (e.g. `[0, 2, 1, 3]`). No return point is added.
+   */
+  stop_order?: number[];
   verdict?: 'GO' | 'NO-GO';
   /**
    * Index (in the LineString) of the FIRST vertex from which the astronaut can no longer get back

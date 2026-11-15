@@ -8,7 +8,7 @@
  */
 import { haversine } from '../../lib/mars-geo';
 import { NEIGHBORS } from './astar';
-import { BLOCKED, buildCostGrid, DEFAULT_PROFILE, type CostProfile } from './cost';
+import { BLOCKED, costGridFor, DEFAULT_PROFILE, type CostProfile } from './cost';
 import { cellIndex, cellToLonLat, type Cell, type Grid } from './grid';
 import { MinHeap } from './heap';
 import { DEFAULT_WALK, segmentCost, type WalkProfile } from './walk';
@@ -25,7 +25,7 @@ export function returnCostField(
 ): Float64Array {
   const { meta } = grid;
   const { width, height } = meta;
-  const costs = buildCostGrid(grid, cost);
+  const costs = costGridFor(grid, cost);
   const field = new Float64Array(width * height).fill(Infinity);
   const done = new Uint8Array(width * height);
   const h = cellIndex(meta, home.col, home.row);
@@ -97,7 +97,7 @@ export function traceReturnPath(
 ): ReturnTrace | null {
   const { meta } = grid;
   const { width, height } = meta;
-  const costs = buildCostGrid(grid, cost);
+  const costs = costGridFor(grid, cost);
   let cur = cellIndex(meta, from.col, from.row);
   if (!Number.isFinite(field[cur]!)) return null;
 

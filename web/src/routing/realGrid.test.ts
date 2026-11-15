@@ -9,8 +9,10 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import type { LonLat } from '../lib/mars-geo';
 import { isInsideBbox } from '../lib/bbox';
 import { parseMeta, parseTargets } from '../lib/loadData';
-import { cellIndex, isNoData, lonLatToCell, type Grid } from './core/grid';
+import { cellIndex, cellToLonLat, isNoData, lonLatToCell, type Grid } from './core/grid';
+import { routeBestOrder } from './core/stopOrder';
 import { route } from './core/route';
+import { O2_RESERVE_FRACTION } from './core/walk';
 import { loadGrid } from './loadGrid';
 
 const dataDir = new URL('../../public/data/', import.meta.url);
@@ -123,7 +125,7 @@ describe('real Jezero grid (public/data)', () => {
     const endCell = lonLatToCell(grid.meta, go.return_path!.coordinates.at(-1)!)!;
     expect(endCell).toEqual(habitatCell);
     const need = go.o2_kg + go.return_path!.o2_kg;
-    const r = route(grid, pts, { habitat: HABITAT, o2_available_kg: need * 0.9 });
+    const r = route(grid, pts, { habitat: HABITAT, o2_available_kg: (need * 0.9) / (1 - O2_RESERVE_FRACTION) }); // 90% of the need is usable
     const p = r.properties;
     expect(p.verdict).toBe('NO-GO');
     expect(p.point_of_no_return).toBeGreaterThan(0);
@@ -137,6 +139,42 @@ describe('real Jezero grid (public/data)', () => {
     const [minLon, minLat, maxLon, maxLat] = grid.meta.bbox;
     const border: LonLat = [minLon + (maxLon - minLon) / grid.meta.width / 2, (minLat + maxLat) / 2];
     expect(() => route(grid, [HABITAT, border])).toThrow(/^Stop 1 is on impassable terrain/);
+  });
+
+  it('every real target is reachable from the habitat and back, each on a slope under 25°', () => {
+    for (const t of targets.filter((f) => f.properties.id !== 'habitat')) {
+      const there = route(grid, [HABITAT, t.geometry.coordinates]).properties;
+      const back = route(grid, [t.geometry.coordinates, HABITAT], { habitat: HABITAT }).properties;
+      expect(there.dist_m, t.properties.id).toBeGreaterThan(0);
+      expect(back.dist_m, t.properties.id).toBeGreaterThan(0);
+    }
+    for (const t of targets) {
+      const c = lonLatToCell(grid.meta, t.geometry.coordinates)!;
+      expect(grid.slope[cellIndex(grid.meta, c.col, c.row)]!, t.properties.id).toBeLessThan(25);
+    }
+  });
+
+  it('best order with 8 stops (every real target plus extra points) takes well under 1 s and never needs more O₂', () => {
+    const realStops = DEMO.slice(1, -1);
+    const need = 8 - realStops.length;
+    const extra: LonLat[] = [];
+    for (let row = 120; extra.length < need && row < 400; row += 37) {
+      for (let col = 140; extra.length < need && col < 380; col += 61) {
+        if (grid.slope[cellIndex(grid.meta, col, row)]! < 10 && (col + row) % 3 === 0) extra.push(cellToLonLat(grid.meta, col, row));
+      }
+    }
+    expect(extra).toHaveLength(need);
+    const stops = [...realStops, ...extra];
+    expect(stops).toHaveLength(8);
+    const t0 = performance.now();
+    const best = routeBestOrder(grid, [HABITAT, ...stops]);
+    const ms = performance.now() - t0;
+    expect(ms).toBeLessThan(1000);
+    expect(best.properties.stop_order).toHaveLength(9);
+    // No return point is added, and the reordered plan never needs more O₂ than the given order.
+    const needed = (pts: LonLat[]) => route(grid, [...pts, HABITAT]).properties.o2_kg;
+    const reordered = best.properties.stop_order!.map((i) => [HABITAT, ...stops][i]!);
+    expect(needed(reordered)).toBeLessThanOrEqual(needed([HABITAT, ...stops]) + 1e-9);
   });
 
   it('no route cell is impassable', () => {

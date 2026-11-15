@@ -39,10 +39,10 @@ export default function RouteMarkers() {
     const pnrs: { index: number; label: string; modifier: string }[] = [];
     // No habitat marker when even the start cannot reach the habitat: the route summary says so instead.
     if (props.verdict === 'NO-GO' && !props.start_unreachable && props.point_of_no_return !== undefined) {
-      pnrs.push({ index: props.point_of_no_return, label: toStart ? 'Point of no return (habitat)' : 'Point of no return', modifier: 'habitat' });
+      pnrs.push({ index: props.point_of_no_return, label: toStart ? 'Point of no return (habitat, estimate)' : 'Point of no return (estimate)', modifier: 'habitat' });
     }
     if (toStart?.verdict === 'NO-GO' && toStart.point_of_no_return !== undefined) {
-      pnrs.push({ index: toStart.point_of_no_return, label: 'Point of no return (start)', modifier: 'start' });
+      pnrs.push({ index: toStart.point_of_no_return, label: 'Point of no return (start, estimate)', modifier: 'start' });
     }
     const points = pnrs.map((m) => profilePointAt(route, m.index));
     // Two markers: the western one gets its label on the left, the eastern one on the right, so the

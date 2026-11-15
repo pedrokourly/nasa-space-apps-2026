@@ -90,3 +90,45 @@
 .route-summary__return--start .route-summary__return-swatch {
   border-top: 3px dotted #c084fc;
 }
+
+/* Decision 0002: the summary carries the data-nature labels on smaller lines under the verdicts. */
+.route-summary--stacked {
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.route-summary--stacked,
+.route-summary--dual {
+  max-width: min(36rem, calc(100vw - 2rem));
+}
+
+.route-summary--stacked .route-summary__line {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.route-summary__labels {
+  margin: 0;
+  color: #c8d1dc;
+  font-size: 0.68rem;
+  line-height: 1.3;
+  text-align: center;
+  white-space: normal;
+}
+
+.route-summary--dual .route-summary__labels {
+  text-align: left;
+}
+
+.route-summary__labels a {
+  color: #7dd3fc;
+  pointer-events: auto;
+}
+
+.route-summary__labels--pnr {
+  color: #ff8a80;
+}
