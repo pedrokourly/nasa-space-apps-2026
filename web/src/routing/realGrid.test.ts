@@ -177,6 +177,27 @@ describe('real Jezero grid (public/data)', () => {
     expect(needed(reordered)).toBeLessThanOrEqual(needed([HABITAT, ...stops]) + 1e-9);
   });
 
+  for (const n of [12, 16, 20]) {
+    it(`best order with ${n} stops uses the heuristic, keeps every stop and never needs more O₂`, () => {
+      const stops: LonLat[] = [...DEMO.slice(1, -1)];
+      for (let row = 60; stops.length < n && row < 470; row += 29) {
+        for (let col = 60; stops.length < n && col < 470; col += 43) {
+          if (grid.slope[cellIndex(grid.meta, col, row)]! < 10 && (col + row) % 2 === 0) stops.push(cellToLonLat(grid.meta, col, row));
+        }
+      }
+      expect(stops).toHaveLength(n);
+      const pts = [HABITAT, ...stops];
+      const t0 = performance.now();
+      const best = routeBestOrder(grid, pts);
+      const ms = performance.now() - t0;
+      expect(ms).toBeLessThan(5000); // measured about 0.7 s (12), 1.2 s (16) and 1.6 s (20) in Node
+      expect(best.properties.stop_order).toHaveLength(n + 1);
+      const needed = (p: LonLat[]) => route(grid, [...p, HABITAT]).properties.o2_kg;
+      const reordered = best.properties.stop_order!.map((i) => pts[i]!);
+      expect(needed(reordered)).toBeLessThanOrEqual(needed(pts) + 1e-9);
+    }, 20_000);
+  }
+
   it('no route cell is impassable', () => {
     const r = route(grid, DEMO);
     for (const [lon, lat] of r.geometry.coordinates) {

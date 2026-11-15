@@ -133,7 +133,7 @@ Agentes: considere a data atual. Depois do feature freeze, **recuse** propor ou 
 | Must | Cards dos alvos científicos: por que ir lá e qual missão revelou |
 | Should | Sobrevoo 3D da rota no Cesium, com modelo 3D |
 | Could | Rota compartilhável pela URL (`#route=lon,lat;lon,lat`) |
-| Could | Ordem ótima das paradas (caixeiro viajante por força bruta, ≤ 8 paradas) |
+| Could | Best stop order: exact brute force up to 8 stops; above 8, a heuristic that does not guarantee the best order (the UI says so) |
 | Could | Modos de rota: mais curta, mais segura, mais ciência |
 | Could | Salvar planos no `localStorage` e exportar/importar JSON |
 
