@@ -4,7 +4,7 @@
  * Pure logic: no React, no Leaflet, no DOM, no Worker. Runs in the browser,
  * in the Web Worker and in Node (tests). Distances only with `haversine` from `lib/mars-geo.ts`.
  *
- * ASSUMPTIONS (likely format, not yet confirmed by Data/GIS):
+ * Format (confirmed by the Data/GIS pipeline, see `docs/terrain-data.md`):
  * - `elevation` in meters; `slope` in DEGREES (0 to 90).
  * - Row 0 is the north edge (`meta.row0 === 'north'`), longitude −180 to 180.
  * - Cell values are area samples ("pixel is area"): the center of cell (col, row) sits

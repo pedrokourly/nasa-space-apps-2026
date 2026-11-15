@@ -169,7 +169,7 @@ web/                     # app Vite + React + TS
   src/routing/           # função de custo, A*, caminhada, O₂, Web Worker
   src/three-d/           # CesiumJS
   src/ui/                # painéis, cards, perfil de elevação
-  src/lib/geo.ts         # haversine com raio de Marte, conversões de longitude
+  src/lib/mars-geo.ts    # haversine com raio de Marte, conversões de longitude
   public/data/           # saída do pipeline (elevation.bin, slope.bin, meta.json, targets.geojson, missions.json)
 pipeline/                # scripts Python de Dados/GIS
 docs/                    # roteiro da demo, fontes, referências e decisions/ (decision records)
@@ -214,7 +214,7 @@ A rota em GeoJSON é o ponto de encontro de todas as frentes: o mesmo arquivo al
 
 ## 6. Armadilhas de Marte (leia antes de escrever código geoespacial)
 
-- **Raio de Marte:** `map.distance()` do Leaflet usa o raio da Terra. Use sempre o haversine próprio com **R = 3389,5 km** (`src/lib/geo.ts`). Nunca use utilitário de distância de biblioteca terrestre sem trocar o raio.
+- **Raio de Marte:** `map.distance()` do Leaflet usa o raio da Terra. Use sempre o haversine próprio com **R = 3389,5 km** (`src/lib/mars-geo.ts`). Nunca use utilitário de distância de biblioteca terrestre sem trocar o raio.
 - **Longitude:** dados de Marte aparecem em 0–360° ou −180–180°. **No contrato e no app, só −180 a 180.** Converta na borda (pipeline), nunca no meio do app.
 - **CRS dos tiles:** o Mars Trek usa EPSG:4326 (lat/lon puro), não o Web Mercator padrão do Leaflet. Configure o CRS do mapa e confira a ordem das linhas de tiles — um erro aqui desloca tudo.
 - **Unidades da declividade:** o gradiente precisa usar metros por pixel reais; senão a inclinação sai absurda.
