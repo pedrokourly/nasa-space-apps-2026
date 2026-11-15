@@ -30,7 +30,7 @@ import { LAYERS } from './map/layers'
 import type { LayerId, Conditions } from './types/contract'
 import MarsDataScreen from './ui/MarsDataScreen'
 import { Button } from './ui/kit'
-import { CloseIcon, InfoIcon, LayersIcon, MaximizeIcon, NavigationIcon, RouteIcon, SlopeIcon, ThermometerIcon } from './ui/icons'
+import { CloseIcon, InfoIcon, LayersIcon, LocateIcon, MaximizeIcon, NavigationIcon, RouteIcon, SlopeIcon, ThermometerIcon } from './ui/icons'
 import './ui/PlannerShell.css'
 import './ui/kit.css'
 
@@ -57,6 +57,8 @@ export default function App() {
   const [selectedSourceLayer, setSelectedSourceLayer] = useState<LayerId | null>(null)
   /** Top (px, inside the map area) of the layer button whose source panel is open: the panel opens beside it. */
   const [sourcePanelTop, setSourcePanelTop] = useState<number | null>(null)
+  /** 3D view: the camera follows the astronaut during the EVA (toggled by "Follow astronaut"). */
+  const [follow3d, setFollow3d] = useState(true)
   const [mapInstance, setMapInstance] = useState<L.Map | null>(null)
   const [recenterIndicator, setRecenterIndicator] = useState({ centered: false, rotation: 0 })
   const route = useAppStore((state) => state.route)
@@ -204,7 +206,14 @@ export default function App() {
 
       <main id="map-area" className="map-area" aria-label="Map area">
         {view === '3d' && tab === 'planning' ? (
-          <Suspense fallback={<div className="three-d-loading">Loading 3D view…</div>}><ThreeDView targets={data?.targets ?? null} /><div className="eva-dock eva-dock--idle eva-dock--3d"><SimulationControl /></div></Suspense>
+          <Suspense fallback={<div className="three-d-loading">Loading 3D view…</div>}><ThreeDView targets={data?.targets ?? null} follow={follow3d} /><div className="dock-stack">
+            {/* The 3D counterpart of the 2D "Recenter": the camera follows the astronaut during the EVA. */}
+            {route && route.geometry.coordinates.length >= 2 && <Button variant="secondary" size="lg" className="map-recenter three-d__follow" aria-pressed={follow3d} title={follow3d ? 'The camera follows the astronaut during the EVA' : 'Free camera: press to follow the astronaut'} onClick={() => setFollow3d((value) => !value)}>
+              <span className="map-recenter__icon"><LocateIcon /></span>
+              <span className="map-recenter__label">Follow astronaut</span>
+            </Button>}
+            <div className="eva-dock eva-dock--idle eva-dock--3d"><SimulationControl /></div>
+          </div></Suspense>
         ) : (
           <MapView onReady={setMapInstance}>
             <LayerManager />
@@ -261,8 +270,8 @@ function ToolPanel({ data, selectedTarget, onSelectTarget, onClose }: {
   onClose: () => void
 }) {
   return (
-    <aside className="tool-panel" aria-label="Region information">
-      <div className="tool-panel__heading"><div><span className="tool-panel__eyebrow">JEZERO CRATER</span><h2>Region information</h2></div><button type="button" aria-label="Close panel" onClick={onClose}>×</button></div>
+    <aside className="tool-panel ui-card" aria-label="Region information">
+      <div className="tool-panel__heading"><div><span className="tool-panel__eyebrow">JEZERO CRATER</span><h2>Region information</h2></div><Button variant="ghost" size="icon" className="tool-panel__close" aria-label="Close panel" onClick={onClose}><CloseIcon /></Button></div>
       <p>Science targets and their source missions for the current map area.</p><div className="tool-target-list">{data?.targets.features.map((feature) => <button key={feature.properties.id} type="button" onClick={() => onSelectTarget(feature.properties.id)}><strong>{feature.properties.name}</strong><span>{feature.properties.why}</span></button>)}</div>{selectedTarget && <p className="tool-panel__selected">Selected: {selectedTarget.properties.name}</p>}
     </aside>
   )

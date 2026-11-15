@@ -45,8 +45,8 @@ function VerdictPill({ verdict }: { verdict: Verdict | undefined }) {
 }
 
 /**
- * Best value of a column (lowest distance, time, O₂ used; highest O₂ left), or null when there is
- * nothing to compare (fewer than 2 rows, or every row equal).
+ * Best value of a column among the ways home (lowest distance, time, O₂ used; highest O₂ left), or
+ * null when there is nothing to compare (fewer than 2 ways home, or both equal).
  */
 function bestOf(values: number[], mode: 'min' | 'max'): number | null {
   if (values.length < 2 || values.every((v) => v === values[0])) return null;
@@ -82,14 +82,17 @@ function PlansTable({ route, rows, o2Available }: { route: Route; rows: PlanRow[
       left: Math.max(0, o2Available - used).toFixed(2),
     }];
   });
+  // Only the two ways home compete: the planned route alone is always the shortest (it has no
+  // return), so it is never the "best" plan to walk.
+  const returns = values.filter((v) => v.plan !== 'route');
   const best = {
-    dist: bestOf(values.map((v) => Number(v.dist)), 'min'),
-    time: bestOf(values.map((v) => Number(v.time)), 'min'),
-    used: bestOf(values.map((v) => Number(v.used)), 'min'),
-    left: bestOf(values.map((v) => Number(v.left)), 'max'),
+    dist: bestOf(returns.map((v) => Number(v.dist)), 'min'),
+    time: bestOf(returns.map((v) => Number(v.time)), 'min'),
+    used: bestOf(returns.map((v) => Number(v.used)), 'min'),
+    left: bestOf(returns.map((v) => Number(v.left)), 'max'),
   };
-  const cls = (key: keyof typeof best, value: string) =>
-    `route-plans__num${best[key] !== null && Number(value) === best[key] ? ' route-plans__best' : ''}`;
+  const cls = (key: keyof typeof best, v: (typeof values)[number]) =>
+    `route-plans__num${v.plan !== 'route' && best[key] !== null && Number(v[key]) === best[key] ? ' route-plans__best' : ''}`;
   return (
     <table className="route-plans">
       <thead>
@@ -119,10 +122,10 @@ function PlansTable({ route, rows, o2Available }: { route: Route; rows: PlanRow[
                 {ret && nogo && <span className="route-plans__sub">{returnText(route, ret, nogo)}</span>}
               </th>
               <td className="route-plans__verdict"><VerdictPill verdict={verdict} /></td>
-              <td className={cls('dist', v.dist)} data-label="Distance">{v.dist} km</td>
-              <td className={cls('time', v.time)} data-label="Time">{v.time} min</td>
-              <td className={cls('used', v.used)} data-label="O₂ used">{v.used} kg</td>
-              <td className={cls('left', v.left)} data-label={O2_LEFT_TITLE}>{v.left} kg</td>
+              <td className={cls('dist', v)} data-label="Distance">{v.dist} km</td>
+              <td className={cls('time', v)} data-label="Time">{v.time} min</td>
+              <td className={cls('used', v)} data-label="O₂ used">{v.used} kg</td>
+              <td className={cls('left', v)} data-label={O2_LEFT_TITLE}>{v.left} kg</td>
             </tr>
           );
         })}

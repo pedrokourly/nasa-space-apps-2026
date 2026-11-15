@@ -20,12 +20,14 @@ import {
 import { COLOR_WALKED, createSimOverlay, type SimOverlay } from './simulationScene'
 import { useSimulationStore } from '../state/simulationStore'
 import { useSimulationPath, useSimulationSnapshot } from '../routing/useSimulation'
-import { Badge, Button } from '../ui/kit'
-import { ChevronDownIcon, LocateIcon } from '../ui/icons'
+import { Badge } from '../ui/kit'
+import { ChevronDownIcon } from '../ui/icons'
 import './ThreeDView.css'
 
 interface Props {
   targets: TargetsCollection | null
+  /** The camera follows the astronaut while the EVA runs (the "Follow astronaut" button in App). */
+  follow: boolean
 }
 
 function messageOf(e: unknown): string {
@@ -38,7 +40,7 @@ function messageOf(e: unknown): string {
  * 3D view of the route over the real relief of Jezero (Cesium + Cesium Mars). Read-only: it only
  * reads `route`, `waypoints` and the targets, it never edits them. Loaded lazily by `App`.
  */
-export default function ThreeDView({ targets }: Props) {
+export default function ThreeDView({ targets, follow }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [scene, setScene] = useState<MarsScene | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -50,7 +52,6 @@ export default function ThreeDView({ targets }: Props) {
   const route = useAppStore((s) => s.route)
   const waypoints = useAppStore((s) => s.waypoints)
   const [drawn, setDrawn] = useState<DrawnScene | null>(null)
-  const [follow, setFollow] = useState(true)
   const [legendOpen, setLegendOpen] = useState(
     () => typeof window === 'undefined' || window.innerWidth > 800,
   )
@@ -204,22 +205,6 @@ export default function ThreeDView({ targets }: Props) {
           </aside>
           {!hasRoute && (
             <div className="three-d__hint">Draw a route on the 2D map to see it in 3D</div>
-          )}
-          {/* The 3D counterpart of the 2D "Recenter": the camera follows the astronaut during the EVA. */}
-          {hasRoute && (
-            <Button
-              variant="secondary"
-              size="lg"
-              className={`map-recenter three-d__follow${simStatus !== 'idle' ? ' map-recenter--eva-active' : ''}`}
-              aria-pressed={follow}
-              title={follow ? 'The camera follows the astronaut during the EVA' : 'Free camera'}
-              onClick={() => setFollow((f) => !f)}
-            >
-              <span className="map-recenter__icon">
-                <LocateIcon />
-              </span>
-              <span className="map-recenter__label">Follow astronaut</span>
-            </Button>
           )}
           {drawing && <div className="three-d__busy">Reading terrain heights…</div>}
         </>

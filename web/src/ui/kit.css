@@ -300,6 +300,25 @@
 .app .map-layer-legends .provenance__warn { color: var(--warning); }
 .app .map-layer-legends .provenance__line a { color: #9bc9ff; }
 
+/* Region information panel: opens beside the info button (the first button of the tool bar, whose
+   top is the tool bar top + its 7 px padding), on the card pattern. */
+@media (min-width: 901px) {
+  .app .tool-panel.ui-card { top: 133px; left: 92px; transform: none; }
+}
+@media (min-width: 601px) and (max-width: 900px) {
+  .app .tool-panel.ui-card { top: 187px; left: 92px; transform: none; }
+}
+.app .tool-panel.ui-card { gap: 10px; padding: 12px 14px 14px; border-radius: var(--radius-lg); font-size: var(--text-sm); }
+.app .tool-panel__heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.app .tool-panel__heading h2 { margin: 2px 0 0; font-size: var(--text-lg); font-weight: 600; }
+.app .tool-panel__eyebrow { color: var(--accent-foreground); font-size: var(--text-xs); font-weight: 700; letter-spacing: 0.06em; }
+.app .tool-panel__heading .tool-panel__close { width: 32px; height: 32px; color: var(--muted-foreground); font-size: inherit; }
+.app .tool-panel__heading .tool-panel__close svg { width: var(--icon-sm); height: var(--icon-sm); stroke-width: 2; }
+.app .tool-panel > p { margin: 0; color: var(--muted-foreground); font-size: var(--text-sm); }
+.app .tool-target-list button strong { font-size: var(--text-sm); }
+.app .tool-target-list button span,
+.app .tool-panel__selected { font-size: var(--text-xs); }
+
 /* Color legends (in the source panel and in the stack above Recenter): one type scale. */
 .app .provenance__legend { margin-top: 8px; }
 .app .provenance__legend-title { display: block; color: var(--foreground); font-size: var(--text-xs); font-weight: 600; }
@@ -353,8 +372,37 @@
 .app .route-summary--card .route-summary__labels,
 .app .route-summary__details > summary { font-size: var(--text-xs); }
 
-/* Pressed toggle on the Recenter slot (3D "Follow astronaut" while it is on). */
-.app .map-recenter.ui-btn[aria-pressed='true'] { border-color: rgb(255 138 43 / 50%); background: var(--accent); color: var(--accent-foreground); }
+/* "Follow astronaut" looks exactly like Recenter; when the follow camera is off, it turns grey. */
+.app .map-recenter.ui-btn[aria-pressed='true'] { border-color: var(--border); background: var(--card); color: var(--accent-foreground); }
+.app .map-recenter.ui-btn[aria-pressed='false'] { color: var(--muted-foreground); }
+
+/* 3D: "Follow astronaut" and the EVA dock in one column, so the gap between them stays 12 px
+   (as Recenter over the dock in 2D) whatever the dock height while the EVA runs. */
+.app .dock-stack {
+  position: absolute;
+  right: 20px;
+  bottom: 28px;
+  z-index: 1120;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(260px, calc(100vw - 32px));
+}
+.app .dock-stack > .map-recenter.ui-btn,
+.app .dock-stack > .eva-dock {
+  position: static;
+  right: auto;
+  bottom: auto;
+  width: 100%;
+  margin: 0;
+  transform: none;
+}
+@media (max-width: 900px) {
+  .app .dock-stack { right: 16px; bottom: 24px; }
+}
+@media (max-width: 600px) {
+  .app .dock-stack { right: 10px; bottom: 18px; width: min(230px, calc(100vw - 20px)); }
+}
 
 /* ---------- 3D view: legend card, hint and busy chips on the kit tokens and type scale ---------- */
 .app .three-d__legend,
@@ -385,9 +433,6 @@
 .app .three-d__busy { padding: 8px 14px; font-size: var(--text-sm); }
 .app .three-d__message { color: var(--foreground); font-size: var(--text-base); }
 
-/* 3D dock: the 2D idle dock look, always shown (3D has no metrics bar); grows during the EVA. */
-.app .eva-dock--3d { z-index: 1120; }
-.app .three-d__follow { z-index: 1110; }
 
 /* Best value of each column (shortest, fastest, least O₂ used, most O₂ left) in the success color. */
 .app .route-plans td.route-plans__best { color: var(--success); font-weight: 700; }
@@ -447,6 +492,23 @@
 
 .app .mars-data-target strong,
 .app .mars-data-missions strong { font-size: var(--text-sm); }
+
+/* Team credits at the bottom of Conditions. */
+.app .mars-data-credits {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 20px;
+  padding: 14px 4px 4px;
+  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: var(--text-sm);
+}
+.app .mars-data-credits ul { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; padding: 0; list-style: none; }
+.app .mars-data-credits a { color: var(--foreground); font-weight: 600; text-decoration: underline; text-decoration-color: var(--input); text-underline-offset: 3px; }
+.app .mars-data-credits a:hover { color: var(--accent-foreground); text-decoration-color: currentColor; }
+.app .mars-data-credits a:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; border-radius: 2px; }
 
 /* Tablets: the header has two rows, so the badge starts under it. */
 @media (min-width: 601px) and (max-width: 900px) {

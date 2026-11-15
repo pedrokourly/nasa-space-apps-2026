@@ -6,6 +6,26 @@ import { Button } from './kit'
 
 type Props = { data: AppData | null; error: string | null; conditions: Conditions | null }
 
+/** Team credits, shown in alphabetical order. A member without a GitHub link is shown as plain text. */
+const TEAM: { name: string; github?: string }[] = [
+  { name: 'Kourly', github: 'https://github.com/pedrokourly' },
+  { name: 'Corrêa', github: 'https://github.com/gustavomcss' },
+  { name: 'Paulo', github: 'https://github.com/PauloRicardo-05' },
+  { name: 'Monteiro', github: 'https://github.com/MeloLuc' },
+  { name: 'Cavalcante', github: 'https://github.com/cgonssalves' },
+  { name: 'Vinhal', github: 'https://github.com/michaelvinhal' },
+]
+const TEAM_SORTED = [...TEAM].sort((a, b) => a.name.localeCompare(b.name, 'pt'))
+
+function Credits() {
+  return <footer className="mars-data-credits">
+    <span>Developed by</span>
+    <ul>{TEAM_SORTED.map((member) => <li key={member.name}>
+      {member.github ? <a href={member.github} target="_blank" rel="noopener noreferrer">{member.name}</a> : member.name}
+    </li>)}</ul>
+  </footer>
+}
+
 /** Display unit for air temperature. The MEDA data (`conditions.json`, `unit`) is in kelvin. */
 type TempUnit = 'C' | 'K' | 'F'
 const TEMP_UNITS: TempUnit[] = ['C', 'K', 'F']
@@ -149,5 +169,6 @@ export default function MarsDataScreen({ data, error, conditions }: Props) {
         <footer>Layer products available in the map. Dates and resolutions are shown only when present in product metadata.</footer>
       </article>
     </div>
+    <Credits />
   </section>
 }
