@@ -4,6 +4,8 @@ import { useMap } from './MapContext';
 import { useAppStore } from '../state/store';
 import { toLatLng, toLonLat, type LonLat } from '../lib/mars-geo';
 import { isInsideBbox } from '../lib/bbox';
+import RouteStepsControl from '../ui/RouteStepsControl';
+import BestOrderControl from '../ui/BestOrderControl';
 import type { Meta } from '../types/contract';
 import './WaypointsLayer.css';
 
@@ -33,7 +35,6 @@ interface Props {
 export default function WaypointsLayer({ meta }: Props) {
   const map = useMap();
   const waypoints = useAppStore((s) => s.waypoints);
-  const setWaypoints = useAppStore((s) => s.setWaypoints);
   const [warning, setWarning] = useState<string | null>(null);
 
   const markersRef = useRef<L.Marker[]>([]);
@@ -78,6 +79,8 @@ export default function WaypointsLayer({ meta }: Props) {
     const markers = markersRef.current;
     const indexOf = (m: L.Marker) => markers.indexOf(m);
 
+    if (waypoints.length < 2) map.closePopup();
+
     waypoints.forEach((wp, i) => {
       const ll = toLatLng(wp);
       const existing = markers[i];
@@ -96,6 +99,7 @@ export default function WaypointsLayer({ meta }: Props) {
       btn.textContent = 'Remove';
       btn.addEventListener('click', () => {
         const idx = indexOf(marker);
+        marker.closePopup();
         if (idx >= 0) useAppStore.getState().removeWaypoint(idx);
       });
       popup.append(label, btn);
@@ -110,6 +114,7 @@ export default function WaypointsLayer({ meta }: Props) {
         L.DomEvent.preventDefault(e.originalEvent);
         L.DomEvent.stopPropagation(e.originalEvent);
         const idx = indexOf(marker);
+        marker.closePopup();
         if (idx >= 0) useAppStore.getState().removeWaypoint(idx);
       });
 
@@ -153,16 +158,9 @@ export default function WaypointsLayer({ meta }: Props) {
   return (
     <div className="waypoints-panel">
       <div className="waypoints-panel__bar">
-        <span>
-          {waypoints.length === 0
-            ? 'Click the map to set the start point'
-            : `${waypoints.length} ${waypoints.length === 1 ? 'point' : 'points'}`}
-        </span>
-        {waypoints.length > 0 && (
-          <button type="button" onClick={() => setWaypoints([])}>
-            Clear route
-          </button>
-        )}
+        {waypoints.length === 0
+          ? <span>Click the map to set the start point</span>
+          : <div className="waypoints-panel__actions"><RouteStepsControl /><BestOrderControl /></div>}
       </div>
       {warning && (
         <div className="waypoints-panel__warn" role="alert">

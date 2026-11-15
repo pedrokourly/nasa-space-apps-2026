@@ -75,7 +75,11 @@ export const useAppStore = create<AppState>()((set) => ({
   addWaypoint: (p) => set((s) => ({ waypoints: [...s.waypoints, p] })),
   moveWaypoint: (i, p) =>
     set((s) => (i < 0 || i >= s.waypoints.length ? s : { waypoints: s.waypoints.map((w, k) => (k === i ? p : w)) })),
-  removeWaypoint: (i) => set((s) => ({ waypoints: s.waypoints.filter((_, k) => k !== i) })),
+  removeWaypoint: (i) => set((s) => {
+    const waypoints = s.waypoints.filter((_, k) => k !== i);
+    // A route needs a start and at least one destination; remove the orphaned start as well.
+    return { waypoints: s.waypoints.length > 1 && waypoints.length < 2 ? [] : waypoints };
+  }),
   setRoute: (route) => set({ route }),
   setRouteStatus: (routeStatus) => set({ routeStatus }),
   setRouteError: (routeError) => set({ routeError }),

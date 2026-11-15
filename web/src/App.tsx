@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import L from 'leaflet'
-import { findHabitat, loadData, type AppData, type DataSource, type DataSources } from './lib/loadData'
+import { findHabitat, loadData, type AppData, type DataSources } from './lib/loadData'
 import MapView from './map/MapView'
 import TargetsLayer from './map/TargetsLayer'
 import TargetCard from './ui/TargetCard'
@@ -20,15 +20,18 @@ import DataStatus from './ui/DataStatus'
 import ViewToggle, { type ViewMode } from './ui/ViewToggle'
 import { useAppStore } from './state/store'
 import { useRouteHashSync } from './state/useRouteHashSync'
-import { useSimulationSnapshot } from './routing/useSimulation'
+import { useSimulationPath, useSimulationSnapshot } from './routing/useSimulation'
+import { useSimulationStore } from './state/simulationStore'
+import { formatDistance, formatElapsed } from './ui/simulationFormat'
+import { availablePlans, buildSimPath } from './routing/simulation'
 import ProvenanceBadge, { Legend } from './ui/ProvenanceBadge'
 import { LAYERS } from './map/layers'
 import type { LayerId, Conditions } from './types/contract'
+import MarsDataScreen from './ui/MarsDataScreen'
 import './ui/PlannerShell.css'
 
 const ThreeDView = lazy(() => import('./three-d/ThreeDView'))
 const DATA_SOURCES: DataSources = { meta: 'real', targets: 'real', missions: 'real' }
-const label = (source: DataSource) => (source === 'real' ? 'REAL DATA' : 'MOCK')
 const JEZERO_OVERVIEW: L.LatLngTuple = [18.45, 77.43]
 
 type AppTab = 'planning' | 'mars-data'
@@ -43,6 +46,7 @@ export default function App() {
   const [data, setData] = useState<AppData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [latestSol, setLatestSol] = useState<number | null>(null)
+  const [conditions, setConditions] = useState<Conditions | null>(null)
   const [view, setView] = useState<ViewMode>('2d')
   const [tab, setTab] = useState<AppTab>('planning')
   const [activeTool, setActiveTool] = useState<ToolId | null>(null)
@@ -55,7 +59,7 @@ export default function App() {
   const selectedTargetId = useAppStore((state) => state.selectedTargetId)
   const selectTarget = useAppStore((state) => state.selectTarget)
   const toggleLayer = useAppStore((state) => state.toggleLayer)
-  const simulation = useSimulationSnapshot()
+  const simulationStatus = useSimulationStore((state) => state.status)
   const planningAreaCenter = useMemo(() => {
     const bbox = data?.meta.bbox
     return bbox
@@ -76,7 +80,10 @@ export default function App() {
     fetch(`${import.meta.env.BASE_URL}data/conditions.json`).then((response) => {
       if (!response.ok) throw new Error('Conditions unavailable')
       return response.json() as Promise<Conditions>
-    }).then((conditions) => setLatestSol(conditions.latest_sol)).catch(() => setLatestSol(null))
+    }).then((loadedConditions) => {
+      setConditions(loadedConditions)
+      setLatestSol(loadedConditions.latest_sol)
+    }).catch(() => { setConditions(null); setLatestSol(null) })
   }, [])
 
   useEffect(() => {
@@ -172,9 +179,9 @@ export default function App() {
         </a>
         <nav className="app-tabs" aria-label="Application views">
           <button className={`app-tab ${tab === 'planning' ? 'app-tab--active' : ''}`} type="button" aria-pressed={tab === 'planning'} onClick={() => setTab('planning')}>◎ <span>Planning</span></button>
-          <button className={`app-tab ${tab === 'mars-data' ? 'app-tab--active' : ''}`} type="button" aria-pressed={tab === 'mars-data'} onClick={() => { setTab('mars-data'); setActiveTool(null) }}>▱ <span>Mars data</span></button>
+          <button className={`app-tab ${tab === 'mars-data' ? 'app-tab--active' : ''}`} type="button" aria-pressed={tab === 'mars-data'} onClick={() => { setTab('mars-data'); setActiveTool(null) }}><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14 14.8V5a3 3 0 0 0-6 0v9.8a5 5 0 1 0 6 0Z"/><path d="M11 8v9"/><circle cx="11" cy="19" r="1.7"/></svg><span>Conditions</span></button>
         </nav>
-        <div className="app-status"><span className="app-readout"><small>Latest MEDA sol</small><strong>{latestSol !== null ? `SOL ${latestSol}` : 'SOL —'}</strong></span><span className="app-readout app-readout--oxygen"><small>O₂ remaining</small><strong>{simulation ? `${simulation.o2_left_kg.toFixed(2)} kg` : 'O₂ —'}</strong></span><ViewToggle view={view} onChange={setView} /></div>
+        <div className="app-status"><span className="app-readout"><small>Latest MEDA sol</small><strong>{latestSol !== null ? `SOL ${latestSol}` : 'SOL —'}</strong></span><ViewToggle view={view} onChange={setView} /></div>
       </header>
 
       {tab === 'planning' && view === '2d' && <>
@@ -197,13 +204,12 @@ export default function App() {
             <RouteMarkers />
             <SimulationLayer />
             <RouteSummary />
-            <SimulationControl />
             <TileHealth />
             <TileLoading />
             <DataStatus loading={!data && !error} error={error} />
             <FixedLayersBadge />
             {data && selectedSourceLayer && activeLayers.includes(selectedSourceLayer) && <div className="map-layer-legends"><div className="map-layer-legends__heading"><strong>{SOURCE_LAYERS.find((layer) => layer.id === selectedSourceLayer)?.label} source</strong><button type="button" aria-label="Close source panel" onClick={() => setSelectedSourceLayer(null)}>×</button></div><ProvenanceBadge activeLayers={[selectedSourceLayer]} missions={data.missions} /></div>}
-            <ActiveLayerLegends activeLayers={activeLayers} />
+            <ActiveLayerLegends activeLayers={activeLayers} recenterElevated={simulationStatus !== 'idle'} />
             <PlanningAreaFocus meta={data?.meta ?? null} />
             <WaypointsLayer meta={data?.meta ?? null} />
             {data && <TargetsLayer targets={data.targets} />}
@@ -213,7 +219,7 @@ export default function App() {
         {tab === 'planning' && view === '2d' && <>
           <button
             type="button"
-            className={`map-recenter${recenterIndicator.centered ? ' map-recenter--centered' : ''}`}
+            className={`map-recenter${recenterIndicator.centered ? ' map-recenter--centered' : ''}${simulationStatus !== 'idle' ? ' map-recenter--eva-active' : ''}`}
             title="Recenter on habitat"
             aria-label={recenterIndicator.centered ? 'Map centered on habitat' : 'Recenter on habitat'}
             data-centered={recenterIndicator.centered}
@@ -232,7 +238,7 @@ export default function App() {
         <ToolPanel data={data} selectedTarget={selectedTarget ?? null} onSelectTarget={selectTarget} onClose={() => { setActiveTool(null); selectTarget(null) }} />
       )}
 
-      {tab === 'mars-data' && <MarsDataScreen data={data} error={error} />}
+      {tab === 'mars-data' && <MarsDataScreen data={data} error={error} conditions={conditions} />}
       {tab === 'planning' && view === '2d' && <RouteMetricsBar values={routeValues} waypointCount={waypoints.length} />}
     </div>
   )
@@ -253,45 +259,49 @@ function ToolPanel({ data, selectedTarget, onSelectTarget, onClose }: {
 }
 
 function RouteMetricsBar({ values, waypointCount }: { values: { distance: string; time: number; oxygen: string; elevation: number } | null; waypointCount: number }) {
+  const path = useSimulationPath()
+  const snapshot = useSimulationSnapshot()
+  const status = useSimulationStore((state) => state.status)
+  const selectedPlan = useSimulationStore((state) => state.plan)
+  const route = useAppStore((state) => state.route)
+  const o2Budget = useAppStore((state) => state.evaParams.o2_available_kg)
+  const live = status !== 'idle' && snapshot !== null
+  const comparison = useMemo(() => route ? availablePlans(route).map((plan) => ({ plan, path: buildSimPath(route, plan) })) : [], [route])
+  const selectedComparison = comparison.find((entry) => entry.plan === selectedPlan)?.path ?? path
+  const bestFor = (field: 'oxygen' | 'time' | 'distance', lowerIsBetter = true) => {
+    const selectedValue = field === 'oxygen' ? selectedComparison?.o2_kg.at(-1) : field === 'time' ? selectedComparison?.time_s.at(-1) : selectedComparison?.dist_m.at(-1)
+    const candidates = comparison.map(({ path: candidate }) => field === 'oxygen' ? candidate.o2_kg.at(-1) : field === 'time' ? candidate.time_s.at(-1) : candidate.dist_m.at(-1)).filter((value): value is number => value !== undefined)
+    if (selectedValue === undefined || candidates.length < 2) return false
+    const best = lowerIsBetter ? Math.min(...candidates) : Math.max(...candidates)
+    return Math.abs(selectedValue - best) < 0.001
+  }
+  const plannedO2 = path?.o2_kg.at(-1)
+  const remainingO2 = plannedO2 === undefined ? null : Math.max(0, o2Budget - plannedO2)
   const metrics = [
-    { icon: '◉', label: 'O₂ consumed', value: values ? `${values.oxygen} kg` : '—' },
-    { icon: '▣', label: 'O₂ remaining', value: 'Not configured' },
-    { icon: '◷', label: 'Estimated time', value: values ? `${values.time} min` : '—' },
-    { icon: '⌁', label: 'Distance', value: values ? `${values.distance} km` : `${waypointCount} points` },
-    { icon: '△', label: 'Elevation gain', value: values ? `+${Math.round(values.elevation)} m` : '—' },
-    { icon: '♡', label: 'Vital signs', value: 'Not loaded' },
+    { icon: '◉', label: 'O₂ consumed', value: `${snapshot?.o2_used_kg.toFixed(2) ?? plannedO2?.toFixed(2) ?? '—'} kg`, best: bestFor('oxygen') },
+    { icon: '▣', label: 'O₂ remaining', value: live ? `${snapshot.o2_left_kg.toFixed(2)} kg` : remainingO2 === null ? '—' : `${remainingO2.toFixed(2)} kg`, best: bestFor('oxygen') },
+    { icon: '◷', label: live ? 'Elapsed time' : 'Estimated time', value: live ? formatElapsed(snapshot.elapsed_s) : path ? `${Math.round((path.time_s.at(-1) ?? 0) / 60)} min` : '—', best: bestFor('time') },
+    { icon: '⌁', label: 'Distance walked', value: live ? formatDistance(snapshot.dist_m) : path ? formatDistance(path.dist_m.at(-1) ?? 0) : `${waypointCount} points`, best: bestFor('distance') },
+    { icon: '△', label: 'Elevation gain', value: values ? `+${Math.round(values.elevation)} m` : '—', best: false },
   ]
-  return <footer className="route-metrics" aria-label="Route summary metrics">{metrics.map((metric) => <div className="route-metric" key={metric.label}><span className="route-metric__icon" aria-hidden="true">{metric.icon}</span><span><small>{metric.label}</small><strong>{metric.value}</strong></span></div>)}</footer>
+  if (!live) return <div className="eva-dock eva-dock--idle"><SimulationControl /></div>
+  return <footer className="route-metrics route-metrics--live" aria-label="Live EVA metrics">{metrics.map((metric) => <div className={`route-metric${metric.best ? ' route-metric--best' : ''}`} key={metric.label}><span className="route-metric__icon" aria-hidden="true">{metric.icon}</span><span><small>{metric.label}</small><strong>{metric.value}</strong></span></div>)}<div className="route-metrics__eva"><SimulationControl /></div></footer>
 }
 
 function FixedLayersBadge() {
   return <div className="fixed-layers-badge" role="status" aria-label="Fixed map layers: CTX Jezero and HiRISE Jezero"><span className="fixed-layers-badge__label">BASE LAYERS</span><span><i aria-hidden="true" />CTX</span><span><i aria-hidden="true" />HiRISE</span></div>
 }
 
-function ActiveLayerLegends({ activeLayers }: { activeLayers: LayerId[] }) {
+function ActiveLayerLegends({ activeLayers, recenterElevated }: { activeLayers: LayerId[]; recenterElevated: boolean }) {
   const legends = activeLayers
     .filter((id) => SOURCE_LAYERS.some((source) => source.id === id))
-    .map((id, index) => {
+    .map((id) => {
       const layer = LAYERS.find((item) => item.id === id)
       return layer?.legend
-        ? <div className="map-active-legends__item" style={{ gridColumn: index + 1, justifySelf: index === 0 ? 'start' : index === 1 ? 'center' : 'end' }} key={id}><Legend def={layer} /></div>
+        ? <div className="map-active-legends__item" key={id}><Legend def={layer} /></div>
         : null
     })
     .filter((item) => item !== null)
 
-  if (legends.length === 0) return null
-  return <div className="map-active-legends" aria-label="Active layer legends">{legends}</div>
-}
-
-function MarsDataScreen({ data, error }: { data: AppData | null; error: string | null }) {
-  const meda = data?.missions.find((mission) => mission.instrument.includes('MEDA'))
-  const dataCards = [
-    { icon: '♨', title: 'Current climate', fields: [['Temperature', '—'], ['Wind', '—'], ['Dust', '—']], source: meda ? `${meda.instrument} · ${meda.name}` : 'MEDA · Perseverance' },
-    { icon: '◉', title: 'Atmosphere', fields: [['Pressure', '—'], ['Composition', 'Not loaded'], ['Last available sol', 'Not provided']], source: meda ? `${meda.instrument} · ${meda.agency}` : 'MEDA · NASA' },
-    { icon: '▱', title: 'Soil and composition', fields: [['Mineral products', 'Select a layer to inspect'], ['Science targets', String(data?.targets.features.length ?? '—')]], source: 'CRISM · MRO' },
-    { icon: '⌖', title: 'Local geology', fields: [['Mapped science targets', String(data?.targets.features.length ?? '—')], ['Selected region', 'Jezero crater']], source: 'Target catalog · provenance on each target' },
-    { icon: '◎', title: 'Radiation', fields: [['Radiation reading', '—'], ['Latest available sol', 'Not provided']], source: 'RAD / Curiosity · data not loaded' },
-    { icon: '♧', title: 'Mission data status', fields: [['Terrain grid', 'REAL DATA'], ['Science targets', 'REAL DATA'], ['Mission catalog', label(DATA_SOURCES.missions)]], source: 'Each layer lists its source and available date' },
-  ]
-  return <section className="mars-data-screen" aria-label="Mars data dashboard"><div className="mars-data-screen__title"><div><span className="tool-panel__eyebrow">LATEST AVAILABLE · NOT LIVE</span><h1>Mars data for Jezero</h1><p>Mission products and verified regional information. Missing readings are left blank rather than estimated.</p></div><span className="data-status-pill">{error ? 'DATA ERROR' : data ? 'STATIC DATA' : 'LOADING'}</span></div><div className="mars-data-grid">{dataCards.map((card) => <article className="mars-data-card" key={card.title}><div className="mars-data-card__header"><span aria-hidden="true">{card.icon}</span><h2>{card.title}</h2></div><div className="mars-data-card__fields">{card.fields.map(([label, value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}</div><footer>{card.source}</footer></article>)}</div><div className="mars-data-provenance"><span>DATA PROVENANCE</span><p>Terrain: {data?.meta.source ?? 'Loading source…'}</p><p>Targets: {label(DATA_SOURCES.targets)} · Mission catalog: {label(DATA_SOURCES.missions)} · {data?.missions.length ?? 0} missions</p><p>Weather, atmosphere and radiation readings are not included in the current static data.</p></div></section>
+  return <div className={`map-active-legends${legends.length ? ' is-open' : ''}${recenterElevated ? ' map-active-legends--eva' : ''}`} aria-label="Active layer legends" aria-hidden={!legends.length}><div className="map-active-legends__content">{legends}</div></div>
 }
