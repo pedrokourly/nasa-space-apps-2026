@@ -308,9 +308,10 @@ export async function drawRouteScene(
   if (pnr) addMarker(ds, place(pnr, matrix, MARKER_LIFT_M), 'Point of no return', COLOR_PNR, 15, 14)
 
   // Camera: oblique view of the route, or of the area of interest when there is no route.
-  const focus = routePts.length >= 2 ? routePts : [centerPt]
+  // The ways back are framed too, with room for the legend and the EVA panel on the sides.
+  const focus = routePts.length >= 2 ? [...routePts, ...homePts, ...startPts] : [centerPt]
   const sphere = BoundingSphere.fromPoints(focus.map((p) => place(p, matrix, 0)))
-  const range = routePts.length >= 2 ? Math.max(sphere.radius * 2.6, MIN_RANGE_M) : 6000
+  const range = routePts.length >= 2 ? Math.max(sphere.radius * 3.2, MIN_RANGE_M) : 6000
   viewer.camera.flyToBoundingSphere(sphere, {
     offset: new HeadingPitchRange(0, CesiumMath.toRadians(CAMERA_PITCH_DEG), range),
     duration: scene.hasFlown ? 1.5 : 0,

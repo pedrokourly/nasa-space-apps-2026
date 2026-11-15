@@ -12,6 +12,7 @@ import {
   LabelStyle,
   Math as CesiumMath,
   Matrix4,
+  PolylineOutlineMaterialProperty,
   VerticalOrigin,
   type Entity,
 } from 'cesium'
@@ -23,11 +24,13 @@ import { COLOR_RETURN_HABITAT, COLOR_RETURN_START, placeAt, type DrawnScene } fr
 /** Meters (before exaggeration) the walked line and the astronaut float above the surface. */
 const WALKED_LIFT_M = 2.5
 const ASTRONAUT_LIFT_M = 4
-const WALKED_COLOR = '#ffb300'
+/** Bright yellow with a dark outline, so it reads apart from the green route and the amber way home. */
+export const COLOR_WALKED = '#ffe14d'
+const WALKED_COLOR = COLOR_WALKED
 const PNR_COLOR = '#ff3b30'
 /** Camera distance (m) and pitch while following the astronaut. */
-const FOLLOW_RANGE_M = 900
-const FOLLOW_PITCH_DEG = -30
+const FOLLOW_RANGE_M = 2200
+const FOLLOW_PITCH_DEG = -35
 
 export interface SimOverlay {
   /** Moves the astronaut and the walked line; hides everything when `snap` is `null`. */
@@ -87,9 +90,13 @@ export function createSimOverlay(scene: MarsScene, drawn: DrawnScene): SimOverla
     show: false,
     polyline: {
       positions: new CallbackProperty(() => walked, false),
-      width: 7,
+      width: 10,
       arcType: ArcType.NONE,
-      material: Color.fromCssColorString(WALKED_COLOR),
+      material: new PolylineOutlineMaterialProperty({
+        color: Color.fromCssColorString(WALKED_COLOR),
+        outlineColor: Color.fromCssColorString('#0b0d12'),
+        outlineWidth: 2,
+      }),
       depthFailMaterial: Color.fromCssColorString(WALKED_COLOR).withAlpha(0.35),
     },
   })

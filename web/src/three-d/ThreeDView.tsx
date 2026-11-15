@@ -17,7 +17,7 @@ import {
   drawRouteScene,
   type DrawnScene,
 } from './routeScene'
-import { createSimOverlay, type SimOverlay } from './simulationScene'
+import { COLOR_WALKED, createSimOverlay, type SimOverlay } from './simulationScene'
 import { useSimulationStore } from '../state/simulationStore'
 import { useSimulationPath, useSimulationSnapshot } from '../routing/useSimulation'
 import './ThreeDView.css'
@@ -49,6 +49,9 @@ export default function ThreeDView({ targets }: Props) {
   const waypoints = useAppStore((s) => s.waypoints)
   const [drawn, setDrawn] = useState<DrawnScene | null>(null)
   const [follow, setFollow] = useState(true)
+  const [legendOpen, setLegendOpen] = useState(
+    () => typeof window === 'undefined' || window.innerWidth > 800,
+  )
   const overlayRef = useRef<SimOverlay | null>(null)
   const simStatus = useSimulationStore((s) => s.status)
   const simPath = useSimulationPath()
@@ -147,41 +150,64 @@ export default function ThreeDView({ targets }: Props) {
         <div className="three-d__message">Loading Mars relief…</div>
       ) : (
         <>
-          <aside className="three-d__legend" aria-label="3D view legend">
-            <div className="three-d__legend-title">
-              Vertical exaggeration {VERTICAL_EXAGGERATION}×
-            </div>
-            <div className="three-d__legend-row">
-              <span className="three-d__swatch" style={{ background: SLOPE_COLORS.easy }} />
-              {`Slope < ${SLOPE_MODERATE_DEG}°`}
-            </div>
-            <div className="three-d__legend-row">
-              <span className="three-d__swatch" style={{ background: SLOPE_COLORS.moderate }} />
-              {`${SLOPE_MODERATE_DEG}° to ${SLOPE_STEEP_DEG}°`}
-            </div>
-            <div className="three-d__legend-row">
-              <span className="three-d__swatch" style={{ background: SLOPE_COLORS.steep }} />
-              {`Slope > ${SLOPE_STEEP_DEG}°`}
-            </div>
-            {route?.properties.return_path && (
-              <div className="three-d__legend-row">
-                <span className="three-d__swatch three-d__swatch--dashed" style={{ color: COLOR_RETURN_HABITAT }} />
-                Way home to habitat (estimate)
+          <aside
+            className={`three-d__legend${legendOpen ? '' : ' three-d__legend--closed'}`}
+            aria-label="3D view legend"
+          >
+            <button
+              type="button"
+              className="three-d__legend-head"
+              aria-expanded={legendOpen}
+              onClick={() => setLegendOpen((o) => !o)}
+            >
+              <span>3D route</span>
+              <span className="three-d__chip">Relief ×{VERTICAL_EXAGGERATION}</span>
+              <span className="three-d__chevron" aria-hidden="true">
+                {legendOpen ? '▾' : '▸'}
+              </span>
+            </button>
+            {legendOpen && (
+              <div className="three-d__legend-body">
+                <div className="three-d__legend-section">Route slope</div>
+                <div className="three-d__slope-scale">
+                  <span><i style={{ background: SLOPE_COLORS.easy }} />{`< ${SLOPE_MODERATE_DEG}°`}</span>
+                  <span><i style={{ background: SLOPE_COLORS.moderate }} />{`${SLOPE_MODERATE_DEG}–${SLOPE_STEEP_DEG}°`}</span>
+                  <span><i style={{ background: SLOPE_COLORS.steep }} />{`> ${SLOPE_STEEP_DEG}°`}</span>
+                </div>
+                {(route?.properties.return_path || route?.properties.return_to_start?.return_path) && (
+                  <>
+                    <div className="three-d__legend-section">Ways back (estimate)</div>
+                    {route?.properties.return_path && (
+                      <div className="three-d__legend-row">
+                        <span className="three-d__swatch three-d__swatch--dashed" style={{ color: COLOR_RETURN_HABITAT }} />
+                        To habitat
+                      </div>
+                    )}
+                    {route?.properties.return_to_start?.return_path && (
+                      <div className="three-d__legend-row">
+                        <span className="three-d__swatch three-d__swatch--dotted" style={{ color: COLOR_RETURN_START }} />
+                        To start
+                      </div>
+                    )}
+                  </>
+                )}
+                {hasRoute && (
+                  <>
+                    <div className="three-d__legend-section">EVA simulation</div>
+                    <div className="three-d__legend-row">
+                      <span className="three-d__swatch" style={{ background: COLOR_WALKED }} />
+                      Walked so far
+                    </div>
+                    <label className="three-d__switch">
+                      <input type="checkbox" checked={follow} onChange={(e) => setFollow(e.target.checked)} />
+                      <span className="three-d__switch-track" aria-hidden="true" />
+                      Camera follows astronaut
+                    </label>
+                  </>
+                )}
+                <div className="three-d__legend-source">Relief: Cesium Mars (Cesium ion)</div>
               </div>
             )}
-            {route?.properties.return_to_start?.return_path && (
-              <div className="three-d__legend-row">
-                <span className="three-d__swatch three-d__swatch--dotted" style={{ color: COLOR_RETURN_START }} />
-                Way back to start (estimate)
-              </div>
-            )}
-            {hasRoute && (
-              <label className="three-d__legend-row three-d__follow">
-                <input type="checkbox" checked={follow} onChange={(e) => setFollow(e.target.checked)} />
-                Follow astronaut during EVA
-              </label>
-            )}
-            <div className="three-d__legend-source">Relief: Cesium Mars (Cesium ion)</div>
           </aside>
           {!hasRoute && (
             <div className="three-d__hint">Draw a route on the 2D map to see it in 3D</div>

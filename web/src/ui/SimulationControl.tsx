@@ -11,6 +11,14 @@ import {
 import { SIM_PLAN_LABELS, type SimPlan } from '../routing/simulation';
 import { formatDistance, formatElapsed } from './simulationFormat';
 import './SimulationControl.css';
+import type { SimulationStatus } from '../state/simulationStore';
+
+const STATUS_LABELS: Record<SimulationStatus, string> = {
+  idle: 'Ready',
+  running: 'Running',
+  paused: 'Paused',
+  finished: 'Finished',
+};
 
 /**
  * EVA simulation control (issues #62 and #71): a plan selector (planned route, or the route with
@@ -49,6 +57,10 @@ export default function SimulationControl() {
 
   return (
     <div ref={rootRef} className="sim-control" role="group" aria-label="EVA simulation">
+      <p className="sim-control__title">
+        EVA simulation
+        <span className={`sim-control__status sim-control__status--${status}`}>{STATUS_LABELS[status]}</span>
+      </p>
       <div className="sim-control__buttons">
         {hasRoute && plans.length > 1 && (
           <label className="sim-control__plan">
@@ -63,7 +75,7 @@ export default function SimulationControl() {
           </label>
         )}
         {(status === 'idle' || status === 'finished') && (
-          <button type="button" onClick={start} disabled={!hasRoute}>
+          <button type="button" className="sim-control__primary" onClick={start} disabled={!hasRoute}>
             {status === 'finished' ? 'Restart EVA' : 'Start EVA'}
           </button>
         )}
@@ -73,7 +85,7 @@ export default function SimulationControl() {
           </button>
         )}
         {status === 'paused' && (
-          <button type="button" onClick={resume}>
+          <button type="button" className="sim-control__primary" onClick={resume}>
             Resume
           </button>
         )}
@@ -103,6 +115,19 @@ export default function SimulationControl() {
               </dd>
             </div>
           </dl>
+          <div className="sim-control__o2" aria-hidden="true">
+            <div
+              className={`sim-control__o2-bar${
+                snap.o2_left_fraction < 0.15
+                  ? ' sim-control__o2-bar--critical'
+                  : snap.o2_left_fraction < 0.35
+                    ? ' sim-control__o2-bar--low'
+                    : ''
+              }`}
+            >
+              <span style={{ width: `${Math.round(snap.o2_left_fraction * 100)}%` }} />
+            </div>
+          </div>
           {snap.pastPointOfNoReturn && (
             <p className="sim-control__warning" role="alert">
               NO-GO: point of no return passed. The remaining O₂ no longer covers the way back.

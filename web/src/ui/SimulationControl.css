@@ -1,21 +1,76 @@
-/* Keep the EVA controls above the route metrics without covering them. */
+/* Keep the EVA controls above the route metrics and the Recenter button without covering them. */
 .sim-control {
   position: absolute;
   right: 18px;
-  bottom: 124px;
+  bottom: 180px;
   left: auto;
   z-index: 1120;
-  max-width: 16rem;
-  padding: 0.5rem 0.6rem;
-  border-radius: 6px;
-  background: rgb(11 13 18 / 88%);
-  color: #e8e6e3;
+  width: 16.5rem;
+  max-width: 16.5rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 14px;
+  background: rgb(10 12 15 / 86%);
+  color: #f4f5f7;
   font-size: 0.8rem;
-  box-shadow: 0 1px 6px rgb(0 0 0 / 50%);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 32%);
+  backdrop-filter: blur(14px);
 }
 
+.sim-control__title {
+  margin: 0 0 0.5rem;
+  color: #8a94a3;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sim-control__status {
+  float: right;
+  color: #f4f5f7;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.sim-control__status--running { color: #34d399; }
+.sim-control__status--paused { color: #ffb300; }
+
+.sim-control button.sim-control__primary {
+  flex: 1;
+  border-color: #ff641d;
+  background: linear-gradient(180deg, #ff7a2f, #e8551a);
+  color: #fff;
+}
+
+.sim-control button.sim-control__primary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #ff8a45, #f05f22);
+}
+
+.sim-control__o2 {
+  margin-top: 0.55rem;
+}
+
+.sim-control__o2-bar {
+  height: 0.4rem;
+  border-radius: 999px;
+  background: #2a2f3a;
+  overflow: hidden;
+}
+
+.sim-control__o2-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #34d399;
+  transition: width 0.2s linear, background 0.3s;
+}
+
+.sim-control__o2-bar--low span { background: #ffb300; }
+.sim-control__o2-bar--critical span { background: #ff3b30; }
+
 @media (max-width: 600px) {
-  .sim-control { right: 8px; bottom: 144px; max-width: min(16rem, calc(100vw - 16px)); }
+  .sim-control { right: 8px; bottom: 144px; width: auto; max-width: min(16.5rem, calc(100vw - 16px)); }
 }
 
 .sim-control__buttons {
@@ -24,9 +79,9 @@
 }
 
 .sim-control button {
-  padding: 0.25rem 0.6rem;
+  padding: 0.35rem 0.75rem;
   border: 1px solid #2a2f3a;
-  border-radius: 4px;
+  border-radius: 8px;
   background: #1a1f2b;
   color: inherit;
   font: inherit;
