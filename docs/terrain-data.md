@@ -33,8 +33,8 @@ We use the **1 m HiRISE DTM (Mars 2020 Terrain Relative Navigation HiRISE DTM Mo
 ### Citation
 
 - Fergason, R. L., Hare, T. M., Mayer, D. P., Galuszka, D. M., Redding, B. L., Smith, E. D., Shinaman, J. R., Cheng, Y., Otero, R. E., 2020, *Mars 2020 Terrain Relative Navigation Flight Product Generation: Digital Terrain Model and Orthorectified Image Mosaics*, 51st Lunar and Planetary Science Conference.
-- McEwen, A. S. et al., 2007, *Mars Reconnaissance Orbiter's High Resolution Imaging Science Experiment (HiRISE)*, J. Geophys. Res. 112, E05S04, https://doi.org/10.1029/2005JE002605.
-- USGS Astrogeology Science Center, 2020, Mars 2020 Terrain Relative Navigation HiRISE DTM Mosaic, https://doi.org/10.5066/P9REJ9JN.
+- McEwen, A. S. et al., 2007, *Mars Reconnaissance Orbiter's High Resolution Imaging Science Experiment (HiRISE)*, J. Geophys. Res. 112(E5), https://doi.org/10.1029/2005JE002605.
+- Fergason, R. L., Galuszka, D. M., Hare, T. M., Mayer, D. P., Redding, B. L., 2020, *Mars 2020 Terrain Relative Navigation HiRISE DTM Mosaic*: U.S. Geological Survey, https://doi.org/10.5066/P9REJ9JN (authors as registered with the DOI).
 
 ## What the file says
 
