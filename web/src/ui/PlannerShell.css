@@ -280,6 +280,11 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* "includes the 10% reserve" under O₂ remaining: the verdict only plans on 90% of the supply. */
+.route-metric small.route-metric__note {
+  color: #ffb300;
+  font-size: 9px;
+}
 .route-metrics__action {
   display: flex;
   align-items: center;
@@ -368,6 +373,35 @@
 .mars-data-card__header h2 {
   margin: 0;
   font-size: 13px;
+}
+/* Temperature unit control (°C / K / °F); the source value in kelvin always stays visible. */
+.mars-data-units {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+  padding: 2px;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 8px;
+}
+.mars-data-units button {
+  min-width: 32px;
+  padding: 3px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #aab1ba;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.mars-data-units button[aria-pressed='true'] {
+  background: #ff8a2b;
+  color: #1b1208;
+  font-weight: 700;
+}
+.mars-data-units button:focus-visible {
+  outline: 2px solid #00e5ff;
+  outline-offset: 1px;
 }
 .mars-data-card__fields {
   display: grid;

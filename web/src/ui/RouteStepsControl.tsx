@@ -17,10 +17,14 @@ export default function RouteStepsControl() {
     L.DomEvent.disableScrollPropagation(root.current)
   }, [])
 
-  useEffect(() => {
+  // When the number of points changes, drop selections past the end and close on an empty route.
+  // Adjusting state during render (instead of in an effect) avoids an extra render pass.
+  const [prevCount, setPrevCount] = useState(waypoints.length)
+  if (prevCount !== waypoints.length) {
+    setPrevCount(waypoints.length)
     setSelected((current) => current.filter((index) => index < waypoints.length))
     if (waypoints.length === 0) setOpen(false)
-  }, [waypoints.length])
+  }
 
   if (waypoints.length === 0) return null
   const toggleStep = (index: number) => setSelected((current) => current.includes(index) ? current.filter((item) => item !== index) : [...current, index])

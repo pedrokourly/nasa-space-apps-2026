@@ -1,9 +1,55 @@
+import { useMemo } from 'react';
 import { useAppStore } from '../state/store';
 import { useSimulationStore } from '../state/simulationStore';
 import { profilePointAt } from '../routing/profilePoint';
+import { availablePlans, buildSimPath, SIM_PLAN_LABELS, type SimPlan } from '../routing/simulation';
 import type { ReturnPath, Route } from '../types/contract';
 import { ASSUMPTIONS_URL, COMPUTED_LABEL, ESTIMATE_LABEL, PNR_EXPLANATION, assumptionsLine } from '../routing/estimateText';
+import { RESERVE_NOTE } from './reserveNote';
 import './RouteSummary.css';
+
+/**
+ * Totals of every plan the route offers (planned route, return to habitat, return to start), shown at
+ * once and independent of the plan picked for the EVA simulation. O₂ left = supply − O₂ used.
+ */
+function PlansTable({ route, o2Available }: { route: Route; o2Available: number }) {
+  const rows = useMemo(
+    () => availablePlans(route).map((plan) => ({ plan, path: buildSimPath(route, plan) })),
+    [route],
+  );
+  return (
+    <table className="route-plans">
+      <thead>
+        <tr>
+          <th scope="col">Plan</th>
+          <th scope="col">Distance</th>
+          <th scope="col">Time</th>
+          <th scope="col">O₂ used</th>
+          <th scope="col">
+            O₂ left <span className="route-plans__note">({RESERVE_NOTE})</span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map(({ plan, path }) => {
+          const used = path.o2_kg.at(-1) ?? 0;
+          return (
+            <tr key={plan} className={`route-plans__row route-plans__row--${plan satisfies SimPlan}`}>
+              <th scope="row">
+                <span className="route-plans__swatch" aria-hidden="true" />
+                {SIM_PLAN_LABELS[plan]}
+              </th>
+              <td>{((path.dist_m.at(-1) ?? 0) / 1000).toFixed(1)} km</td>
+              <td>{Math.round((path.time_s.at(-1) ?? 0) / 60)} min</td>
+              <td>{used.toFixed(2)} kg</td>
+              <td>{Math.max(0, o2Available - used).toFixed(2)} kg</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
 
 /** Map label of the stop at route vertex `vertex`: 'A' for the start, then 1, 2… as the waypoint markers. */
 function stopLabel(route: Route, vertex: number): string {
@@ -79,9 +125,6 @@ export default function RouteSummary() {
   if (!route) return null;
 
   const p = route.properties;
-  const km = (p.dist_m / 1000).toFixed(1);
-  const min = Math.round(p.time_s / 60);
-  const o2 = p.o2_kg.toFixed(2);
   const ret = p.return_path;
   const nogo = p.verdict === 'NO-GO';
   // Point of no return 0: even the start cannot reach the habitat, so there is nothing to turn back by.
@@ -103,15 +146,13 @@ export default function RouteSummary() {
     </>
   );
 
-  // Route not starting at the habitat: totals on top, then one compact line per verdict.
+  // Route not starting at the habitat: every plan's totals on top, then one compact line per verdict.
   if (toStart && p.verdict) {
     const startNogo = toStart.verdict === 'NO-GO';
     const startPnr = startNogo ? profilePointAt(route, toStart.point_of_no_return) : null;
     return (
       <div className={`route-summary route-summary--info route-summary--dual${liveClass}`} role="status" aria-live="polite">
-        <span className="route-summary__totals">
-          {km} km · {min} min · {o2} kg O₂{p.mock ? ' (mock)' : ''}
-        </span>
+        <PlansTable route={route} o2Available={o2Available} />
         <VerdictLine
           route={route}
           who="Habitat"
@@ -143,9 +184,7 @@ export default function RouteSummary() {
           {p.verdict}
         </span>
       )}
-      <span>
-        {km} km · {min} min · {o2} kg O₂{p.mock ? ' (mock)' : ''}
-      </span>
+      {p.mock && <span>(mock)</span>}
       {startUnreachable && (
         <span className="route-summary__pnr">Start is too far from the habitat for the available O₂ (estimate)</span>
       )}
@@ -158,6 +197,7 @@ export default function RouteSummary() {
         </span>
       )}
       </div>
+      <PlansTable route={route} o2Available={o2Available} />
       {labels}
     </div>
   );

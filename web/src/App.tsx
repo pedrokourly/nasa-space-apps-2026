@@ -12,6 +12,7 @@ import RouteController from './routing/RouteController'
 import RouteLayer from './map/RouteLayer'
 import RouteMarkers from './map/RouteMarkers'
 import RouteSummary from './ui/RouteSummary'
+import { RESERVE_NOTE } from './ui/reserveNote'
 import SimulationLayer from './map/SimulationLayer'
 import SimulationControl from './ui/SimulationControl'
 import TileHealth from './map/TileHealth'
@@ -86,9 +87,13 @@ export default function App() {
     }).catch(() => { setConditions(null); setLatestSol(null) })
   }, [])
 
-  useEffect(() => {
+  // Selecting a target closes the source panel. Adjusted during render (not in an effect) to avoid
+  // an extra render pass.
+  const [prevTargetId, setPrevTargetId] = useState(selectedTargetId)
+  if (prevTargetId !== selectedTargetId) {
+    setPrevTargetId(selectedTargetId)
     if (selectedTargetId) setSelectedSourceLayer(null)
-  }, [selectedTargetId])
+  }
 
   useEffect(() => {
     if (!mapInstance) return
@@ -279,13 +284,13 @@ function RouteMetricsBar({ values, waypointCount }: { values: { distance: string
   const remainingO2 = plannedO2 === undefined ? null : Math.max(0, o2Budget - plannedO2)
   const metrics = [
     { icon: '◉', label: 'O₂ consumed', value: `${snapshot?.o2_used_kg.toFixed(2) ?? plannedO2?.toFixed(2) ?? '—'} kg`, best: bestFor('oxygen') },
-    { icon: '▣', label: 'O₂ remaining', value: live ? `${snapshot.o2_left_kg.toFixed(2)} kg` : remainingO2 === null ? '—' : `${remainingO2.toFixed(2)} kg`, best: bestFor('oxygen') },
+    { icon: '▣', label: 'O₂ remaining', value: live ? `${snapshot.o2_left_kg.toFixed(2)} kg` : remainingO2 === null ? '—' : `${remainingO2.toFixed(2)} kg`, note: RESERVE_NOTE, best: bestFor('oxygen') },
     { icon: '◷', label: live ? 'Elapsed time' : 'Estimated time', value: live ? formatElapsed(snapshot.elapsed_s) : path ? `${Math.round((path.time_s.at(-1) ?? 0) / 60)} min` : '—', best: bestFor('time') },
     { icon: '⌁', label: 'Distance walked', value: live ? formatDistance(snapshot.dist_m) : path ? formatDistance(path.dist_m.at(-1) ?? 0) : `${waypointCount} points`, best: bestFor('distance') },
     { icon: '△', label: 'Elevation gain', value: values ? `+${Math.round(values.elevation)} m` : '—', best: false },
   ]
   if (!live) return <div className="eva-dock eva-dock--idle"><SimulationControl /></div>
-  return <footer className="route-metrics route-metrics--live" aria-label="Live EVA metrics">{metrics.map((metric) => <div className={`route-metric${metric.best ? ' route-metric--best' : ''}`} key={metric.label}><span className="route-metric__icon" aria-hidden="true">{metric.icon}</span><span><small>{metric.label}</small><strong>{metric.value}</strong></span></div>)}<div className="route-metrics__eva"><SimulationControl /></div></footer>
+  return <footer className="route-metrics route-metrics--live" aria-label="EVA simulation metrics">{metrics.map((metric) => <div className={`route-metric${metric.best ? ' route-metric--best' : ''}`} key={metric.label}><span className="route-metric__icon" aria-hidden="true">{metric.icon}</span><span><small>{metric.label}</small><strong>{metric.value}</strong>{'note' in metric && metric.note && <small className="route-metric__note">{metric.note}</small>}</span></div>)}<div className="route-metrics__eva"><SimulationControl /></div></footer>
 }
 
 function FixedLayersBadge() {

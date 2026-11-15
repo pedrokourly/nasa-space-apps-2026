@@ -132,3 +132,55 @@
 .route-summary__labels--pnr {
   color: #ff8a80;
 }
+
+/* Every plan at once (planned route, return to habitat, return to start), independent of the EVA plan select. */
+.route-plans {
+  border-collapse: collapse;
+  color: #e8e6e3;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.route-plans th,
+.route-plans td {
+  padding: 0.1rem 0.6rem 0.1rem 0;
+  text-align: left;
+  font-weight: 400;
+}
+
+.route-plans thead th {
+  color: #98a0ad;
+  font-size: 0.68rem;
+}
+
+.route-plans tbody th {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+/* The long "O₂ left (includes the 10% reserve)" header wraps instead of widening the table. */
+.route-plans thead th:last-child {
+  white-space: normal;
+}
+
+.route-plans__note {
+  display: block;
+  font-weight: 400;
+}
+
+.route-plans__swatch {
+  display: inline-block;
+  width: 1.1rem;
+  border-top: 3px solid #00e5ff;
+}
+
+.route-plans__row--habitat .route-plans__swatch {
+  border-top: 3px dashed #ffb300;
+}
+
+.route-plans__row--start .route-plans__swatch {
+  border-top: 3px dotted #4ade80;
+}
