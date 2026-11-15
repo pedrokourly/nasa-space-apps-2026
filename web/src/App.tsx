@@ -185,9 +185,9 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <a className="app-brand" href="#map-area" aria-label="Martian Map home">
+        <a className="app-brand" href="#map-area" aria-label="Mars Route Planner home">
           <span className="app-brand__mark" aria-hidden="true"><svg className="mars-icon" viewBox="0 0 32 32"><defs><linearGradient id="marsSurface" x1="3" y1="5" x2="29" y2="28" gradientUnits="userSpaceOnUse"><stop stopColor="#ffb13b"/><stop offset=".52" stopColor="#ff641d"/><stop offset="1" stopColor="#c92b25"/></linearGradient><clipPath id="marsSurfaceClip"><circle cx="16" cy="16" r="14"/></clipPath></defs><circle className="mars-icon__planet" cx="16" cy="16" r="14"/><g clipPath="url(#marsSurfaceClip)" fill="#9f2028" opacity=".86"><path d="M-2 7c5-2 9-2 13 0 3 2 7 2 11 0 4-2 8-2 12 0v4c-5 2-9 2-13 0-3-2-7-2-11 0-4 2-8 2-12 0V7Z"/><path d="M-1 15c5-2 9-2 13 0 3 2 7 2 11 0 4-2 8-2 11 0v4c-5 2-9 2-13 0-3-2-7-2-11 0-4 2-8 2-12 0v-4Z"/><path d="M-1 23c5-2 9-2 13 0 3 2 7 2 11 0 4-2 8-2 11 0v4c-5 2-9 2-13 0-3-2-7-2-11 0-4 2-8 2-12 0v-4Z"/></g><circle cx="10" cy="11" r="1.25" fill="#ffd17a"/><circle cx="21" cy="21" r="1.6" fill="#ffd17a"/><circle cx="23" cy="11" r=".8" fill="#ffd17a"/></svg></span>
-          <span><strong>Martian Map</strong><small>Jezero crater · EVA planner</small></span>
+          <span><strong>Mars Route Planner</strong><small>Jezero crater · EVA planner</small></span>
         </a>
         <nav className="app-tabs" aria-label="Application views">
           <button className={`app-tab ${tab === 'planning' ? 'app-tab--active' : ''}`} type="button" aria-pressed={tab === 'planning'} onClick={() => setTab('planning')}><RouteIcon /><span>Planning</span></button>
