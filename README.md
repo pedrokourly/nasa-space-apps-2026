@@ -137,6 +137,10 @@ Deploy runs on Cloudflare Workers (static assets, `web/wrangler.jsonc`) with Wor
 
 **`main` is always deployable:** never break `main`; work on a branch and open a small PR. The full rules are in [`AGENTS.md`](AGENTS.md).
 
+## AI assistance
+
+This project was built with the help of two AI coding assistants: **Claude Code** (Anthropic) and **Codex** (OpenAI). They helped write the code, the tests, the documentation and the data pipeline. The team set the goals, made the decisions and is responsible for the result. Every data source, citation and assumption is recorded in [`docs/data-sources.md`](docs/data-sources.md).
+
 ## License
 
 GPL-3.0 (see `LICENSE`).
